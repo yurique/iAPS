@@ -39,13 +39,18 @@ struct CapsulaBackground: ViewModifier {
     }
 }
 
+struct BoolTag: ViewModifier {
+    let bool: Bool
+    func body(content: Content) -> some View {
+        content
+            .padding(4).border(Color.gray).background((bool ? Color.green : Color.red).opacity(0.4)).padding(.trailing, 6)
+    }
+}
+
 struct CompactSectionSpacing: ViewModifier {
     func body(content: Content) -> some View {
-        if #available(iOS 17, *) {
-            return content
-                .listSectionSpacing(.compact)
-        } else {
-            return content }
+        content
+            .listSectionSpacing(.compact)
     }
 }
 
@@ -65,17 +70,10 @@ struct CarveOrDrop: ViewModifier {
 struct InfoPanelBackground: View {
     let colorScheme: ColorScheme
     var body: some View {
-        if #available(iOS 17.0, *) {
-            Rectangle()
-                .stroke(.gray, lineWidth: 2)
-                .fill(colorScheme == .light ? .white : .black)
-                .frame(height: 24)
-        } else {
-            Rectangle()
-                .strokeBorder(.gray, lineWidth: 2)
-                .background(Rectangle().fill(colorScheme == .light ? .white : .black))
-                .frame(height: 24)
-        }
+        Rectangle()
+            .stroke(.gray, lineWidth: 2)
+            .fill(colorScheme == .light ? .white : .black)
+            .frame(height: 24)
     }
 }
 
@@ -210,7 +208,7 @@ struct ClockOffset: View {
                 .frame(maxHeight: 20)
                 .symbolRenderingMode(.palette)
                 .foregroundStyle(Color(.warning))
-                .offset(x: 10, y: !mdtPump ? -20 : -13)
+                .offset(x: !mdtPump ? 10 : 12, y: !mdtPump ? -20 : -22)
         }
     }
 }
@@ -237,7 +235,7 @@ struct NonStandardInsulin: View {
                         .foregroundStyle(.white)
                 }
         }
-        .offset(x: pod ? -15 : -3, y: pod ? -24 : -4.5)
+        .offset(x: pod ? -15 : -5, y: pod ? -24 : 7)
     }
 }
 
@@ -361,6 +359,10 @@ extension View {
 
     func carvingOrRelief(carve: Bool) -> some View {
         modifier(CarveOrDrop(carve: carve))
+    }
+
+    func boolTag(_ bool: Bool) -> some View {
+        modifier(BoolTag(bool: bool))
     }
 
     func addBackground() -> some View {

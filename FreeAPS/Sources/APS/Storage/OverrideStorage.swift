@@ -32,6 +32,20 @@ final class OverrideStorage {
         return overrideArray
     }
 
+    func fetchPreset(id: String) -> OverridePresets? {
+        var overrideArray = [OverridePresets]()
+        coredataContext.performAndWait {
+            let requestOverrides = OverridePresets.fetchRequest() as NSFetchRequest<OverridePresets>
+            let sortOverride = NSSortDescriptor(key: "date", ascending: false)
+            requestOverrides.sortDescriptors = [sortOverride]
+            requestOverrides.predicate = NSPredicate(
+                format: "id == %@", id as String
+            )
+            try? overrideArray = self.coredataContext.fetch(requestOverrides)
+        }
+        return overrideArray.first
+    }
+
     func fetchLatestAutoISFsettings() -> [Auto_ISF] {
         var array = [Auto_ISF]()
         coredataContext.performAndWait {
@@ -118,6 +132,7 @@ final class OverrideStorage {
             save.indefinite = preset.indefinite
             save.isPreset = true
             save.isf = preset.isf
+            save.basal = preset.basal
             save.isfAndCr = preset.isfAndCr
             save.percentage = preset.percentage
             save.smbIsAlwaysOff = preset.smbIsAlwaysOff
@@ -182,7 +197,7 @@ final class OverrideStorage {
             return nil
         }
 
-        guard (last.date ?? Date.now).addingTimeInterval(Int(last.duration ?? 0).minutes.timeInterval) > Date(),
+        guard (last.date ?? Date.now).addingTimeInterval(Int(truncating: last.duration ?? 0).minutes.timeInterval) > Date(),
               (last.date ?? Date.now) <= Date.now,
               last.duration != 0
         else {
@@ -217,6 +232,7 @@ final class OverrideStorage {
             save.indefinite = override.indefinite
             save.isPreset = override.isPreset
             save.isf = override.isf
+            save.basal = override.basal
             save.isfAndCr = override.isfAndCr
             save.percentage = override.percentage
             save.smbIsAlwaysOff = override.smbIsAlwaysOff
@@ -310,6 +326,7 @@ final class OverrideStorage {
                 save.indefinite = preset.indefinite
                 save.isPreset = true
                 save.isf = preset.isf
+                save.basal = preset.basal
                 save.isfAndCr = preset.isfAndCr
                 save.percentage = preset.percentage
                 save.smbIsAlwaysOff = preset.smbIsAlwaysOff
@@ -381,5 +398,28 @@ final class OverrideStorage {
             return Int(latest.number)
         }
         return nil
+    }
+
+    // Currently not used.
+    func DeleteBatch(identifier: String?, entity: String) {
+        guard let id = identifier else { return }
+        coredataContext.performAndWait {
+            let fetchRequest: NSFetchRequest<NSFetchRequestResult>
+            fetchRequest = NSFetchRequest(entityName: entity)
+            fetchRequest.predicate = NSPredicate(format: "id == %@", id)
+            let deleteRequest = NSBatchDeleteRequest(
+                fetchRequest: fetchRequest
+            )
+            deleteRequest.resultType = .resultTypeObjectIDs
+            do {
+                let deleteResult = try coredataContext.execute(deleteRequest) as? NSBatchDeleteResult
+                if let objectIDs = deleteResult?.result as? [NSManagedObjectID] {
+                    NSManagedObjectContext.mergeChanges(
+                        fromRemoteContextSave: [NSDeletedObjectsKey: objectIDs],
+                        into: [coredataContext]
+                    )
+                }
+            } catch { /* To do: handle any eventual errors. */ }
+        }
     }
 }

@@ -120,7 +120,7 @@ extension LiveActivityAttributes.ContentState {
     }
 }
 
-@available(iOS 16.2, *) private struct ActiveActivity {
+private struct ActiveActivity {
     let activity: Activity<LiveActivityAttributes>
     let startDate: Date
 
@@ -140,7 +140,7 @@ extension LiveActivityAttributes.ContentState {
     }
 }
 
-@available(iOS 16.2, *) final class LiveActivityBridge: NSObject, Injectable, ObservableObject, SettingsObserver,
+final class LiveActivityBridge: NSObject, Injectable, ObservableObject, SettingsObserver,
     NSFetchedResultsControllerDelegate
 {
     @Injected() private var settingsManager: SettingsManager!
@@ -406,7 +406,6 @@ extension LiveActivityAttributes.ContentState {
     }
 }
 
-@available(iOS 16.2, *)
 extension LiveActivityBridge: SuggestionObserver, EnactedSuggestionObserver {
     func enactedSuggestionDidUpdate(_ suggestion: Suggestion) {
         let settings = self.settings
