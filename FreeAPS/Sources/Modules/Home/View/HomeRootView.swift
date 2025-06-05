@@ -216,7 +216,7 @@ extension Home {
 
                 ZStack {
                     HStack {
-                        Text("⇢").font(.statusFont).foregroundStyle(.secondary)
+                        Text("🔜").font(.statusFont).foregroundStyle(.secondary)
 
                         if let eventualBG = state.eventualBG {
                             Text(
@@ -265,27 +265,25 @@ extension Home {
                 VStack {
                     Divider()
                     HStack {
-                        if state.carbButton {
-                            Button { state.showModal(for: .addCarbs(editMode: false, override: false)) }
-                            label: {
-                                ZStack(alignment: Alignment(horizontal: .trailing, vertical: .bottom)) {
-                                    Image(systemName: "fork.knife")
-                                        .renderingMode(.template)
-                                        .font(.custom("Buttons", size: 24))
-                                        .foregroundColor(colorScheme == .dark ? .loopYellow : .orange)
-                                        .padding(8)
-                                        .foregroundColor(.loopYellow)
-                                    if let carbsReq = state.carbsRequired {
-                                        Text(numberFormatter.string(from: carbsReq as NSNumber)!)
-                                            .font(.caption)
-                                            .foregroundColor(.white)
-                                            .padding(4)
-                                            .background(Capsule().fill(Color.red))
-                                    }
+                        Button { state.showModal(for: .addCarbs(editMode: false, override: false)) }
+                        label: {
+                            ZStack(alignment: Alignment(horizontal: .trailing, vertical: .bottom)) {
+                                Image(systemName: "fork.knife.circle.fill")
+                                    .renderingMode(.template)
+                                    .font(.custom("Buttons", size: 24))
+                                    .foregroundColor(colorScheme == .dark ? .loopYellow : .orange)
+                                    .padding(8)
+                                    .foregroundColor(.loopYellow)
+                                if let carbsReq = state.carbsRequired {
+                                    Text(numberFormatter.string(from: carbsReq as NSNumber)!)
+                                        .font(.caption)
+                                        .foregroundColor(.white)
+                                        .padding(4)
+                                        .background(Capsule().fill(Color.pink))
                                 }
-                            }.buttonStyle(.borderless)
-                            Spacer()
-                        }
+                            }
+                        }.buttonStyle(.borderless)
+                        Spacer()
                         Button {
                             (state.bolusProgress != nil) ? showBolusActiveAlert = true :
                                 state.showModal(for: .bolus(
@@ -294,7 +292,7 @@ extension Home {
                                 ))
                         }
                         label: {
-                            Image(systemName: "syringe")
+                            Image(systemName: "fuelpump.circle.fill")
                                 .renderingMode(.template)
                                 .font(.custom("Buttons", size: 24))
                         }
@@ -312,36 +310,34 @@ extension Home {
                             .foregroundColor(.insulin)
                             Spacer()
                         }
-                        if state.profileButton {
-                            ZStack(alignment: Alignment(horizontal: .trailing, vertical: .bottom)) {
-                                Image(systemName: isOverride ? "person.fill" : "person")
-                                    .symbolRenderingMode(.palette)
-                                    .font(.custom("Buttons", size: 28))
-                                    .foregroundStyle(.purple)
-                                    .padding(8)
-                                    .background(isOverride ? .purple.opacity(0.15) : .clear)
-                                    .clipShape(RoundedRectangle(cornerRadius: 10))
-                            }
-                            .onTapGesture {
-                                if isOverride {
-                                    showCancelAlert.toggle()
-                                } else {
-                                    state.showModal(for: .overrideProfilesConfig)
-                                }
-                            }
-                            .onLongPressGesture {
+                        ZStack(alignment: Alignment(horizontal: .trailing, vertical: .bottom)) {
+                            Image(systemName: "person.circle.fill")
+                                .renderingMode(.template)
+                                .font(.custom("Buttons", size: 24))
+                                .padding(8)
+                                .foregroundColor(.loopPink)
+                                .background(isOverride ? .purple.opacity(0.18) : .clear)
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
+                        }
+                        .onTapGesture {
+                            if isOverride {
+                                showCancelAlert.toggle()
+                            } else {
                                 state.showModal(for: .overrideProfilesConfig)
                             }
-                            Spacer()
+                        }
+                        .onLongPressGesture {
+                            state.showModal(for: .overrideProfilesConfig)
                         }
                         if state.useTargetButton {
+                            Spacer()
                             Image(systemName: "target")
                                 .renderingMode(.template)
                                 .font(.custom("Buttons", size: 24))
                                 .padding(8)
                                 .foregroundColor(.loopGreen)
                                 .background(isTarget ? .green.opacity(0.15) : .clear)
-                                .clipShape(RoundedRectangle(cornerRadius: 10))
+                                .clipShape(RoundedRectangle(cornerRadius: 12))
                                 .onTapGesture {
                                     if isTarget {
                                         showCancelTTAlert.toggle()
@@ -352,8 +348,8 @@ extension Home {
                                 .onLongPressGesture {
                                     state.showModal(for: .addTempTarget)
                                 }
-                            Spacer()
                         }
+                        Spacer()
                         Button { state.showModal(for: .settings) }
                         label: {
                             Image(systemName: "gear")
@@ -363,7 +359,7 @@ extension Home {
                         .buttonStyle(.borderless)
                         .foregroundColor(.gray)
                     }
-                    .padding(.horizontal, state.allowManualTemp ? 10 : 24)
+                    .padding(.horizontal, state.allowManualTemp ? 5 : 24)
                     .padding(.bottom, geo.safeAreaInsets.bottom)
                 }
             }
@@ -375,7 +371,7 @@ extension Home {
                 }
             }
             .confirmationDialog("Cancel Temporary Target", isPresented: $showCancelTTAlert) {
-                Button("Cancel Temporary Target", role: .destructive) {
+                Button("Tijdelijk doel annuleren", role: .destructive) {
                     state.cancelTempTarget()
                 }
             }
@@ -414,7 +410,7 @@ extension Home {
                         colourOfSubstance: .loopYellow,
                         materialOpacity: materialOpacity
                     )
-                    .frame(width: 12, height: 38)
+                    .frame(width: 24, height: 33)
                     .offset(x: 0, y: -5)
                     HStack(spacing: 0) {
                         if let loop = state.data.suggestion, let cob = loop.cob {
@@ -439,10 +435,10 @@ extension Home {
                     TestTube(
                         opacity: opacity,
                         amount: fill,
-                        colourOfSubstance: substance < 0 ? .red : .insulin,
+                        colourOfSubstance: substance < 0 ? .pink : .insulin,
                         materialOpacity: materialOpacity
                     )
-                    .frame(width: 12, height: 38)
+                    .frame(width: 24, height: 33)
                     .offset(x: 0, y: -5)
                     HStack(spacing: 0) {
                         if let loop = state.data.suggestion, let iob = loop.iob {
@@ -465,7 +461,7 @@ extension Home {
                 .overlay {
                     PreviewChart(readings: $state.readings, lowLimit: $state.data.lowGlucose, highLimit: $state.data.highGlucose)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 15))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .addShadows()
                 .padding(.horizontal, 10)
                 .blur(radius: animateTIRView ? 2 : 0)
@@ -488,7 +484,7 @@ extension Home {
                         info
                     }
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 15))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .addShadows()
                 .padding(.horizontal, 10)
         }
@@ -508,7 +504,7 @@ extension Home {
                         tddActualAverage: $state.tddActualAverage
                     )
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 15))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .addShadows()
                 .padding(.horizontal, 10)
         }
@@ -519,7 +515,7 @@ extension Home {
                 .overlay {
                     ActiveCOBView(data: $state.iobData)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 15))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .addShadows()
                 .padding(.horizontal, 10)
         }
@@ -530,7 +526,7 @@ extension Home {
                 .overlay {
                     LoopsView(loopStatistics: $state.loopStatistics)
                 }
-                .clipShape(RoundedRectangle(cornerRadius: 15))
+                .clipShape(RoundedRectangle(cornerRadius: 12))
                 .addShadows()
                 .padding(.horizontal, 10)
                 .blur(radius: animateLoopView ? 2.5 : 0)
@@ -595,9 +591,9 @@ extension Home {
                     HStack(alignment: .bottom, spacing: 5) {
                         ProgressView(value: Double(progress)).progressViewStyle(BolusProgressViewStyle())
                             .overlay {
-                                Image(systemName: "pause.fill")
+                                Image(systemName: "x.square.fill")
                                     .symbolRenderingMode(.palette)
-                                    .foregroundStyle(.white, .blue)
+                                    .foregroundStyle(.white, .pink)
                                     .font(.bolusProgressStopFont)
                             }
                     }
@@ -666,7 +662,7 @@ extension Home {
                     y: .value("Glucose", Double($0.glucose ?? 0) * (state.data.units == .mmolL ? 0.0555 : 1.0))
                 )
                 .foregroundStyle(
-                    (($0.glucose ?? 0) > veryHigh || Decimal($0.glucose ?? 0) < low) ? Color(.red) : Decimal($0.glucose ?? 0) >
+                    (($0.glucose ?? 0) > veryHigh || Decimal($0.glucose ?? 0) < low) ? Color(.pink) : Decimal($0.glucose ?? 0) >
                         high ? Color(.yellow) : Color(.darkGreen)
                 )
                 .symbolSize(5)
@@ -690,29 +686,26 @@ extension Home {
         }
 
         var timeSetting: some View {
-            let hourLabel = NSLocalizedString("\(state.hours) hours", comment: "") + "   "
-
-            return Menu(hourLabel) {
-                ForEach([3, 6, 9, 12, 24], id: \.self) { value in
-                    let label = NSLocalizedString("\(value) hours", comment: "")
-                    Button(label, action: { state.hours = value })
-                }
-
-                Button("UI/UX Settings", action: {
-                    state.showModal(for: .statisticsConfig)
-                })
+            let string = "\(state.hours) " + NSLocalizedString("hours", comment: "") + "   "
+            return Menu(string) {
+                Button("3 " + NSLocalizedString("hours", comment: ""), action: { state.hours = 3 })
+                Button("6 " + NSLocalizedString("hours", comment: ""), action: { state.hours = 6 })
+                Button("9 " + NSLocalizedString("hours", comment: ""), action: { state.hours = 9 })
+                Button("12 " + NSLocalizedString("hours", comment: ""), action: { state.hours = 12 })
+                Button("24 " + NSLocalizedString("hours", comment: ""), action: { state.hours = 24 })
+                Button("UI/UX Settings", action: { state.showModal(for: .statisticsConfig) })
             }
             .buttonStyle(.borderless)
             .foregroundStyle(.primary)
             .font(.timeSettingFont)
             .padding(.vertical, 15)
-            .background(TimeEllipse(characters: hourLabel.count))
+            .background(TimeEllipse(characters: string.count))
         }
 
         private var isfView: some View {
             ZStack {
                 HStack {
-                    Image(systemName: "divide").font(.system(size: 16)).foregroundStyle(.teal)
+                    Image(systemName: "divide.circle.fill").font(.system(size: 12)).foregroundStyle(.teal)
                     Text("\(state.data.suggestion?.sensitivityRatio ?? 1)").foregroundStyle(.primary)
                 }
                 .font(.timeSettingFont)
@@ -803,19 +796,38 @@ extension Home {
                         buttonPanel(geo)
                     }
                     .background(
-                        colorScheme == .light ? IAPSconfig.homeViewBackgroundLight : IAPSconfig.homeViewBackgrundDark
+                        LinearGradient(
+                            gradient: Gradient(
+                                stops: colorScheme == .light
+                                    ? [
+                                        .init(color: Color.cyan.opacity(0.2), location: 0.0),
+                                        .init(color: Color.white, location: 0.3), // Snelle overgang naar wit aan de bovenkant
+                                        .init(color: Color.white, location: 0.8), // Wit blijft tot 80%
+                                        .init(color: Color.cyan.opacity(0.2), location: 1.0)
+                                    ]
+                                    : [
+                                        .init(color: Color.cyan.opacity(0.3), location: 0.0),
+                                        .init(color: Color.black, location: 0.3), // Snelle overgang naar zwart aan de bovenkant
+                                        .init(color: Color.black, location: 0.8), // Zwart blijft tot 70%
+                                        .init(color: Color.cyan.opacity(0.3), location: 1.0)
+                                    ]
+                            ),
+                            startPoint: .top,
+                            endPoint: .bottom
+                        )
+                        .ignoresSafeArea(.all)
                     )
                     .ignoresSafeArea(edges: .vertical)
                     .overlay {
                         if let progress = state.bolusProgress, let amount = state.bolusAmount {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 15)
-                                    .fill(.gray.opacity(0.9))
-                                    .frame(maxWidth: 320, maxHeight: 90)
+                                    .fill(.teal.opacity(0.3))
+                                    .frame(width: 320, height: 60)
                                 bolusProgressView(progress: progress, amount: amount)
                             }
                             .frame(maxWidth: .infinity, alignment: .center)
-                            .offset(y: -100)
+                            .offset(x: 0, y: -50)
                         }
                     }
                 }

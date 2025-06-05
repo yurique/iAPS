@@ -26,7 +26,7 @@ struct BoolTag: ViewModifier {
     func body(content: Content) -> some View {
         content
             .padding(.vertical, 4).padding(.horizontal, 6)
-            .background((bool ? Color.green : Color.red).opacity(colorScheme == .light ? 0.8 : 0.5))
+            .background((bool ? Color.green : Color.pink).opacity(colorScheme == .light ? 0.8 : 0.5))
             .clipShape(RoundedRectangle(cornerRadius: 6)).padding(.vertical, 3).padding(.trailing, 3)
     }
 }
@@ -131,8 +131,8 @@ struct ColouredRoundedBackground: View {
     var body: some View {
         Rectangle()
             .fill(
-                colorScheme == .dark ? IAPSconfig.previewBackgroundDark :
-                    IAPSconfig.previewBackgroundLight
+                colorScheme == .dark ? .black :
+                    Color.white
             )
     }
 }
@@ -142,8 +142,8 @@ struct ColouredBackground: View {
     var body: some View {
         Rectangle()
             .fill(
-                colorScheme == .dark ? IAPSconfig.chartBackgroundDark :
-                    IAPSconfig.chartBackgroundLight
+                colorScheme == .dark ? .black :
+                    Color.white
             )
     }
 }
@@ -167,7 +167,7 @@ struct Sage: View {
     let expiration: Double
     var body: some View {
         let fill = max(amount / expiration, 0.07)
-        let colour: Color = amount <= 8.64E4 ? .red.opacity(0.9) : amount <= 2 * 8.64E4 ? .orange
+        let colour: Color = amount <= 8.64E4 ? .pink.opacity(0.9) : amount <= 2 * 8.64E4 ? .orange
             .opacity(0.8) : colorScheme == .light ? .white.opacity(0.7) : .black.opacity(0.8)
         RoundedRectangle(cornerRadius: 15)
             .stroke(colorScheme == .dark ? Color(.systemGray2) : Color(.systemGray6), lineWidth: 2)
@@ -200,12 +200,8 @@ struct TimeEllipse: View {
 }
 
 struct HeaderBackground: View {
-    @Environment(\.colorScheme) var colorScheme
     var body: some View {
-        Rectangle()
-            .fill(
-                colorScheme == .light ? IAPSconfig.headerBackgroundLight : IAPSconfig.headerBackgroundDark
-            )
+        Color.clear
     }
 }
 
@@ -238,7 +234,7 @@ struct NonStandardInsulin: View {
     var body: some View {
         ZStack {
             RoundedRectangle(cornerRadius: 15)
-                .fill(.red)
+                .fill(.pink)
                 .frame(width: 33, height: 15)
                 .overlay {
                     Text("U" + (formatter.string(from: concentration * 100 as NSNumber) ?? ""))
@@ -403,7 +399,7 @@ extension UIImage {
         context.setBlendMode(CGBlendMode.sourceIn)
         context
             .setFillColor(
-                color.cgColor ?? UIColor(portion > 0.75 ? .red.opacity(0.8) : .insulin.opacity(portion <= 3 ? 0.8 : 1))
+                color.cgColor ?? UIColor(portion > 0.75 ? .pink.opacity(0.8) : .insulin.opacity(portion <= 3 ? 0.8 : 1))
                     .cgColor
             )
         let height: CGFloat = 1 - portion
