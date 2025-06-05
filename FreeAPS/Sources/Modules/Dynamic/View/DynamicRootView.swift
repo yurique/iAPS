@@ -52,7 +52,7 @@ extension Dynamic {
                     if state.aisf {
                         Text("Dynamic ISF is disabled while Auto ISF is enabled")
                             .frame(maxWidth: .infinity, alignment: .center)
-                            .foregroundStyle(.red)
+                            .foregroundStyle(.pink)
                     } else {
                         HStack {
                             Toggle(isOn: $state.useNewFormula) {
@@ -83,7 +83,7 @@ extension Dynamic {
                             }.disabled(isPresented)
                         }
                     }
-                } header: { state.aisf ? nil : Text("Experimental").foregroundStyle(.red) }
+                } header: { state.aisf ? nil : Text("Experimental").foregroundStyle(.pink) }
 
                 if state.useNewFormula, !state.aisf {
                     Section {

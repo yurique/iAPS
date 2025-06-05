@@ -227,7 +227,7 @@ extension BasalProfileEditor {
                     )
                     .textCase(nil)
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .foregroundStyle((saving && !state.saved) ? .red : .secondary) }
+                    .foregroundStyle((saving && !state.saved) ? .pink : .secondary) }
             }
             .alert(
                 Text("Are you sure?"),

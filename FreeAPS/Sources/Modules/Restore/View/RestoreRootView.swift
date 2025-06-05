@@ -48,7 +48,7 @@ extension Restore {
                     }
                     label: { Text("No") }
                         .buttonStyle(.borderless)
-                        .tint(.red)
+                        .tint(.pink)
                         .padding(.trailing, 10)
                 }
             } header: {

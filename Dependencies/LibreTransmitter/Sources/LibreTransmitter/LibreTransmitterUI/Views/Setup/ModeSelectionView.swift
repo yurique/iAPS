@@ -43,7 +43,7 @@ struct ModeSelectionView: View {
             print("cancel button pressed")
             cancelNotifier.notify()
 
-        }//.accentColor(.red)
+        }//.accentColor(.pink)
     }
     
     var body: some View {

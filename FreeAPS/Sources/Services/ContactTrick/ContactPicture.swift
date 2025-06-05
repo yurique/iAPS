@@ -402,7 +402,7 @@ struct ContactPicture: View {
                     progress1: state.iob.map { Double($0) / Double(state.maxIOB) },
                     progress2: state.cob.map { Double($0) / Double(state.maxCOB) },
                     colors1: [contact.darkMode ? .blue : .blue, contact.darkMode ? .pink : .red],
-                    colors2: [.loopYellow, .red],
+                    colors2: [.loopYellow, .pink],
                     strokeWidth: strokeWidth
                 )
             }

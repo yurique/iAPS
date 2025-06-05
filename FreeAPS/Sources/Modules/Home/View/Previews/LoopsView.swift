@@ -62,7 +62,7 @@ struct LoopsView: View {
                     x: .value("LoopPercentage", percentage)
                 )
                 .foregroundStyle(
-                    percentage >= 90 ? Color(.darkGreen) : percentage >= 75 ? .orange : .red
+                    percentage >= 90 ? Color(.darkGreen) : percentage >= 75 ? .orange : .pink
                 ).opacity(1)
                 .clipShape(
                     UnevenRoundedRectangle(

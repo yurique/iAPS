@@ -13,6 +13,6 @@ private struct ErrorTextFieldStyle : TextFieldStyle {
         configuration
             .background(
                 RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                .stroke(Color.red,  lineWidth: 3))
+                                .stroke(Color.pink,  lineWidth: 3))
     }
 }

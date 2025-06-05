@@ -352,7 +352,7 @@ struct MinimedPumpSettingsView: View {
             showingDeletionSheet = true
         }, label: {
             Text(LocalizedString("Delete Pump", comment: "Button label for removing Pump"))
-                .foregroundColor(.red)
+                .foregroundColor(.pink)
         }).actionSheet(isPresented: $showingDeletionSheet) {
             ActionSheet(
                 title: Text(LocalizedString("Are you sure you want to delete this Pump?", comment: "Text to confirm delete this pump")),

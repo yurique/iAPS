@@ -47,7 +47,7 @@ struct PreviewChart: View {
                         NSLocalizedString(
                             "Low",
                             comment: ""
-                        ): .red,
+                        ): .pink,
                         NSLocalizedString("In Range", comment: ""): .darkGreen,
                         NSLocalizedString(
                             "High",

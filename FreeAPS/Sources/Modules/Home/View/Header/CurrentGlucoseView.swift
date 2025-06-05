@@ -147,7 +147,7 @@ struct CurrentGlucoseView: View {
                     (-1 * date.timeIntervalSinceNow)
 
                 Sage(amount: remainingTime, expiration: anubis ? remainingTime : expiration)
-                    .frame(width: 59, height: 26)
+                    .frame(width: 60, height: 27)
                     .overlay {
                         HStack {
                             Text(
@@ -215,9 +215,14 @@ struct CurrentGlucoseView: View {
             let decimal = string.components(separatedBy: decimalString)
             if decimal.count > 1 {
                 HStack(spacing: 0) {
-                    Text(decimal[0]).font(scrolling ? .glucoseSmallFont : .glucoseFont)
-                    Text(decimalString).font(.system(size: !scrolling ? 28 : 14).weight(.semibold)).baselineOffset(-10)
-                    Text(decimal[1]).font(.system(size: !scrolling ? 28 : 18)).baselineOffset(!scrolling ? -10 : -4)
+                    Text(decimal[0])
+                        .font(.system(size: !scrolling ? 45 : 24, weight: .black)) // Aangepast
+                    Text(decimalString)
+                        .font(.system(size: !scrolling ? 28 : 14).weight(.semibold))
+                        .baselineOffset(-5)
+                    Text(decimal[1])
+                        .font(.system(size: !scrolling ? 28 : 18))
+                        .baselineOffset(!scrolling ? -5 : -4)
                 }
                 .tracking(-1)
                 .offset(x: -2, y: 14)

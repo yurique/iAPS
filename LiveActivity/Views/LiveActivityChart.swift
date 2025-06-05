@@ -143,7 +143,7 @@ struct LiveActivityChart: View {
                             y: .value("GlucoseLow", $0.value)
                         )
                         .symbolSize(readingsSymbolSize)
-                        .foregroundStyle(.red)
+                        .foregroundStyle(.pink)
                     } else if $0.value > highThreshold {
                         PointMark(
                             x: .value("Time", $0.date),

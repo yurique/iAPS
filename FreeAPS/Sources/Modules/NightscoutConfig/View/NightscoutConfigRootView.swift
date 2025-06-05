@@ -52,7 +52,7 @@ extension NightscoutConfig {
                 Section {
                     Button("Connect") { state.connect() }
                         .disabled(state.url.isEmpty || state.connecting)
-                    Button("Delete") { state.delete() }.foregroundColor(.red).disabled(state.connecting)
+                    Button("Delete") { state.delete() }.foregroundColor(.pink).disabled(state.connecting)
                 }
 
                 Section {

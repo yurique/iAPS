@@ -127,7 +127,7 @@ struct CarbsView: View {
             Spacer()
             Text(numberFormatter.string(from: proteinAmount as NSNumber)! + " g")
                 .font(selection == .protein ? .title : .title3)
-                .foregroundStyle(.red)
+                .foregroundStyle(.pink)
                 .focusable(selection == .protein)
                 .digitalCrownRotation(
                     $proteinAmount,

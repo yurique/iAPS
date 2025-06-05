@@ -76,8 +76,8 @@ struct ActiveIOBView: View {
                 ),
                 "IOB < 0": LinearGradient(
                     gradient: Gradient(colors: [
-                        Color.red.opacity(1),
-                        Color.red.opacity(1)
+                        Color.pink.opacity(1),
+                        Color.pink.opacity(1)
                     ]),
                     startPoint: .bottom,
                     endPoint: .top
@@ -119,7 +119,7 @@ struct ActiveIOBView: View {
                 variable: NSLocalizedString("Time with negative insulin", comment: ""),
                 formula: NSLocalizedString(" min", comment: ""),
                 insulin: Decimal(neg),
-                color: .red
+                color: .pink
             ),
             BolusSummary(
                 variable: NSLocalizedString("Insulin compared to yesterday", comment: ""),

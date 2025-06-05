@@ -80,7 +80,7 @@ struct PredictionView: View {
         let requiresInsulin = (insulin[1].glucose > insulin[0].glucose) && useEventualBG
 
         let insulinString = requiresInsulin ? "Insulin" : notZeroInsulin ? "-Insulin" : ""
-        let insulinColor: Color = requiresInsulin ? .minus : notZeroInsulin ? .red : .clear
+        let insulinColor: Color = requiresInsulin ? .minus : notZeroInsulin ? .pink : .clear
 
         // Chart
         return Chart(data) {
@@ -132,7 +132,7 @@ struct PredictionView: View {
                             .value("Target", insulin[0].glucose)
                     )
                     .foregroundStyle(
-                        requiresInsulin ? Color(.minus).opacity(colorScheme == .light ? 0.6 : 0.7) : Color(.red)
+                        requiresInsulin ? Color(.minus).opacity(colorScheme == .light ? 0.6 : 0.7) : Color(.pink)
                             .opacity(colorScheme == .dark ? 0.6 : 0.75)
                     )
                 }

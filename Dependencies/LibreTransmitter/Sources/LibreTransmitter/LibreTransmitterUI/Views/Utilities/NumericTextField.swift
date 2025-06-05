@@ -131,7 +131,7 @@ public struct NumericTextField: View  {
             VStack {
                 if hasError {
                     Rectangle()
-                    .stroke(Color.red, lineWidth: 1)
+                    .stroke(Color.pink, lineWidth: 1)
                 } else {
                     EmptyView()
                 }

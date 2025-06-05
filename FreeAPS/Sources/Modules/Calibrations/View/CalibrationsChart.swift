@@ -37,7 +37,7 @@ struct CalibrationsChart: View {
 
                 ForEach(state.calibrations, id: \.self) { value in
                     ZStack {
-                        Circle().fill(.red)
+                        Circle().fill(.pink)
                             .frame(width: 6, height: 6)
                             .position(
                                 x: value.x / maxValue * geo.size.width,

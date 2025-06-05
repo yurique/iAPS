@@ -45,7 +45,7 @@ struct LoopView: View {
                                     if minutesAgo > 999 {
                                         Text("--").font(.caption).padding(.leading, 5).foregroundColor(.secondary)
                                     } else {
-                                        let timeString = NSLocalizedString("m", comment: "Minutes ago since last loop")
+                                        let timeString = NSLocalizedString("min", comment: "Minutes ago since last loop")
                                         HStack(spacing: 0) {
                                             Text("\(minutesAgo) ")
                                             Text(timeString).foregroundColor(.secondary)

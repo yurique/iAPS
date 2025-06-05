@@ -287,7 +287,7 @@ extension AddCarbs {
                 Text("grams").foregroundColor(.secondary)
             }
             HStack {
-                Text("Protein").foregroundColor(.red)
+                Text("Protein").foregroundColor(.pink)
                 Spacer()
                 DecimalTextField(
                     "0",

@@ -70,7 +70,7 @@ struct TagCloudView: View {
                  textTag where textTag.contains("Auto ISF"):
                 return .purple
             case textTag where textTag.contains("Middleware:"):
-                return .red
+                return .pink
             default:
                 return .insulin
             }

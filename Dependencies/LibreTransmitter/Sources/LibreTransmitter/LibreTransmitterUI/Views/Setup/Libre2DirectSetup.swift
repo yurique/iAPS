@@ -87,7 +87,7 @@ struct Libre2DirectSetup: View {
             print("cancel button pressed")
             cancelNotifier.notify()
 
-        }//.accentColor(.red)
+        }//.accentColor(.pink)
     }
 
     var pairButtonSection : some View {

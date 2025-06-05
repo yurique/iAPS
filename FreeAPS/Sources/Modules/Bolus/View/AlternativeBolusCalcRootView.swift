@@ -64,7 +64,7 @@ extension Bolus {
                     } else if state.predictions != nil {
                         predictionChart
                     } else {
-                        Text("No Predictions. Failed loop suggestion.").frame(maxWidth: .infinity, alignment: .center)
+                        Text("Geen voorspellingen. Mislukte loop suggestie.").frame(maxWidth: .infinity, alignment: .center)
                     }
                 }
 
@@ -84,7 +84,7 @@ extension Bolus {
                             }.onChange(of: state.manualGlucose) {
                                 state.insulinCalculated = state.calculateInsulin()
                             }
-                        } header: { Text("Missing Glucose") }
+                        } header: { Text("Ontbrekende glucose") }
                     }
                 }
 

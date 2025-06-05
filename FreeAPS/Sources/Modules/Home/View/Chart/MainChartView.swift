@@ -489,7 +489,7 @@ struct MainChartView: View {
                 path.addEllipse(in: rect)
             }
         }
-        .fill(Color.red)
+        .fill(Color.pink)
 
         .onChange(of: data.isManual) {
             update(fullSize: fullSize)

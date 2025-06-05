@@ -121,7 +121,7 @@ extension Settings {
                                 Button("Delete") { state.deleteOverrides() }
                                     .frame(maxWidth: .infinity, alignment: .trailing)
                                     .buttonStyle(.borderedProminent)
-                                    .tint(.red)
+                                    .tint(.pink)
                             }
 
                             HStack {

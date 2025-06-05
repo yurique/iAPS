@@ -333,11 +333,11 @@ extension Bolus {
                             if state.evBG < state.target {
                                 Text(
                                     "Eventual Glucose is lower than your target glucose. No insulin recommended."
-                                ).foregroundStyle(.red)
+                                ).foregroundStyle(.pink)
                             } else if state.minimumPrediction, state.minPredBG < state.threshold {
                                 Text(
                                     "Minimum Predicted Glucose is lower than your glucose threshold. No insulin recommended."
-                                ).foregroundStyle(.red)
+                                ).foregroundStyle(.pink)
                             } else {
                                 Text(
                                     "Carbs and previous insulin are included in the eventual glucose prediction."

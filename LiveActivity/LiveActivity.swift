@@ -124,7 +124,7 @@ struct LiveActivity: Widget {
                 directionText = String(direction[direction.startIndex ... direction.startIndex])
 
                 if direction.count > 1 {
-                    warnColor = Color.red
+                    warnColor = Color.pink
                 }
             } else {
                 directionText = direction

@@ -94,7 +94,7 @@ struct ChartsView: View {
                     x: .value("Date", item.date ?? Date()),
                     y: .value("Low", Double(item.glucose) * (units == .mmolL ? conversionFactor : 1))
                 )
-                .foregroundStyle(.red)
+                .foregroundStyle(.pink)
                 .symbolSize(sizeOfDataPoints)
             }
         }
@@ -234,7 +234,7 @@ struct ChartsView: View {
                 HStack {
                     let value = Double(mapGlucoseAcuteLow.count * 100 / mapGlucose.count)
                     Text(units == .mmolL ? "<  3.3 " : "<  59  ").foregroundColor(.secondary)
-                    Text(value.formatted()).foregroundColor(.red)
+                    Text(value.formatted()).foregroundColor(.pink)
                     Text("%").foregroundColor(.secondary)
                 }.font(.caption)
             }
@@ -252,7 +252,7 @@ struct ChartsView: View {
                 HStack {
                     let value = Double(mapGlucoseLow.count * 100 / mapGlucose.count)
                     Text(units == .mmolL ? "< 3.3" : "< 59").font(.caption2).foregroundColor(.secondary)
-                    Text(value.formatted()).font(.caption).foregroundColor(value == 0 ? .green : .red)
+                    Text(value.formatted()).font(.caption).foregroundColor(value == 0 ? .green : .pink)
                     Text("%").font(.caption)
                 }
                 Spacer()

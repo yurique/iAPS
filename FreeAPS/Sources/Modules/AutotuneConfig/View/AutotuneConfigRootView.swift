@@ -161,7 +161,7 @@ extension AutotuneConfig {
                     Section {
                         Button { state.delete() }
                         label: { Text("Delete autotune data") }
-                            .foregroundColor(.red)
+                            .foregroundColor(.pink)
                     }
 
                     Section {

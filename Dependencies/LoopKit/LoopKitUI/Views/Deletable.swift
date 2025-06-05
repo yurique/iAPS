@@ -113,7 +113,7 @@ private struct DeletionIndicator: View {
             .bold()
             .foregroundColor(.white)
             .padding(1)
-            .background(Circle().fill(Color.red))
+            .background(Circle().fill(Color.pink))
             .padding(-1) // Prevent circle background from affecting layout
     }
 }

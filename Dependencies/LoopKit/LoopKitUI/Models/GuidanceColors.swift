@@ -23,6 +23,6 @@ public struct GuidanceColors {
     public init() {
         self.acceptable = .primary
         self.warning = .yellow
-        self.critical = .red
+        self.critical = .pink
     }
 }

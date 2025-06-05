@@ -152,7 +152,7 @@ extension DataTable {
                     }
                 } else {
                     HStack {
-                        Text("No data.")
+                        Text("Geen gegevens.")
                     }
                 }
             }
@@ -177,7 +177,7 @@ extension DataTable {
                     }
                 } else {
                     HStack {
-                        Text("No data.")
+                        Text("Geen gegevens.")
                     }
                 }
             }
@@ -336,7 +336,7 @@ extension DataTable {
 
                             isRemoveHistoryItemAlertPresented = true
                         }
-                    ).tint(.red)
+                    ).tint(.pink)
                 }.disabled(item.type == .tempBasal || item.type == .tempTarget || item.type == .resume || item.type == .suspend)
                 .alert(
                     Text(NSLocalizedString(alertTitle, comment: "")),
@@ -410,7 +410,7 @@ extension DataTable {
                         }
                         .listRowBackground(
                             amountWarningCondition ? Color
-                                .red : colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white
+                                .pink : colorScheme == .dark ? Color(UIColor.secondarySystemBackground) : Color.white
                         )
                     }
                 }
@@ -435,7 +435,7 @@ extension DataTable {
                     ) as NSNumber)!
                 } ?? "--")
                 if isManual.type == GlucoseType.manual.rawValue {
-                    Image(systemName: "drop.fill").symbolRenderingMode(.monochrome).foregroundStyle(.red)
+                    Image(systemName: "drop.fill").symbolRenderingMode(.monochrome).foregroundStyle(.pink)
                 } else {
                     Text(item.glucose.direction?.symbol ?? "--")
                 }
@@ -461,7 +461,7 @@ extension DataTable {
                         alertMessage = dateFormatter.string(from: item.glucose.dateString) + ", " + valueText
                         isRemoveHistoryItemAlertPresented = true
                     }
-                ).tint(.red)
+                ).tint(.pink)
             }
             .alert(
                 Text(NSLocalizedString(alertTitle, comment: "")),
@@ -515,7 +515,7 @@ extension DataTable {
                                 Text("grams").foregroundColor(.secondary)
                             }
                             HStack {
-                                Text("Protein").foregroundColor(.red)
+                                Text("Protein").foregroundColor(.pink)
                                 Spacer()
                                 DecimalTextField(
                                     "0",

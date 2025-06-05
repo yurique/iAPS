@@ -822,7 +822,7 @@ extension Home {
                         if let progress = state.bolusProgress, let amount = state.bolusAmount {
                             ZStack {
                                 RoundedRectangle(cornerRadius: 15)
-                                    .fill(.teal.opacity(0.3))
+                                    .fill(.teal.opacity(0.2))
                                     .frame(width: 320, height: 60)
                                 bolusProgressView(progress: progress, amount: amount)
                             }

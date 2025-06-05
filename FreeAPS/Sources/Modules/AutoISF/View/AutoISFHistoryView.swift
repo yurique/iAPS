@@ -71,7 +71,7 @@ struct AutoISFHistoryView: View {
                 .font(.system(size: 26))
             // SubTitle
             HStack {
-                Text("Final Ratio").foregroundStyle(.red)
+                Text("Final Ratio").foregroundStyle(.pink)
                 Spacer()
                 Text("Adjustments").foregroundStyle(.orange).offset(x: -20)
                 Spacer()
@@ -91,7 +91,7 @@ struct AutoISFHistoryView: View {
                 Text(verbatim: "Time").foregroundStyle(.primary)
                 Spacer(minLength: 1)
                 Text(verbatim: "BG  ").foregroundStyle(Color(.loopGreen)).offset(x: proMaxOffset_1)
-                Text(verbatim: "Final").foregroundStyle(.red).offset(x: proMaxOffset_1)
+                Text(verbatim: "Final").foregroundStyle(.pink).offset(x: proMaxOffset_1)
                 Text(verbatim: "acce").foregroundStyle(.orange).offset(x: 2 + proMaxOffset_2)
                 Text(verbatim: "bg  ").foregroundStyle(.orange).offset(x: 6 + proMaxOffset_2)
                 Text(verbatim: "dura  ").foregroundStyle(.orange).offset(x: 6)
@@ -137,7 +137,7 @@ struct AutoISFHistoryView: View {
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                         .offset(x: 4)
                                     // Ratio
-                                    Text((formatter.string(from: item.ratio ?? 1) ?? "") + "  ").foregroundStyle(.red)
+                                    Text((formatter.string(from: item.ratio ?? 1) ?? "") + "  ").foregroundStyle(.pink)
                                         .frame(maxWidth: .infinity, alignment: .leading)
                                     // acce.
                                     Text((reasonParsed.first ?? "") + "  ")

@@ -65,7 +65,7 @@ extension AutoISF {
                                 }
                         }.disabled(isPresented)
                     }
-                } header: { Text("Experimental").foregroundStyle(.red) }
+                } header: { Text("Experimental").foregroundStyle(.pink) }
 
                 if state.autoisf {
                     Section {

@@ -51,7 +51,7 @@ struct DanaKitRefillReservoirAndCannulaView: View {
                     
                     if viewModel.failedReservoirAmount {
                         Label(LocalizedString("Failed to set reservoir amount. Re-sync pump data and try again please", comment: "Label for error first step refill"), systemImage: "exclamationmark.circle.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(.pink)
                             .transition(.move(edge: .top))
                     }
                     
@@ -88,7 +88,7 @@ struct DanaKitRefillReservoirAndCannulaView: View {
                     
                     if viewModel.failedTubeAmount {
                         Label(LocalizedString("Failed to prime the tube. Please try again later", comment: "Label for error second step refill"), systemImage: "exclamationmark.circle.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(.pink)
                             .transition(.move(edge: .top))
                     }
                     
@@ -131,7 +131,7 @@ struct DanaKitRefillReservoirAndCannulaView: View {
                     
                     if viewModel.failedPrimeAmount {
                         Label(LocalizedString("Failed to prime the cannula. Please try again later", comment: "Label for error third step refill"), systemImage: "exclamationmark.circle.fill")
-                            .foregroundStyle(.red)
+                            .foregroundStyle(.pink)
                             .transition(.move(edge: .top))
                     }
                     

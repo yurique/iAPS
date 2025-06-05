@@ -172,17 +172,17 @@ struct PumpView: View {
                     HStack(spacing: 0) {
                         Text(" \(hours)")
                         Text(NSLocalizedString("h", comment: "abbreviation for hours"))
-                            .foregroundStyle(time < 4 * 60 * 60 ? .red : .secondary)
+                            .foregroundStyle(time < 4 * 60 * 60 ? .pink : .secondary)
                     }
                 } else {
                     HStack(spacing: 0) {
                         Text(" \(minutes)")
                         Text(NSLocalizedString("m", comment: "abbreviation for minutes"))
-                            .foregroundStyle(time < 4 * 60 * 60 ? .red : .secondary)
+                            .foregroundStyle(time < 4 * 60 * 60 ? .pink : .secondary)
                     }
                 }
             } else {
-                Text(NSLocalizedString("Replace", comment: "View/Header when pod expired")).foregroundStyle(.red)
+                Text(NSLocalizedString("Replace", comment: "View/Header when pod expired")).foregroundStyle(.pink)
             }
         }
     }
@@ -193,7 +193,7 @@ struct PumpView: View {
         }
         switch percent {
         case ...10:
-            return .red
+            return .pink
         case ...20:
             return .yellow
         default:
@@ -208,7 +208,7 @@ struct PumpView: View {
 
         switch reservoir {
         case ...10:
-            return .red
+            return .pink
         case ...30:
             return .yellow
         default:
@@ -225,7 +225,7 @@ struct PumpView: View {
 
         switch time {
         case ...8.hours.timeInterval:
-            return .red
+            return .pink
         case ...1.days.timeInterval:
             return .yellow
         default:
@@ -248,7 +248,7 @@ struct PumpView: View {
                     let units = 50 * (concentration.last?.concentration ?? 1)
                     portion <= 0.3 ?
                         Text((reservoirFormatter.string(from: units as NSNumber) ?? "") + "+").foregroundStyle(.white)
-                        .font(.system(size: 6))
+                        .font(.system(size: 10))
                         .offset(y: -4)
                         : nil
                 }

@@ -8,7 +8,7 @@ struct ProgressBar: View {
             ZStack(alignment: .leading) {
                 Capsule(style: .circular)
                     .frame(width: geometry.size.width, height: geometry.size.height)
-                    .opacity(0.3)
+                    .opacity(0.2)
                     .foregroundColor(.secondary)
 
                 Capsule(style: .circular)
