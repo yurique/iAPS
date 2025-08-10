@@ -3107,6 +3107,9 @@ Eenvoudig gezegd, de Dynamische Carb Ratio past de koolhydraatverhouding aan op 
 "Use insulin bars" = "Gebruik insulinebalken";
 
 /* UI/UX option */
+"Use carb bars" = "Use carb bars";
+
+/* UI/UX option */
 "Hide the bolus amount strings when amount is under" = "Verberg de bolus hoeveelheid als de hoeveelheid lager is dan";
 
 /* UI/UX option */
@@ -3138,6 +3141,9 @@ Eenvoudig gezegd, de Dynamische Carb Ratio past de koolhydraatverhouding aan op 
 
 /* Debug option */
 "Neglect Carbohydrates in oref0" = "Negeer koolhydraten in oref0";
+
+/* Debug option */
+"Hide oref0 Predictions" = "Verberg oref0 voorspellingen";
 
 /* Setting title */
 "Bolus Calculator" = "Bolus calculator";

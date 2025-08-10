@@ -3106,6 +3106,9 @@ Pri cieľovej_glykémii je pomer SMB rovný smb_delivery_ratio_min, pri cieľove
 "Use insulin bars" = "Použiť inzulínové čiary";
 
 /* UI/UX option */
+"Use carb bars" = "Použiť sacharidové čiary";
+
+/* UI/UX option */
 "Hide the bolus amount strings when amount is under" = "Skryť veľkosť bolusu, ak je množstvo nižšie";
 
 /* UI/UX option */
@@ -3137,6 +3140,9 @@ Pri cieľovej_glykémii je pomer SMB rovný smb_delivery_ratio_min, pri cieľove
 
 /* Debug option */
 "Neglect Carbohydrates in oref0" = "Ignorovať sacharidy v oref0";
+
+/* Debug option */
+"Hide oref0 Predictions" = "Skryť predpovede oref0";
 
 /* Setting title */
 "Bolus Calculator" = "Kalkulačka bolusu";

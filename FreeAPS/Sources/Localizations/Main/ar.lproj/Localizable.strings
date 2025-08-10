@@ -3107,6 +3107,9 @@ Enact a temp Basal or a temp target */
 "Use insulin bars" = "Use insulin bars";
 
 /* UI/UX option */
+"Use carb bars" = "Use carb bars";
+
+/* UI/UX option */
 "Hide the bolus amount strings when amount is under" = "Hide the bolus amount strings when amount is under";
 
 /* UI/UX option */
@@ -3138,6 +3141,9 @@ Enact a temp Basal or a temp target */
 
 /* Debug option */
 "Neglect Carbohydrates in oref0" = "Neglect Carbohydrates in oref0";
+
+/* Debug option */
+"Hide oref0 Predictions" = "Hide oref0 Predictions";
 
 /* Setting title */
 "Bolus Calculator" = "Bolus Calculator";

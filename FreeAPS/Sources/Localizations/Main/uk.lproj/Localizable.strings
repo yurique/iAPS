@@ -3103,6 +3103,9 @@ Enact a temp Basal or a temp target */
 "Use insulin bars" = "Відображати інсулін вертикально";
 
 /* UI/UX option */
+"Use carb bars" = "Use carb bars";
+
+/* UI/UX option */
 "Hide the bolus amount strings when amount is under" = "Приховати рядки об'єм болюса, коли об'єм менший";
 
 /* UI/UX option */
@@ -3134,6 +3137,9 @@ Enact a temp Basal or a temp target */
 
 /* Debug option */
 "Neglect Carbohydrates in oref0" = "Не враховуйте вуглеводи в oref0";
+
+/* Debug option */
+"Hide oref0 Predictions" = "Приховати прогнози oref0";
 
 /* Setting title */
 "Bolus Calculator" = "Калькулятор Болюса";
