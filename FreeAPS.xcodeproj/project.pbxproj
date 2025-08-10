@@ -464,6 +464,7 @@
 		E4984C5262A90469788754BB /* PreferencesEditorProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6F8BA8533F56BC55748CA877 /* PreferencesEditorProvider.swift */; };
 		E97285ED9B814CD5253C6658 /* AddCarbsDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F48C3AC770D4CCD0EA2B0C2 /* AddCarbsDataFlow.swift */; };
 		E974172296125A5AE99E634C /* PumpConfigRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2AD22C985B79A2F0D2EA3D9D /* PumpConfigRootView.swift */; };
+		F21580A52E47B4FF003BC827 /* PeakPicker.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21580A42E47B4FE003BC827 /* PeakPicker.swift */; };
 		F2159A4A2BA60A6000A0B716 /* ContactTrickDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2159A492BA60A6000A0B716 /* ContactTrickDataFlow.swift */; };
 		F2159A4C2BA60A8E00A0B716 /* ContactTrickRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2159A4B2BA60A8E00A0B716 /* ContactTrickRootView.swift */; };
 		F2159A4E2BA60AC000A0B716 /* ContactTrickProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2159A4D2BA60AC000A0B716 /* ContactTrickProvider.swift */; };
@@ -1117,6 +1118,7 @@
 		E625985B47742D498CB1681A /* NotificationsConfigProvider.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = NotificationsConfigProvider.swift; sourceTree = "<group>"; };
 		E68CDC1E5C438D1BEAD4CF24 /* LibreConfigStateModel.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = LibreConfigStateModel.swift; sourceTree = "<group>"; };
 		E9AAB83FB6C3B41EFD1846A0 /* AddTempTargetRootView.swift */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = sourcecode.swift; path = AddTempTargetRootView.swift; sourceTree = "<group>"; };
+		F21580A42E47B4FE003BC827 /* PeakPicker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeakPicker.swift; sourceTree = "<group>"; };
 		F2159A492BA60A6000A0B716 /* ContactTrickDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTrickDataFlow.swift; sourceTree = "<group>"; };
 		F2159A4B2BA60A8E00A0B716 /* ContactTrickRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTrickRootView.swift; sourceTree = "<group>"; };
 		F2159A4D2BA60AC000A0B716 /* ContactTrickProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTrickProvider.swift; sourceTree = "<group>"; };
@@ -1901,6 +1903,7 @@
 			isa = PBXGroup;
 			children = (
 				38AAF8702600C1B0004AF583 /* MainChartView.swift */,
+				F21580A42E47B4FE003BC827 /* PeakPicker.swift */,
 			);
 			path = Chart;
 			sourceTree = "<group>";
@@ -3104,6 +3107,7 @@
 			files = (
 				3811DE2325C9D48300A708ED /* MainDataFlow.swift in Sources */,
 				3811DEEB25CA063400A708ED /* PersistedProperty.swift in Sources */,
+				F21580A52E47B4FF003BC827 /* PeakPicker.swift in Sources */,
 				38E44537274E411700EC9A94 /* Disk+Helpers.swift in Sources */,
 				196809E22D46E7B300BA566F /* OpenClosedShortcuts.swift in Sources */,
 				388E5A6025B6F2310019842D /* Autosens.swift in Sources */,

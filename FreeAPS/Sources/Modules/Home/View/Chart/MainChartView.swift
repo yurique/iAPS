@@ -115,6 +115,7 @@ struct MainChartView: View {
     @State private var horizontalGrid: [(CGFloat, Int)] = []
     @State private var lowThresholdLine: (CGFloat, Int)? = nil
     @State private var highThresholdLine: (CGFloat, Int)? = nil
+    @State private var glucoseLines: [(CGFloat, CGFloat, CGFloat, Int, ExtremumType)] = [] // y, x-start, x-end, glucose value
 
     private let calculationQueue = DispatchQueue(label: "MainChartView.calculationQueue")
 
@@ -276,12 +277,12 @@ struct MainChartView: View {
     private func yGridView(fullSize: CGSize) -> some View {
         let useColour = data.displayYgridLines ? Color.secondary : Color.clear
         return ZStack {
-            Path { path in
-                for (line, _) in horizontalGrid {
-                    path.move(to: CGPoint(x: 0, y: line))
-                    path.addLine(to: CGPoint(x: fullSize.width, y: line))
-                }
-            }.stroke(useColour, lineWidth: 0.15)
+//            Path { path in
+//                for (line, _) in horizontalGrid {
+//                    path.move(to: CGPoint(x: 0, y: line))
+//                    path.addLine(to: CGPoint(x: fullSize.width, y: line))
+//                }
+//            }.stroke(useColour, lineWidth: 0.15)
 
             // horizontal limits
             if data.thresholdLines {
@@ -404,6 +405,7 @@ struct MainChartView: View {
                     glucoseView(fullSize: fullSize)
                     lowGlucoseView(fullSize: fullSize)
                     highGlucoseView(fullSize: fullSize)
+                    glucoseGridLinesView(fullSize: fullSize)
                     if data.showInsulinActivity {
                         activityView(fullSize: fullSize)
                     }
@@ -534,6 +536,28 @@ struct MainChartView: View {
             .onReceive(Foundation.NotificationCenter.default.publisher(for: UIApplication.willEnterForegroundNotification)) { _ in
                 update(fullSize: fullSize)
             }
+    }
+
+    private func glucoseGridLinesView(fullSize _: CGSize) -> some View {
+        ForEach(glucoseLines, id: \.1) { y, xStart, xEnd, glucose, tpe in
+            let useColour = data.displayYgridLines ? Color.secondary : Color.clear
+            let value = Double(glucose) *
+                (data.units == .mmolL ? Double(GlucoseUnits.exchangeRate) : 1)
+
+            Group {
+                Path { path in
+                    path.move(to: CGPoint(x: xStart, y: y))
+                    path.addLine(to: CGPoint(x: xEnd, y: y))
+                }
+                .stroke(useColour, lineWidth: 0.5)
+
+                Text(value == 0 ? "" : glucoseFormatter.string(from: value as NSNumber) ?? "")
+                    .position(CGPoint(x: xEnd - 6, y: tpe == .max ? y - 6 : y + 6))
+                    .font(.glucoseDotFont)
+                    .opacity(0.8)
+            }
+            .asAny()
+        }
     }
 
     private func activityView(fullSize: CGSize) -> some View {
@@ -1038,36 +1062,65 @@ extension MainChartView {
             let lowLine = (glucoseToYCoordinate(lowGlucoseInt, fullSize: fullSize), lowGlucoseInt)
             let highLine = (glucoseToYCoordinate(highGlucoseInt, fullSize: fullSize), highGlucoseInt)
 
-            if let glucoseMin = data.glucose.compactMap(\.glucose).min(),
-               let glucoseMax = data.glucose.compactMap(\.glucose).max()
-            {
-                if glucoseMin < lowGlucoseInt {
-                    lines.append(lowLine)
-                    if glucoseMin < lowGlucoseInt - 18 {
-                        lines.append((glucoseToYCoordinate(glucoseMin, fullSize: fullSize), glucoseMin))
-                    }
-                } else {
-                    lines.append((glucoseToYCoordinate(glucoseMin, fullSize: fullSize), glucoseMin))
-                }
+            lines.append(lowLine)
+            lines.append(highLine)
 
-                if glucoseMax > highGlucoseInt {
-                    lines.append(highLine)
-                    if glucoseMax > highGlucoseInt + 18 {
-                        lines.append((glucoseToYCoordinate(glucoseMax, fullSize: fullSize), glucoseMax))
-                        for g in glucoseLines(from: highGlucoseInt, through: glucoseMax) {
-                            let nice = roundGlucoseToNearestNiceValue(g)
-                            lines.append((glucoseToYCoordinate(nice, fullSize: fullSize), nice))
-                        }
-                    }
-                } else {
-                    lines.append((glucoseToYCoordinate(glucoseMax, fullSize: fullSize), glucoseMax))
+//            if let glucoseMin = data.glucose.compactMap(\.glucose).min(),
+//               let glucoseMax = data.glucose.compactMap(\.glucose).max()
+//            {
+//                if glucoseMin < lowGlucoseInt {
+//                    lines.append(lowLine)
+//                    if glucoseMin < lowGlucoseInt - 18 {
+//                        lines.append((glucoseToYCoordinate(glucoseMin, fullSize: fullSize), glucoseMin))
+//                    }
+//                } else {
+//                    lines.append((glucoseToYCoordinate(glucoseMin, fullSize: fullSize), glucoseMin))
+//                }
+//
+//                if glucoseMax > highGlucoseInt {
+//                    lines.append(highLine)
+//                    if glucoseMax > highGlucoseInt + 18 {
+//                        lines.append((glucoseToYCoordinate(glucoseMax, fullSize: fullSize), glucoseMax))
+            ////                        for g in glucoseLines(from: highGlucoseInt, through: glucoseMax) {
+            ////                            let nice = roundGlucoseToNearestNiceValue(g)
+            ////                            lines.append((glucoseToYCoordinate(nice, fullSize: fullSize), nice))
+            ////                        }
+//                    }
+//                } else {
+//                    lines.append((glucoseToYCoordinate(glucoseMax, fullSize: fullSize), glucoseMax))
+//                }
+//            }
+
+            let (maxima, minima) = PeakPicker.pick(data: data.glucose)
+
+            // y, x-start, x-end, glucose value
+            var glucoseLines: [(CGFloat, CGFloat, CGFloat, Int, ExtremumType)] = []
+            for peak in maxima {
+                if let glucose = peak.glucose {
+                    let point = glucoseToCoordinate(peak, fullSize: fullSize)
+                    glucoseLines.append(
+                        (point.y - 4, point.x - 6, point.x + 20, glucose, .max)
+                    )
                 }
             }
+            for peak in minima {
+                if let glucose = peak.glucose {
+                    let point = glucoseToCoordinate(peak, fullSize: fullSize)
+                    glucoseLines.append(
+                        (point.y + 4, point.x - 6, point.x + 20, glucose, .min)
+                    )
+                }
+            }
+            // dateString: Date
+            // glucose: Int?
+
+//            glucoseLines: (CGFloat, CGFloat, CGFloat, Int)? = nil // y, x-start, x-end, glucose value
 
             DispatchQueue.main.async {
                 horizontalGrid = lines
                 lowThresholdLine = lowLine
                 highThresholdLine = highLine
+                self.glucoseLines = glucoseLines
             }
         }
     }
