@@ -565,7 +565,7 @@ struct MainChartView: View {
                     .position(CGPoint(x: xEnd, y: tpe == .max ? lineY - 6 : lineY + 6))
                     .font(.glucoseDotFont)
 //                    .foregroundStyle(textColour)
-                    .opacity(0.7)
+                    .opacity(0.9)
             }
             .asAny()
         }

@@ -5,7 +5,7 @@ enum ExtremumType { case max, min }
 enum PeakPicker {
     static func pick(
         data: [BloodGlucose],
-        windowHours: Double = 1.5
+        windowHours: Double = 1
     ) -> (maxima: [BloodGlucose], minima: [BloodGlucose]) {
         let W: TimeInterval = windowHours * 3600
 
