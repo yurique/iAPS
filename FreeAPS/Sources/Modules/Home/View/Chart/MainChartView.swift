@@ -174,7 +174,9 @@ struct MainChartView: View {
             ZStack {
                 yGridView(fullSize: geo.size)
                 mainScrollView(fullSize: geo.size)
-                glucoseLabelsView(fullSize: geo.size)
+                if data.thresholdLines {
+                    glucoseLabelsView(fullSize: geo.size)
+                }
                 if data.showInsulinActivity {
                     activityLabelsView(fullSize: geo.size)
                 }
@@ -552,16 +554,18 @@ struct MainChartView: View {
                 (data.units == .mmolL ? Double(GlucoseUnits.exchangeRate) : 1)
 
             Group {
+                let lineY = tpe == .max ? y - 3 : y + 3
                 Path { path in
-                    path.move(to: CGPoint(x: xStart, y: y))
-                    path.addLine(to: CGPoint(x: xEnd, y: y))
+                    path.move(to: CGPoint(x: xStart - 10, y: lineY))
+                    path.addLine(to: CGPoint(x: xEnd + 10, y: lineY))
                 }
-                .stroke(useColour, lineWidth: 0.5)
+                .stroke(useColour, lineWidth: 0.75)
 
                 Text(value == 0 ? "" : glucoseFormatter.string(from: value as NSNumber) ?? "")
-                    .position(CGPoint(x: xEnd - 6, y: tpe == .max ? y - 6 : y + 6))
+                    .position(CGPoint(x: xEnd, y: tpe == .max ? lineY - 6 : lineY + 6))
                     .font(.glucoseDotFont)
-                    .opacity(0.8)
+//                    .foregroundStyle(textColour)
+                    .opacity(0.7)
             }
             .asAny()
         }
@@ -1124,26 +1128,58 @@ extension MainChartView {
 
             // y, x-start, x-end, glucose value
             var glucoseLines: [(CGFloat, CGFloat, CGFloat, Int, ExtremumType)] = []
+            var bolusIndex = 0
             for peak in maxima {
                 if let glucose = peak.glucose {
                     let point = glucoseToCoordinate(peak, fullSize: fullSize)
+                    var endX = point.x
+
+                    while bolusIndex < data.boluses.count,
+                          data.boluses[bolusIndex].timestamp < peak.dateString.addingTimeInterval(-5 * 60)
+                    {
+                        bolusIndex += 1
+                    }
+                    if bolusIndex < data.boluses.count,
+                       data.boluses[bolusIndex].timestamp < peak.dateString.addingTimeInterval(5 * 60)
+                    {
+                        endX = endX + 18
+//                        timeToXCoordinate(
+//                            peak.dateString.addingTimeInterval(15 * 60).timeIntervalSince1970,
+//                            fullSize: fullSize
+//                        )
+                    }
+
                     glucoseLines.append(
-                        (point.y - 4, point.x - 6, point.x + 20, glucose, .max)
+                        (point.y, point.x, endX, glucose, .max)
                     )
                 }
             }
+
+            var carbIndex = 0
             for peak in minima {
                 if let glucose = peak.glucose {
                     let point = glucoseToCoordinate(peak, fullSize: fullSize)
+                    var endX = point.x
+                    while carbIndex < data.carbs.count,
+                          data.carbs[carbIndex].createdAt < peak.dateString.addingTimeInterval(-5 * 60)
+                    {
+                        carbIndex += 1
+                    }
+                    if carbIndex < data.carbs.count,
+                       data.carbs[carbIndex].createdAt < peak.dateString.addingTimeInterval(5 * 60)
+                    {
+                        endX = endX + 18
+//                        endX = timeToXCoordinate(
+//                            peak.dateString.addingTimeInterval(15 * 60).timeIntervalSince1970,
+//                            fullSize: fullSize
+//                        )
+                    }
+
                     glucoseLines.append(
-                        (point.y + 4, point.x - 6, point.x + 20, glucose, .min)
+                        (point.y, point.x, endX, glucose, .min)
                     )
                 }
             }
-            // dateString: Date
-            // glucose: Int?
-
-//            glucoseLines: (CGFloat, CGFloat, CGFloat, Int)? = nil // y, x-start, x-end, glucose value
 
             DispatchQueue.main.async {
                 horizontalGrid = lines
