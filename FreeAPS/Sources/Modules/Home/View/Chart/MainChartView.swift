@@ -117,7 +117,16 @@ struct MainChartView: View {
     @State private var horizontalGrid: [(CGFloat, Int)] = []
     @State private var lowThresholdLine: (CGFloat, Int)? = nil
     @State private var highThresholdLine: (CGFloat, Int)? = nil
-    @State private var glucoseLines: [(CGFloat, CGFloat, CGFloat, Int, ExtremumType)] = [] // y, x-start, x-end, glucose value
+    @State private var glucoseLines: [(
+        yStart: CGFloat,
+        yEnd: CGFloat,
+        xStart: CGFloat,
+        xEnd: CGFloat,
+        textX: CGFloat,
+        textY: CGFloat,
+        glucose: Int,
+        type: ExtremumType
+    )] = []
 
     private let calculationQueue = DispatchQueue(label: "MainChartView.calculationQueue")
 
@@ -138,6 +147,23 @@ struct MainChartView: View {
         let formatter = NumberFormatter()
         formatter.numberStyle = .decimal
         formatter.maximumFractionDigits = 1
+        return formatter
+    }
+
+    private var dotGlucoseFormatter: NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 1
+        formatter.decimalSeparator = "."
+        return formatter
+    }
+
+    private var mmolDotGlucoseFormatter: NumberFormatter {
+        let formatter = NumberFormatter()
+        formatter.numberStyle = .decimal
+        formatter.maximumFractionDigits = 1
+        formatter.minimumFractionDigits = 1
+        formatter.decimalSeparator = "."
         return formatter
     }
 
@@ -548,24 +574,54 @@ struct MainChartView: View {
     }
 
     private func glucoseGridLinesView(fullSize _: CGSize) -> some View {
-        ForEach(glucoseLines, id: \.1) { y, xStart, xEnd, glucose, tpe in
-            let useColour = data.displayYgridLines ? Color.secondary : Color.clear
+        ForEach(glucoseLines, id: \.1) { yStart, yEnd, xStart, xEnd, textX, textY, glucose, _ in
             let value = Double(glucose) *
                 (data.units == .mmolL ? Double(GlucoseUnits.exchangeRate) : 1)
 
-            Group {
-                let lineY = tpe == .max ? y - 3 : y + 3
-                Path { path in
-                    path.move(to: CGPoint(x: xStart - 10, y: lineY))
-                    path.addLine(to: CGPoint(x: xEnd + 10, y: lineY))
-                }
-                .stroke(useColour, lineWidth: 0.75)
+            let formatter = data.units == .mmolL ? mmolDotGlucoseFormatter : dotGlucoseFormatter
 
-                Text(value == 0 ? "" : glucoseFormatter.string(from: value as NSNumber) ?? "")
-                    .position(CGPoint(x: xEnd, y: tpe == .max ? lineY - 6 : lineY + 6))
-                    .font(.glucoseDotFont)
-//                    .foregroundStyle(textColour)
-                    .opacity(0.9)
+            Group {
+                Path { path in
+                    path.move(to: CGPoint(x: xStart, y: yStart))
+                    path.addLine(to: CGPoint(x: xEnd, y: yEnd))
+                }
+                .stroke(Color.secondary, lineWidth: 0.75)
+                .opacity(0.5)
+                .mask(
+                    // the line goes from the center of the bg dot to the center of the text label
+                    // because of this mask (which is a "copy" of the actual label below) - the line doesn't go under the label, even though it's semi-transparent
+                    // a simpler solution is to fill the rectangle below with 1.0 opacity - but needs a better colour
+                    ZStack {
+                        Color.white // allow everywhere by default
+                        Text(value == 0 ? "" : formatter.string(from: value as NSNumber) ?? "")
+                            .font(.glucoseDotFont)
+                            .padding(.horizontal, 3)
+                            .padding(.vertical, 1)
+                            .background(
+                                RoundedRectangle(cornerRadius: 2)
+                                    .fill(Color.black) // cut out this area
+                            )
+                            .position(CGPoint(x: textX, y: textY))
+                            .blendMode(.destinationOut)
+                    }
+                    .compositingGroup()
+                )
+
+                ZStack {
+                    Text(value == 0 ? "" : formatter.string(from: value as NSNumber) ?? "")
+                        .font(.glucoseDotFont)
+                        .padding(.horizontal, 3)
+                        .padding(.vertical, 1)
+                        .background(
+                            RoundedRectangle(cornerRadius: 2)
+                                .fill(Color.blue.opacity(0.5)) // fill color
+                        )
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 2)
+                                .stroke(Color.blue, lineWidth: 1) // border
+                        )
+                }
+                .position(CGPoint(x: textX, y: textY))
             }
             .asAny()
         }
@@ -1124,10 +1180,19 @@ extension MainChartView {
 //                }
 //            }
 
-            let (maxima, minima) = PeakPicker.pick(data: data.glucose)
+            let (maxima, minima) = PeakPicker.pick(data: data.glucose, windowHours: Double(data.screenHours) / 2.5)
 
             // y, x-start, x-end, glucose value
-            var glucoseLines: [(CGFloat, CGFloat, CGFloat, Int, ExtremumType)] = []
+            var glucoseLines: [(
+                yStart: CGFloat,
+                yEnd: CGFloat,
+                xStart: CGFloat,
+                xEnd: CGFloat,
+                textX: CGFloat,
+                textY: CGFloat,
+                glucose: Int,
+                type: ExtremumType
+            )] = []
             var bolusIndex = 0
             for peak in maxima {
                 if let glucose = peak.glucose {
@@ -1148,9 +1213,19 @@ extension MainChartView {
 //                            fullSize: fullSize
 //                        )
                     }
-
                     glucoseLines.append(
-                        (point.y, point.x, endX, glucose, .max)
+                        (
+                            //                            yStart: point.y - 3,
+                            yStart: point.y,
+//                            yEnd: point.y - 3,
+                            yEnd: point.y - 15,
+                            xStart: point.x,
+                            xEnd: endX,
+                            textX: endX,
+                            textY: point.y - 15,
+                            glucose: glucose,
+                            .max
+                        )
                     )
                 }
             }
@@ -1176,7 +1251,18 @@ extension MainChartView {
                     }
 
                     glucoseLines.append(
-                        (point.y, point.x, endX, glucose, .min)
+                        (
+                            //                            yStart: point.y + 3,
+                            yStart: point.y,
+//                            yEnd: point.y + 3,
+                            yEnd: point.y + 15,
+                            xStart: point.x,
+                            xEnd: endX,
+                            textX: endX,
+                            textY: point.y + 15,
+                            glucose: glucose,
+                            .min
+                        )
                     )
                 }
             }
