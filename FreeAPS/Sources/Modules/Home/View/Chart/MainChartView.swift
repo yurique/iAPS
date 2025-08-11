@@ -607,6 +607,12 @@ struct MainChartView: View {
                     .compositingGroup()
                 )
 
+                let glucoseDecimal = Decimal(glucose)
+                let fillColour =
+                    glucoseDecimal < data.lowGlucose ? Color.loopRed.opacity(0.4)
+                        : glucoseDecimal > data.highGlucose ? Color.loopYellow.opacity(0.4)
+                        : colorScheme == .dark ? Color.darkGreen.opacity(0.6) : Color.darkGreen.opacity(0.4)
+
                 ZStack {
                     Text(value == 0 ? "" : formatter.string(from: value as NSNumber) ?? "")
                         .font(.glucoseDotFont)
@@ -614,11 +620,12 @@ struct MainChartView: View {
                         .padding(.vertical, 1)
                         .background(
                             RoundedRectangle(cornerRadius: 2)
-                                .fill(Color.blue.opacity(0.5)) // fill color
+                                .fill(fillColour)
                         )
                         .overlay(
                             RoundedRectangle(cornerRadius: 2)
-                                .stroke(Color.blue, lineWidth: 1) // border
+                                .stroke(Color.primary, lineWidth: 0.5)
+                                .opacity(0.9)
                         )
                 }
                 .position(CGPoint(x: textX, y: textY))
