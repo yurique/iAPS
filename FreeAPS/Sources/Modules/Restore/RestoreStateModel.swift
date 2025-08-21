@@ -6,9 +6,9 @@ extension Restore {
     final class StateModel: BaseStateModel<Provider> {
         let coreData = CoreDataStorage()
 
-        func saveFile(_ file: JSON, filename: String) {
+        func saveFile<T>(_ file: T, _ storage: (FileStorage) -> EntityStorage<T>) {
             let s = BaseFileStorage()
-            s.save(file, as: filename)
+            storage(s).save(file)
             coreData.saveOnbarding()
         }
     }

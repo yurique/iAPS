@@ -48,15 +48,12 @@ final class BaseGlucoseStorage: GlucoseStorage, Injectable {
     func storeGlucose(_ glucose: [BloodGlucose]) {
         processQueue.sync {
             debug(.deviceManager, "start storage glucose")
-            let file = OpenAPS.Monitor.glucose
             self.storage.transaction { storage in
-                storage.append(glucose, to: file, uniqBy: \.dateString)
-
-                let uniqEvents = storage.retrieve(file, as: [BloodGlucose].self)?
+                let uniqEvents = storage.glucose.append(glucose, uniqBy: \.dateString)
                     .filter { $0.dateString.addingTimeInterval(24.hours.timeInterval) > Date() }
-                    .sorted { $0.dateString > $1.dateString } ?? []
+                    .sorted { $0.dateString > $1.dateString }
                 let glucose = Array(uniqEvents)
-                storage.save(glucose, as: file)
+                storage.glucose.save(glucose)
 
                 DispatchQueue.main.async {
                     self.broadcaster.notify(GlucoseObserver.self, on: .main) {
@@ -67,8 +64,8 @@ final class BaseGlucoseStorage: GlucoseStorage, Injectable {
 
             debug(.deviceManager, "start storage cgmState")
             self.storage.transaction { storage in
-                let file = OpenAPS.Monitor.cgmState
-                var treatments = storage.retrieve(file, as: [NigtscoutTreatment].self) ?? []
+//                let file = OpenAPS.Monitor.cgmState
+                var treatments = storage.cgmState.retrieve()
                 var updated = false
                 for x in glucose {
                     debug(.deviceManager, "storeGlucose \(x)")
@@ -114,10 +111,9 @@ final class BaseGlucoseStorage: GlucoseStorage, Injectable {
                 }
                 if updated {
                     // We have to keep quite a bit of history as sensors start only every 10 days.
-                    storage.save(
+                    storage.cgmState.save(
                         treatments.filter
                             { $0.createdAt != nil && $0.createdAt!.addingTimeInterval(30.days.timeInterval) > Date() },
-                        as: file
                     )
                 }
             }
@@ -126,12 +122,11 @@ final class BaseGlucoseStorage: GlucoseStorage, Injectable {
 
     func removeGlucose(ids: [String]) {
         processQueue.sync {
-            let file = OpenAPS.Monitor.glucose
             self.storage.transaction { storage in
-                let bgInStorage = storage.retrieve(file, as: [BloodGlucose].self)
-                let filteredBG = bgInStorage?.filter { !ids.contains($0.id) } ?? []
+                let bgInStorage = storage.glucose.retrieveOrEmpty()
+                let filteredBG = bgInStorage.filter { !ids.contains($0.id) }
                 guard bgInStorage != filteredBG else { return }
-                storage.save(filteredBG, as: file)
+                storage.glucose.save(filteredBG)
 
                 DispatchQueue.main.async {
                     self.broadcaster.notify(GlucoseObserver.self, on: .main) {
@@ -143,8 +138,8 @@ final class BaseGlucoseStorage: GlucoseStorage, Injectable {
     }
 
     func syncDate() -> Date {
-        guard let events = storage.retrieve(OpenAPS.Monitor.glucose, as: [BloodGlucose].self),
-              let recent = events.first
+        let events = storage.glucose.retrieveOrEmpty()
+        guard let recent = events.first
         else {
             return Date().addingTimeInterval(-1.days.timeInterval)
         }
@@ -152,7 +147,7 @@ final class BaseGlucoseStorage: GlucoseStorage, Injectable {
     }
 
     func recent() -> [BloodGlucose] {
-        storage.retrieve(OpenAPS.Monitor.glucose, as: [BloodGlucose].self)?.reversed() ?? []
+        storage.glucose.retrieveOrEmpty().reversed()
     }
 
     func lastGlucoseDate() -> Date {
@@ -189,20 +184,20 @@ final class BaseGlucoseStorage: GlucoseStorage, Injectable {
     }
 
     func nightscoutGlucoseNotUploaded() -> [BloodGlucose] {
-        let uploaded = storage.retrieve(OpenAPS.Nightscout.uploadedGlucose, as: [BloodGlucose].self) ?? []
+        let uploaded = storage.uploadedGlucose.retrieve()
         let recentGlucose = recent()
 
         return Array(Set(recentGlucose).subtracting(Set(uploaded)))
     }
 
     func nightscoutCGMStateNotUploaded() -> [NigtscoutTreatment] {
-        let uploaded = storage.retrieve(OpenAPS.Nightscout.uploadedCGMState, as: [NigtscoutTreatment].self) ?? []
-        let recent = storage.retrieve(OpenAPS.Monitor.cgmState, as: [NigtscoutTreatment].self) ?? []
+        let uploaded = storage.uploadedCGMState.retrieveOpt() ?? []
+        let recent = storage.cgmState.retrieve()
         return Array(Set(recent).subtracting(Set(uploaded)))
     }
 
     func nightscoutManualGlucoseNotUploaded() -> [NigtscoutTreatment] {
-        let uploaded = (storage.retrieve(OpenAPS.Nightscout.uploadedGlucose, as: [BloodGlucose].self) ?? [])
+        let uploaded = storage.uploadedGlucose.retrieve()
             .filter({ $0.type == GlucoseType.manual.rawValue })
         let recent = recent().filter({ $0.type == GlucoseType.manual.rawValue })
         let filtered = Array(Set(recent).subtracting(Set(uploaded)))

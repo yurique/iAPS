@@ -3,31 +3,25 @@ import Foundation
 extension ISFEditor {
     final class Provider: BaseProvider, ISFEditorProvider {
         var profile: InsulinSensitivities {
-            storage.retrieve(OpenAPS.Settings.insulinSensitivities, as: InsulinSensitivities.self)
-                ?? (try? InsulinSensitivities.decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.insulinSensitivities)))
-                ?? InsulinSensitivities(
-                    units: .mmolL,
-                    userPrefferedUnits: .mmolL,
-                    sensitivities: []
-                )
+            storage.insulinSensitivities.retrieve()
         }
 
         func saveProfile(_ profile: InsulinSensitivities) {
-            storage.save(profile, as: OpenAPS.Settings.insulinSensitivities)
+            storage.insulinSensitivities.save(profile)
         }
 
         var autosense: Autosens {
-            storage.retrieve(OpenAPS.Settings.autosense, as: Autosens.self)
-                ?? (try? Autosens.decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.autosense)))
+            storage.autosens.retrieveOpt()
                 ?? Autosens(ratio: 1, newisf: nil, timestamp: nil)
         }
 
         var suggestion: Suggestion? {
-            storage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self)
+            storage.suggested.retrieveOpt()
         }
 
         var autotune: Autotune? {
-            storage.retrieve(OpenAPS.Settings.autotune, as: Autotune.self)
+            guard let profile = storage.autotune.retrieveOpt() else { return nil }
+            return Autotune.from(profile: profile)
         }
 
         var sensitivity: NSDecimalNumber? {

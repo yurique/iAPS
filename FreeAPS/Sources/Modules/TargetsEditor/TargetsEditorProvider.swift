@@ -1,13 +1,11 @@
 extension TargetsEditor {
     final class Provider: BaseProvider, TargetsEditorProvider {
         var profile: BGTargets {
-            storage.retrieve(OpenAPS.Settings.bgTargets, as: BGTargets.self)
-                ?? (try? BGTargets.decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.bgTargets)))
-                ?? BGTargets(units: .mmolL, userPrefferedUnits: .mmolL, targets: [])
+            storage.bgTargets.retrieve()
         }
 
         func saveProfile(_ profile: BGTargets) {
-            storage.save(profile, as: OpenAPS.Settings.bgTargets)
+            storage.bgTargets.save(profile)
         }
     }
 }

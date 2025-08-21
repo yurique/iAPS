@@ -6,7 +6,7 @@ enum Screen: Identifiable, Hashable {
     case loading
     case home
     case settings
-    case configEditor(file: String)
+    case configEditor(file: ConfigEditorFile)
     case nighscoutConfig
     case pumpConfig
     case pumpSettingsEditor
@@ -120,4 +120,33 @@ extension Screen {
     func modal(resolver: Resolver) -> Main.Modal {
         .init(screen: self, view: view(resolver: resolver).asAny())
     }
+}
+
+enum ConfigEditorFile: Identifiable, Hashable {
+    case none
+    case preferences
+    case pumpSettings
+    case autosense
+    case pumpHistory
+    case tempBasal
+    case basalProfile
+    case bgTargets
+    case tempTargets
+    case meal
+    case pumpProfile
+    case profile
+    case carbHistory
+    case enacted
+    case announcements
+    case announcementsEnacted
+    case notUploadedOverrides
+    case autotune
+    case glucose
+    case dynamicVariables
+    case tempTargetsPresets
+    case calibrations
+    case middleware
+    case statistics
+    case settings
+    var id: Int { String(reflecting: self).hashValue }
 }

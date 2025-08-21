@@ -13,7 +13,7 @@ extension WatchConfig {
             processQueue.async {
                 var prefs = preferences
                 prefs.timestamp = Date()
-                self.storage.save(prefs, as: OpenAPS.Settings.preferences)
+                self.storage.preferences.save(prefs)
             }
         }
     }

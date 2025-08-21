@@ -171,7 +171,7 @@ enum JSONCoding {
 
     static var decoder: JSONDecoder {
         let decoder = JSONDecoder()
-        decoder.dateDecodingStrategy = .customISO8601
+        decoder.dateDecodingStrategy = .iso8601withOptionalFractionalSeconds
         return decoder
     }
 }

@@ -338,7 +338,7 @@ final class BaseAPSManager: APSManager, Injectable {
             return APSError.invalidPumpState(message: "Pump suspended")
         }
 
-        let reservoir = storage.retrieve(OpenAPS.Monitor.reservoir, as: Decimal.self) ?? 100
+        let reservoir = storage.reservoir.retrieveOpt() ?? 100
         guard reservoir >= 0 else {
             return APSError.invalidPumpState(message: "Reservoir is empty")
         }
@@ -347,7 +347,7 @@ final class BaseAPSManager: APSManager, Injectable {
     }
 
     private func autosens() -> AnyPublisher<Bool, Error> {
-        guard let autosens = storage.retrieve(OpenAPS.Settings.autosense, as: Autosens.self),
+        guard let autosens = storage.autosens.retrieveOpt(),
               (autosens.timestamp ?? .distantPast).addingTimeInterval(30.minutes.timeInterval) > Date()
         else {
             return openAPS.autosens()
@@ -362,7 +362,8 @@ final class BaseAPSManager: APSManager, Injectable {
 
     func determineBasal() -> AnyPublisher<Bool, Never> {
         debug(.apsManager, "Start determine basal")
-        guard let glucose = storage.retrieve(OpenAPS.Monitor.glucose, as: [BloodGlucose].self), glucose.isNotEmpty else {
+        let glucose = storage.glucose.retrieveOrEmpty()
+        guard glucose.isNotEmpty else {
             debug(.apsManager, "Not enough glucose data")
             processError(APSError.glucoseError(message: "Not enough glucose data"))
             return Just(false).eraseToAnyPublisher()
@@ -549,7 +550,7 @@ final class BaseAPSManager: APSManager, Injectable {
                     temp: .absolute,
                     timestamp: Date()
                 )
-                self.storage.save(temp, as: OpenAPS.Monitor.tempBasal)
+                self.storage.tempBasal.save(temp)
                 if rate == 0, duration == 0 {
                     self.pumpHistoryStorage.saveCancelTempEvents()
                 }
@@ -774,7 +775,7 @@ final class BaseAPSManager: APSManager, Injectable {
 
     private func currentTemp(date: Date) -> TempBasal {
         let defaultTemp = { () -> TempBasal in
-            guard let temp = storage.retrieve(OpenAPS.Monitor.tempBasal, as: TempBasal.self) else {
+            guard let temp = storage.tempBasal.retrieveOpt() else {
                 return TempBasal(duration: 0, rate: 0, temp: .absolute, timestamp: Date())
             }
             let delta = Int((date.timeIntervalSince1970 - temp.timestamp.timeIntervalSince1970) / 60)
@@ -796,7 +797,7 @@ final class BaseAPSManager: APSManager, Injectable {
     }
 
     private func enactSuggested() -> AnyPublisher<Void, Error> {
-        guard let suggested = storage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self) else {
+        guard let suggested = storage.suggested.retrieveOpt() else {
             return Fail(error: APSError.apsError(message: "Suggestion not found")).eraseToAnyPublisher()
         }
 
@@ -841,7 +842,7 @@ final class BaseAPSManager: APSManager, Injectable {
             )
             .map { _ in
                 let temp = TempBasal(duration: duration, rate: rate, temp: .absolute, timestamp: Date())
-                self.storage.save(temp, as: OpenAPS.Monitor.tempBasal)
+                self.storage.tempBasal.save(temp)
                 return ()
             }
             .eraseToAnyPublisher()
@@ -875,12 +876,12 @@ final class BaseAPSManager: APSManager, Injectable {
     }
 
     private func reportEnacted(received: Bool) {
-        if let suggestion = storage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self), suggestion.deliverAt != nil {
+        if let suggestion = storage.suggested.retrieveOpt(), suggestion.deliverAt != nil {
             var enacted = suggestion
             enacted.timestamp = Date()
             enacted.recieved = received
 
-            storage.save(enacted, as: OpenAPS.Enact.enacted)
+            storage.enacted.save(enacted)
 
             // Save to CoreData also. TO DO: Remove the JSON saving after some testing.
             coredataContext.perform {
@@ -1117,7 +1118,7 @@ final class BaseAPSManager: APSManager, Injectable {
             let copyrightNotice_ = Bundle.main.infoDictionary?["NSHumanReadableCopyright"] as? String ?? ""
             let pump_ = pumpManager?.localizedTitle ?? ""
             let cgm = settings.cgm
-            let file = OpenAPS.Monitor.statistics
+//            let file = OpenAPS.Monitor.statistics
             var iPa: Decimal = 75
             if preferences.useCustomPeakTime {
                 iPa = preferences.insulinPeakTime
@@ -1314,7 +1315,7 @@ final class BaseAPSManager: APSManager, Injectable {
                 dob: settings.birthDate,
                 sex: settings.sexSetting
             )
-            storage.save(dailystat, as: file)
+            storage.statistics.save(dailystat)
             nightscout.uploadStatistics(dailystat: dailystat)
         } else {
             let json = BareMinimum(
@@ -1501,8 +1502,8 @@ extension BaseAPSManager: PumpManagerStatusObserver {
             string: percent > 10 ? .normal : .low,
             display: status.pumpBatteryChargeRemaining != nil
         )
-        storage.save(battery, as: OpenAPS.Monitor.battery)
-        storage.save(status.pumpStatus, as: OpenAPS.Monitor.status)
+        storage.battery.save(battery)
+        storage.pumpStatus.save(status.pumpStatus)
     }
 }
 

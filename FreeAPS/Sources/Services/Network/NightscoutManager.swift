@@ -360,7 +360,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                     switch completion {
                     case .finished:
                         debug(.nightscout, "Preferences uploaded to database. Profile: \(preferences.profile ?? "")")
-                        self.storage.save(preferences, as: OpenAPS.Nightscout.uploadedPreferences)
+                        self.storage.uploadedNsPreferences.save(preferences)
                         self.saveToCoreData(preferences.profile ?? "default")
                     case let .failure(error):
                         debug(.nightscout, "Preferences failed to upload to database " + error.localizedDescription)
@@ -378,7 +378,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                     switch completion {
                     case .finished:
                         debug(.nightscout, "Settings uploaded to database. Profile: \(settings.profile ?? "")")
-                        self.storage.save(settings, as: OpenAPS.Nightscout.uploadedSettings)
+                        self.storage.uploadedNsSettings.save(settings)
                         self.saveToCoreData(settings.profile ?? "default")
                     case let .failure(error):
                         debug(.nightscout, error.localizedDescription)
@@ -396,7 +396,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                     switch completion {
                     case .finished:
                         debug(.nightscout, "Pump settings uploaded to database. Profile: \(upload.profile ?? "")")
-                        self.storage.save(settings, as: OpenAPS.Nightscout.uploadedPumpSettings)
+                        self.storage.uploadedPumpSettings.save(settings)
                         self.saveToCoreData(name ?? "default")
                     case let .failure(error):
                         debug(.nightscout, "Pump settings failed to upload to database " + error.localizedDescription)
@@ -414,7 +414,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                     switch completion {
                     case .finished:
                         debug(.nightscout, "Temp targets uploaded to database. Profile: \(upload.profile ?? "")")
-                        self.storage.save(targets, as: OpenAPS.Nightscout.uploadedTempTargetsDatabase)
+                        self.storage.uploadedTempTargetsDatabase.save(targets)
                         self.saveToCoreData(name ?? "default")
                     case let .failure(error):
                         debug(.nightscout, "Temp targets failed to upload to database " + error.localizedDescription)
@@ -431,7 +431,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                     switch completion {
                     case .finished:
                         debug(.nightscout, "Meal presets uploaded to database. Profile: \(presets.profile)")
-                        self.storage.save(presets, as: OpenAPS.Nightscout.uploadedMealPresets)
+                        self.storage.uploadedMealPresets.save(presets)
                         self.saveToCoreData(presets.profile)
                     case let .failure(error):
                         debug(.nightscout, "Meal presets failed to upload to database " + error.localizedDescription)
@@ -448,7 +448,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                     switch completion {
                     case .finished:
                         debug(.nightscout, "Override presets uploaded to database. Profile: \(presets.profile)")
-                        self.storage.save(presets, as: OpenAPS.Nightscout.uploadedOverridePresets)
+                        self.storage.uploadedOverridePresets.save(presets)
                         self.saveToCoreData(presets.profile)
                     case let .failure(error):
                         debug(.nightscout, "Override presets failed to upload to database " + error.localizedDescription)
@@ -459,9 +459,9 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     }
 
     func uploadStatus() {
-        let iob = storage.retrieve(OpenAPS.Monitor.iob, as: [IOBEntry].self)
-        var suggested = storage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self)
-        var enacted = storage.retrieve(OpenAPS.Enact.enacted, as: Suggestion.self)
+        let iob = storage.iob.retrieve()
+        var suggested = storage.suggested.retrieveOpt()
+        var enacted = storage.enacted.retrieveOpt()
 
         if (suggested?.timestamp ?? .distantPast) > (enacted?.timestamp ?? .distantPast) {
             enacted?.predictions = nil
@@ -476,27 +476,27 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         // Only upload suggested in Open Loop Mode. Only upload enacted in Closed Loop Mode.
         if loopIsClosed {
             openapsStatus = OpenAPSStatus(
-                iob: iob?.first,
+                iob: iob.first,
                 suggested: nil,
                 enacted: enacted,
                 version: "0.7.1"
             )
         } else {
             openapsStatus = OpenAPSStatus(
-                iob: iob?.first,
+                iob: iob.first,
                 suggested: suggested,
                 enacted: nil,
                 version: "0.7.1"
             )
         }
 
-        let battery = storage.retrieve(OpenAPS.Monitor.battery, as: Battery.self)
+        let battery = storage.battery.retrieveOpt()
 
-        var reservoir: Decimal? = storage.retrieveDecimal(OpenAPS.Monitor.reservoir) ?? 0.0
+        var reservoir: Decimal? = storage.reservoir.retrieveOpt() ?? 0.0
         if reservoir == 0xDEAD_BEEF {
             reservoir = nil
         }
-        let pumpStatus = storage.retrieve(OpenAPS.Monitor.status, as: PumpStatus.self)
+        let pumpStatus = storage.pumpStatus.retrieveOpt()
 
         let pump = NSPumpStatus(clock: Date(), battery: battery, reservoir: reservoir, status: pumpStatus)
 
@@ -513,7 +513,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             uploader: uploader
         )
 
-        storage.save(status, as: OpenAPS.Upload.nsStatus)
+        storage.nsStatus.save(status)
 
         guard let nightscout = nightscoutAPI, isUploadEnabled else {
             return
@@ -536,8 +536,8 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     }
 
     func uploadPodAge() {
-        let uploadedPodAge = storage.retrieve(OpenAPS.Nightscout.uploadedPodAge, as: [NigtscoutTreatment].self) ?? []
-        if let podAge = storage.retrieve(OpenAPS.Monitor.podAge, as: Date.self),
+        let uploadedPodAge = storage.uploadedPodAge.retrieveOpt() ?? []
+        if let podAge = storage.podAge.retrieveOpt(),
            uploadedPodAge.last?.createdAt == nil || podAge != uploadedPodAge.last!.createdAt!
         {
             let siteTreatment = NigtscoutTreatment(
@@ -558,7 +558,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                 targetTop: nil,
                 targetBottom: nil
             )
-            uploadTreatments([siteTreatment], fileToSave: OpenAPS.Nightscout.uploadedPodAge)
+            uploadTreatments([siteTreatment], storageToSave: storage.uploadedPodAge)
         }
     }
 
@@ -566,7 +566,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         var loaded = Loaded()
 
         // Start trying retrieving files
-        let sensitivities = storage.retrieveFile(OpenAPS.Settings.insulinSensitivities, as: InsulinSensitivities.self)
+        let sensitivities = storage.insulinSensitivities.retrieveOpt()
         if sensitivities != nil {
             loaded.sens = true
             debug(.nightscout, "NightscoutManager uploadProfile: file insulinSensitivities loaded")
@@ -574,35 +574,35 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             debug(.nightscout, "NightscoutManager uploadProfile: error loading insulinSensitivities")
         }
 
-        let settings = storage.retrieveFile(OpenAPS.FreeAPS.settings, as: FreeAPSSettings.self)
+        let settings = storage.settings.retrieveOpt()
         if settings != nil {
             loaded.settings = true
         } else {
             debug(.nightscout, "NightscoutManager uploadProfile: error loading settings")
         }
 
-        let preferences = storage.retrieveFile(OpenAPS.Settings.preferences, as: Preferences.self)
+        let preferences = storage.preferences.retrieveOpt()
         if preferences != nil {
             loaded.preferences = true
         } else {
             debug(.nightscout, "NightscoutManager uploadProfile: error loading preferences")
         }
 
-        let targets = storage.retrieveFile(OpenAPS.Settings.bgTargets, as: BGTargets.self)
+        let targets = storage.bgTargets.retrieveOpt()
         if targets != nil {
             loaded.targets = true
         } else {
             debug(.nightscout, "NightscoutManager uploadProfile: error loading bgTargets")
         }
 
-        let carbRatios = storage.retrieveFile(OpenAPS.Settings.carbRatios, as: CarbRatios.self)
+        let carbRatios = storage.carbRatios.retrieveOpt()
         if carbRatios != nil {
             loaded.carbratios = true
         } else {
             debug(.nightscout, "NightscoutManager uploadProfile: error loading carbRatios")
         }
 
-        let basalProfile = storage.retrieveFile(OpenAPS.Settings.basalProfile, as: [BasalProfileEntry].self)
+        let basalProfile = storage.basalProfile.retrieveOpt()
         if basalProfile != nil {
             loaded.basalProfiles = true
         } else {
@@ -714,7 +714,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             )
 
             // UPLOAD Profiles WHEN CHANGED
-            if let uploadedProfile = storage.retrieveFile(OpenAPS.Nightscout.uploadedProfile, as: NightscoutProfileStore.self),
+            if let uploadedProfile = storage.uploadedProfile.retrieveOpt(),
                (uploadedProfile.store["default"]?.rawJSON ?? "").sorted() == ps.rawJSON.sorted(), !force
             {
                 NSLog("NightscoutManager uploadProfile, no profile change")
@@ -725,7 +725,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                             .sink { completion in
                                 switch completion {
                                 case .finished:
-                                    self.storage.save(p, as: OpenAPS.Nightscout.uploadedProfile)
+                                    self.storage.uploadedProfile.save(p)
                                     debug(.nightscout, "Profile uploaded")
                                 case let .failure(error):
                                     debug(.nightscout, error.localizedDescription)
@@ -737,11 +737,8 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             }
 
             // UPLOAD Profiles to database WHEN CHANGED
-            if let uploadedProfile = storage.retrieveFile(
-                OpenAPS.Nightscout.uploadedProfileToDatabase,
-                as: DatabaseProfileStore.self
-            ),
-                (uploadedProfile.store["default"]?.rawJSON ?? "").sorted() == ps.rawJSON.sorted(), !force
+            if let uploadedProfile = storage.uploadedProfileToDatabase.retrieveOpt(),
+               (uploadedProfile.store["default"]?.rawJSON ?? "").sorted() == ps.rawJSON.sorted(), !force
             {
                 NSLog("NightscoutManager uploadProfile to database, no profile change")
             } else {
@@ -753,7 +750,8 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                                 switch completion {
                                 case .finished:
                                     debug(.nightscout, "Profiles uploaded to database. Profile: \(p.profile ?? "")")
-                                    self.storage.save(p, as: OpenAPS.Nightscout.uploadedProfileToDatabase)
+                                    self.storage.uploadedProfileToDatabaseNs
+                                        .save(p) // TODO: we are saving a structure different from what we just read from here!
                                 case let .failure(error):
                                     debug(.nightscout, error.localizedDescription)
                                 }
@@ -766,7 +764,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
 
         // UPLOAD PREFERNCES WHEN CHANGED
         if isStatsUploadEnabled || force {
-            if let uploadedPreferences = storage.retrieveFile(OpenAPS.Nightscout.uploadedPreferences, as: Preferences.self),
+            if let uploadedPreferences = storage.uploadedPreferences.retrieveOpt(),
                let unWrappedPreferences = preferences
             {
                 if uploadedPreferences.rawJSON.sorted() != unWrappedPreferences.rawJSON.sorted() ||
@@ -785,7 +783,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
 
         // UPLOAD FreeAPS Settings WHEN CHANGED
         if isStatsUploadEnabled || force {
-            if let uploadedSettings = storage.retrieve(OpenAPS.Nightscout.uploadedSettings, as: FreeAPSSettings.self),
+            if let uploadedSettings = storage.uploadedSettings.retrieveOpt(),
                let unwrappedSettings = settings, uploadedSettings.rawJSON.sorted() == unwrappedSettings.rawJSON.sorted(), !force
             {
                 NSLog("NightscoutManager Settings, settings unchanged")
@@ -799,8 +797,8 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
 
         // UPLOAD PumpSettings WHEN CHANGED
         if isStatsUploadEnabled || force {
-            if let pumpSettings = storage.retrieveFile(OpenAPS.Settings.settings, as: PumpSettings.self) {
-                if let uploadedSettings = storage.retrieve(OpenAPS.Nightscout.uploadedPumpSettings, as: PumpSettings.self),
+            if let pumpSettings = storage.pumpSettings.retrieveOpt() {
+                if let uploadedSettings = storage.uploadedPumpSettings.retrieveOpt(),
                    uploadedSettings.rawJSON.sorted() == pumpSettings.rawJSON.sorted(), !force
                 {
                     NSLog("PumpSettings unchanged")
@@ -813,13 +811,10 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
 
         // UPLOAD Temp Targets WHEN CHANGED
         if isStatsUploadEnabled || force {
-            if let tempTargets = storage.retrieveFile(OpenAPS.FreeAPS.tempTargetsPresets, as: [TempTarget].self) {
-                if let uploadedTempTargets = storage.retrieve(
-                    OpenAPS.Nightscout.uploadedTempTargetsDatabase,
-                    as: [TempTarget].self
-                ),
-                    // TODO: what are these sorted() on Strings?
-                    uploadedTempTargets.rawJSON() /* .sorted() */ == tempTargets.rawJSON() /* .sorted() */, !force
+            if let tempTargets = storage.tempTargetPresets.retrieveOpt() {
+                if let uploadedTempTargets = storage.uploadedTempTargetsDatabase.retrieveOpt(),
+                   // TODO: what are these sorted() on Strings?
+                   uploadedTempTargets.rawJSON() /* .sorted() */ == tempTargets.rawJSON() /* .sorted() */, !force
                 {
                     NSLog("Temp targets unchanged")
                 } else { uploadTempTargetsToDatabase(tempTargets, token: token, name: name) }
@@ -833,8 +828,9 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         if isStatsUploadEnabled || force {
             let mealPresets = Database(token: token).mealPresetDatabaseUpload(profile: name, token: token)
             if !mealPresets.presets.isEmpty {
-                if let uploadedMealPresets = storage.retrieveFile(OpenAPS.Nightscout.uploadedMealPresets, as: MealDatabase.self),
-                   mealPresets.rawJSON.sorted() == uploadedMealPresets.rawJSON.sorted(), !force
+                if let uploadedMealPresets = storage.uploadedMealPresets.retrieveOpt(),
+                   // TODO: what are these sorted() on Strings?
+                   mealPresets.rawJSON /* .sorted() */ == uploadedMealPresets.rawJSON /* .sorted() */, !force
                 {
                     NSLog("Meal Presets unchanged")
                 } else {
@@ -847,11 +843,8 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         if isStatsUploadEnabled || force {
             let overridePresets = Database(token: token).overridePresetDatabaseUpload(profile: name, token: token)
             if !overridePresets.presets.isEmpty {
-                if let uploadedOverridePresets = storage.retrieveFile(
-                    OpenAPS.Nightscout.uploadedOverridePresets,
-                    as: OverrideDatabase.self
-                ),
-                    overridePresets.rawJSON.sorted() == uploadedOverridePresets.rawJSON.sorted(), !force
+                if let uploadedOverridePresets = storage.uploadedOverridePresets.retrieveOpt(),
+                   overridePresets.rawJSON.sorted() == uploadedOverridePresets.rawJSON.sorted(), !force
                 {
                     NSLog("Override Presets unchanged")
                 } else {
@@ -862,8 +855,8 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     }
 
     func uploadGlucose() {
-        uploadGlucose(glucoseStorage.nightscoutGlucoseNotUploaded(), fileToSave: OpenAPS.Nightscout.uploadedGlucose)
-        uploadTreatments(glucoseStorage.nightscoutCGMStateNotUploaded(), fileToSave: OpenAPS.Nightscout.uploadedCGMState)
+        uploadGlucose(glucoseStorage.nightscoutGlucoseNotUploaded(), storageToSave: storage.uploadedGlucose)
+        uploadTreatments(glucoseStorage.nightscoutCGMStateNotUploaded(), storageToSave: storage.uploadedCGMState)
     }
 
     private func getIdentifier() -> String {
@@ -873,7 +866,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     func uploadManualGlucose() {
         uploadTreatments(
             glucoseStorage.nightscoutManualGlucoseNotUploaded(),
-            fileToSave: OpenAPS.Nightscout.uploadedManualGlucose
+            storageToSave: storage.uploadedManualGlucose
         )
     }
 
@@ -983,45 +976,42 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
     }
 
     private func notUploaded(overrides: [NigtscoutExercise]) {
-        let file = OpenAPS.Nightscout.notUploadedOverrides
+//        let file = OpenAPS.Nightscout.notUploadedOverrides
         var uniqEvents: [NigtscoutExercise] = []
 
         storage.transaction { storage in
-            storage.append(overrides, to: file, uniqBy: \.createdAt)
-            uniqEvents = storage.retrieve(file, as: [NigtscoutExercise].self)?
+            uniqEvents = storage.notUploadedOverrides.append(overrides, uniqBy: \.createdAt)
                 .filter { $0.createdAt.addingTimeInterval(2.days.timeInterval) > Date() }
-                .sorted { $0.createdAt > $1.createdAt } ?? []
-            storage.save(Array(uniqEvents), as: file)
+                .sorted { $0.createdAt > $1.createdAt }
+            storage.notUploadedOverrides.save(Array(uniqEvents))
             debug(.nightscout, "\(uniqEvents.count) Overide added to list ot not uploaded Overrides.")
         }
     }
 
     private func removeFromNotUploaded() {
-        let file = OpenAPS.Nightscout.notUploadedOverrides
         storage.transaction { storage in
-            let newFile: [NigtscoutExercise] = []
-            storage.save(newFile, as: file)
+            storage.notUploadedOverrides.save([])
             debug(.nightscout, "Override(s) deleted from list of not uploaded Overrides.")
         }
     }
 
     private func uploadPumpHistory() {
-        uploadTreatments(pumpHistoryStorage.nightscoutTretmentsNotUploaded(), fileToSave: OpenAPS.Nightscout.uploadedPumphistory)
+        uploadTreatments(pumpHistoryStorage.nightscoutTretmentsNotUploaded(), storageToSave: storage.uploadedPumpHistory)
     }
 
     private func uploadCarbs() {
-        uploadTreatments(carbsStorage.nightscoutTretmentsNotUploaded(), fileToSave: OpenAPS.Nightscout.uploadedCarbs)
+        uploadTreatments(carbsStorage.nightscoutTretmentsNotUploaded(), storageToSave: storage.uploadedCarbs)
     }
 
-    private func loadFileFromStorage(name: String) -> RawJSON {
-        storage.retrieveRaw(name) ?? OpenAPS.defaults(for: name)
-    }
+//    private func loadFileFromStorage(name: String) -> RawJSON {
+//        storage.retrieveRaw(name) ?? OpenAPS.defaults(for: name)
+//    }
 
     private func uploadTempTargets() {
-        uploadTreatments(tempTargetsStorage.nightscoutTretmentsNotUploaded(), fileToSave: OpenAPS.Nightscout.uploadedTempTargets)
+        uploadTreatments(tempTargetsStorage.nightscoutTretmentsNotUploaded(), storageToSave: storage.uploadedTempTargets)
     }
 
-    private func uploadGlucose(_ glucose: [BloodGlucose], fileToSave: String) {
+    private func uploadGlucose(_ glucose: [BloodGlucose], storageToSave: EntityStorage<[BloodGlucose]>) {
         guard !glucose.isEmpty, let nightscout = nightscoutAPI, isUploadEnabled, isUploadGlucoseEnabled else {
             return
         }
@@ -1044,7 +1034,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                 .sink { completion in
                     switch completion {
                     case .finished:
-                        self.storage.save(glucose, as: fileToSave)
+                        storageToSave.save(glucose)
                         debug(.nightscout, "Glucose uploaded")
 
                         // self.checkForNoneUploadedOverides() // To do : Move somewhere else
@@ -1061,7 +1051,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
         guard let nightscout = nightscoutAPI, isUploadEnabled else { return }
         guard let count = overrideStorage.countNotUploaded() else { return }
 
-        let file = storage.retrieve(OpenAPS.Nightscout.notUploadedOverrides, as: [NigtscoutExercise].self) ?? []
+        let file = storage.notUploadedOverrides.retrieveOpt() ?? []
         guard file.isNotEmpty else { return }
 
         let deleteLast = file[0] // To do: Not always needed, but try everytime for now...
@@ -1092,7 +1082,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
             .store(in: &lifetime)
     }
 
-    private func uploadTreatments(_ treatments: [NigtscoutTreatment], fileToSave: String) {
+    private func uploadTreatments(_ treatments: [NigtscoutTreatment], storageToSave: EntityStorage<[NigtscoutTreatment]>) {
         guard let nightscout = nightscoutAPI, isUploadEnabled else { return }
 
         checkForNoneUploadedOverides()
@@ -1114,7 +1104,7 @@ final class BaseNightscoutManager: NightscoutManager, Injectable {
                 .sink { completion in
                     switch completion {
                     case .finished:
-                        self.storage.save(treatments, as: fileToSave)
+                        storageToSave.save(treatments)
                         debug(.nightscout, "Treatments uploaded")
                     case let .failure(error):
                         debug(.nightscout, error.localizedDescription)

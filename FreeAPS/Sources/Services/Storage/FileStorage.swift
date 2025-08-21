@@ -1,22 +1,66 @@
 import Foundation
 
 protocol FileStorage {
-    func save<Value: Encodable>(_ value: Value, as name: String)
-    func save(_ value: String, as name: String) // save without JSON encoding
-    func retrieve<Value: Decodable>(_ name: String, as type: Value.Type) -> Value?
-    func retrieveRaw(_ name: String) -> String?
-    func retrieveDecimal(_ name: String) -> Decimal?
-    func retrieveRawAsync(_ name: String) async -> RawJSON?
-    func append<Value: JSON>(_ newValue: Value, to name: String)
-    func append<Value: JSON>(_ newValues: [Value], to name: String)
-    func append<Value: JSON, T: Equatable>(_ newValue: Value, to name: String, uniqBy keyPath: KeyPath<Value, T>)
-    func append<Value: JSON, T: Equatable>(_ newValues: [Value], to name: String, uniqBy keyPath: KeyPath<Value, T>)
-    func remove(_ name: String)
     func rename(_ name: String, to newName: String)
     func transaction(_ exec: (FileStorage) -> Void)
-    func retrieveFile<Value: Decodable>(_ name: String, as type: Value.Type) -> Value?
 
-    func urlFor(file: String) -> URL?
+    var bgTargets: EntityStorageWithFallback<BGTargets> { get }
+    var pumpSettings: EntityStorageWithFallback<PumpSettings> { get }
+    var pumpProfile: EntityStorage<Profile> { get }
+    var profile: EntityStorage<Profile> { get }
+    var autotune: EntityStorage<Profile> { get }
+    var basalProfile: EntityStorageWithFallback<[BasalProfileEntry]> { get }
+    var suggested: EntityStorage<Suggestion> { get }
+    var enacted: EntityStorage<Suggestion> { get }
+    var dynamicVariables: EntityStorage<DynamicVariables> { get }
+    var battery: EntityStorage<Battery> { get }
+    var calibrations: EntityStorageWithFallback<[Calibration]> { get }
+    var carbRatios: EntityStorageWithFallback<CarbRatios> { get }
+    var insulinSensitivities: EntityStorageWithFallback<InsulinSensitivities> { get }
+    var autosens: EntityStorage<Autosens> { get }
+    var contactPictureEntries: EntityStorageWithFallback<[ContactTrickEntry]> { get }
+    var preferences: EntityStorageWithFallback<Preferences> { get }
+    var reservoir: EntityStorage<Decimal> { get }
+    var glucose: EntityStorageWithAppend<BloodGlucose> { get }
+    var uploadedGlucose: EntityStorageWithFallback<[BloodGlucose]> { get }
+    var tempBasal: EntityStorage<TempBasal> { get }
+    var tempTargets: EntityStorageWithAppend<TempTarget> { get }
+    var tempTargetPresets: EntityStorageWithAppend<TempTarget> { get }
+    var uploadedTempTargets: EntityStorageWithFallback<[NigtscoutTreatment]> { get }
+    var settings: EntityStorageWithFallback<FreeAPSSettings> { get }
+    var cgmState: EntityStorageWithFallback<[NigtscoutTreatment]> { get }
+    var uploadedPumpHistory: EntityStorageWithFallback<[NigtscoutTreatment]> { get }
+    var pumpHistory: EntityStorageWithAppend<PumpHistoryEvent> { get }
+    var statistics: EntityStorage<Statistics> { get }
+    var pumpStatus: EntityStorage<PumpStatus> { get }
+    var carbsHistory: EntityStorageWithAppend<CarbsEntry> { get }
+    var uploadedCarbs: EntityStorageWithFallback<[NigtscoutTreatment]> { get }
+    var announcements: EntityStorageWithAppend<Announcement> { get }
+    var announcementsEnacted: EntityStorageWithAppend<Announcement> { get }
+    var alertHistory: EntityStorageWithAppend<AlertEntry> { get }
+    var iob: EntityStorageWithFallback<[IOBEntry]> { get }
+    var nsStatus: EntityStorage<NightscoutStatus> { get }
+    var uploadedOverridePresets: EntityStorage<OverrideDatabase> { get }
+    var uploadedMealPresets: EntityStorage<MealDatabase> { get }
+    var uploadedTempTargetsDatabase: EntityStorageWithFallback<[TempTarget]> { get }
+    var uploadedPumpSettings: EntityStorage<PumpSettings> { get }
+    var uploadedNsSettings: EntityStorage<NightscoutSettings> { get }
+    var uploadedNsPreferences: EntityStorage<NightscoutPreferences> { get }
+    var uploadedPodAge: EntityStorage<[NigtscoutTreatment]> { get }
+    var podAge: EntityStorage<Date> { get }
+    var uploadedProfile: EntityStorage<NightscoutProfileStore> { get }
+    var uploadedPreferences: EntityStorage<Preferences> { get }
+    var uploadedSettings: EntityStorage<FreeAPSSettings> { get }
+    var notUploadedOverrides: EntityStorageWithAppend<NigtscoutExercise> { get }
+    var uploadedManualGlucose: EntityStorage<[NigtscoutTreatment]> { get }
+    var uploadedCGMState: EntityStorage<[NigtscoutTreatment]> { get }
+    var meal: EntityStorage<RecentCarbs> { get }
+    var model: EntityStorageWithFallback<String> { get }
+    var middleware: EntityStorage<String> { get }
+
+    // TODO: these two share the same file 🤔
+    var uploadedProfileToDatabase: EntityStorage<DatabaseProfileStore> { get }
+    var uploadedProfileToDatabaseNs: EntityStorage<NightscoutProfileStore> { get }
 }
 
 final class BaseFileStorage: FileStorage, Injectable {
@@ -25,133 +69,305 @@ final class BaseFileStorage: FileStorage, Injectable {
         qos: .utility
     )
 
-    private var fileQueues: [String: DispatchQueue] = [:]
-    private let queueAccessLock = DispatchQueue(label: "BaseFileStorage.processQueue")
+    let bgTargets = EntityStorageWithFallback<BGTargets>(
+        file: OpenAPS.Settings.bgTargets,
+        codec: EntityCodecs.json(),
+        readDefaults: true,
+        fallbackValue: BGTargets.defaultValue()
+    )
 
-    private func getQueue(for path: String) -> DispatchQueue {
-        queueAccessLock.sync {
-            if let queue = fileQueues[path] {
-                return queue
-            } else {
-                let newQueue = DispatchQueue(label: "BaseFileStorage.processQueue.\(path.hashValue)", qos: .utility)
-                fileQueues[path] = newQueue
-                return newQueue
-            }
-        }
-    }
+    let pumpSettings = EntityStorageWithFallback<PumpSettings>(
+        file: OpenAPS.Settings.pumpSettings,
+        codec: EntityCodecs.json(),
+        readDefaults: true,
+        fallbackValue: PumpSettings.defaultValue()
+    )
 
-    func save<Value: Encodable>(_ value: Value, as name: String) {
-        getQueue(for: name).sync {
-            if let value = value as? String, let data = value.data(using: .utf8) {
-                // important - save strings without JSON encoding
-                try? Disk.save(data, to: .documents, as: name)
-            } else {
-                try? Disk.save(value, to: .documents, as: name, encoder: JSONCoding.encoder)
-            }
-        }
-    }
+    let pumpProfile = EntityStorage<Profile>(
+        file: OpenAPS.Settings.pumpProfile,
+        codec: EntityCodecs.json(),
+        readDefaults: false,
+    )
 
-    func retrieve<Value: Decodable>(_ name: String, as type: Value.Type) -> Value? {
-        getQueue(for: name).sync {
-            try? Disk.retrieve(name, from: .documents, as: type, decoder: JSONCoding.decoder)
-        }
-    }
+    let profile = EntityStorage<Profile>(
+        file: OpenAPS.Settings.profile,
+        codec: EntityCodecs.json(),
+        readDefaults: false,
+    )
 
-    func retrieveRaw(_ name: String) -> String? {
-        getQueue(for: name).sync {
-            guard let data = try? Disk.retrieve(name, from: .documents, as: Data.self) else {
-                return nil
-            }
-            return String(data: data, encoding: .utf8)
-        }
-    }
+    let autotune = EntityStorage<Profile>(
+        file: OpenAPS.Settings.autotune,
+        codec: EntityCodecs.json(),
+        readDefaults: false,
+    )
 
-    func retrieveDecimal(_ name: String) -> Decimal? {
-        if let string = retrieveRaw(name) {
-            return Decimal(string: string)
-        } else {
-            return nil
-        }
-    }
+    let basalProfile = EntityStorageWithFallback<[BasalProfileEntry]>(
+        file: OpenAPS.Settings.basalProfile,
+        codec: EntityCodecs.json(),
+        readDefaults: true,
+        fallbackValue: []
+    )
 
-    func retrieveRawAsync(_ name: String) async -> RawJSON? {
-        await withCheckedContinuation { continuation in
-            getQueue(for: name).async {
-                guard let data = try? Disk.retrieve(name, from: .documents, as: Data.self) else {
-                    continuation.resume(returning: nil)
-                    return
-                }
-                let result = String(data: data, encoding: .utf8)
-                continuation.resume(returning: result)
-            }
-        }
-    }
+    let suggested = EntityStorage<Suggestion>(
+        file: OpenAPS.Enact.suggested,
+        codec: EntityCodecs.json(),
+    )
 
-    func retrieveFile<Value: Decodable>(_ name: String, as type: Value.Type) -> Value? {
-        if let loaded = retrieve(name, as: type) {
-            return loaded
-        }
-        let file = retrieveRaw(name) ?? OpenAPS.defaults(for: name)
-        save(file, as: name)
-        return retrieve(name, as: type)
-    }
+    let enacted = EntityStorage<Suggestion>(
+        file: OpenAPS.Enact.enacted,
+        codec: EntityCodecs.json(),
+    )
 
-    func append<Value: JSON>(_ newValue: Value, to name: String) {
-        getQueue(for: name).sync {
-            try? Disk.append(newValue, to: name, in: .documents, decoder: JSONCoding.decoder, encoder: JSONCoding.encoder)
-        }
-    }
+    let dynamicVariables = EntityStorage<DynamicVariables>(
+        file: OpenAPS.Monitor.dynamicVariables,
+        codec: EntityCodecs.json(),
+    )
 
-    func append<Value: JSON>(_ newValues: [Value], to name: String) {
-        getQueue(for: name).sync {
-            try? Disk.append(newValues, to: name, in: .documents, decoder: JSONCoding.decoder, encoder: JSONCoding.encoder)
-        }
-    }
+    let battery = EntityStorage<Battery>(
+        file: OpenAPS.Monitor.battery,
+        codec: EntityCodecs.json(),
+    )
 
-    func append<Value: JSON, T: Equatable>(_ newValue: Value, to name: String, uniqBy keyPath: KeyPath<Value, T>) {
-        if let value = retrieve(name, as: Value.self) {
-            if value[keyPath: keyPath] != newValue[keyPath: keyPath] {
-                append(newValue, to: name)
-            }
-        } else if let values = retrieve(name, as: [Value].self) {
-            guard values.first(where: { $0[keyPath: keyPath] == newValue[keyPath: keyPath] }) == nil else {
-                return
-            }
-            append(newValue, to: name)
-        } else {
-            save(newValue, as: name)
-        }
-    }
+    let calibrations = EntityStorageWithFallback<[Calibration]>(
+        file: OpenAPS.FreeAPS.calibrations,
+        codec: EntityCodecs.json(),
+        fallbackValue: []
+    )
 
-    func append<Value: JSON, T: Equatable>(_ newValues: [Value], to name: String, uniqBy keyPath: KeyPath<Value, T>) {
-        if let value = retrieve(name, as: Value.self) {
-            if newValues.firstIndex(where: { $0[keyPath: keyPath] == value[keyPath: keyPath] }) != nil {
-                save(newValues, as: name)
-                return
-            }
-            append(newValues, to: name)
-        } else if var values = retrieve(name, as: [Value].self) {
-            for newValue in newValues {
-                if let index = values.firstIndex(where: { $0[keyPath: keyPath] == newValue[keyPath: keyPath] }) {
-                    values[index] = newValue
-                } else {
-                    values.append(newValue)
-                }
-                save(values, as: name)
-            }
-        } else {
-            save(newValues, as: name)
-        }
-    }
+    let carbRatios = EntityStorageWithFallback<CarbRatios>(
+        file: OpenAPS.Settings.carbRatios,
+        codec: EntityCodecs.json(),
+        readDefaults: true,
+        fallbackValue: CarbRatios.defaultValue()
+    )
 
-    func remove(_ name: String) {
-        getQueue(for: name).sync {
-            try? Disk.remove(name, from: .documents)
-        }
-    }
+    let insulinSensitivities = EntityStorageWithFallback<InsulinSensitivities>(
+        file: OpenAPS.Settings.insulinSensitivities,
+        codec: EntityCodecs.json(),
+        readDefaults: true,
+        fallbackValue: InsulinSensitivities.defaultValue()
+    )
+
+    let autosens = EntityStorage<Autosens>(
+        file: OpenAPS.Settings.autosense,
+        codec: EntityCodecs.json(),
+        readDefaults: true,
+    )
+
+    let contactPictureEntries = EntityStorageWithFallback<[ContactTrickEntry]>(
+        file: OpenAPS.Settings.contactTrick,
+        codec: EntityCodecs.json(),
+        readDefaults: true,
+        fallbackValue: []
+    )
+
+    let preferences = EntityStorageWithFallback<Preferences>(
+        file: OpenAPS.Settings.preferences,
+        codec: EntityCodecs.json(),
+        readDefaults: true,
+        fallbackValue: Preferences()
+    )
+
+    let reservoir = EntityStorage<Decimal>(
+        file: OpenAPS.Monitor.reservoir,
+        codec: EntityCodecs.decimal,
+    )
+
+    let glucose = EntityStorageWithAppend<BloodGlucose>(
+        file: OpenAPS.Monitor.glucose,
+    )
+
+    let uploadedGlucose = EntityStorageWithFallback<[BloodGlucose]>(
+        file: OpenAPS.Nightscout.uploadedGlucose,
+        codec: EntityCodecs.json(),
+        fallbackValue: []
+    )
+
+    let tempBasal = EntityStorage<TempBasal>(
+        file: OpenAPS.Monitor.tempBasal,
+        codec: EntityCodecs.json(),
+    )
+
+    let tempTargets = EntityStorageWithAppend<TempTarget>(
+        file: OpenAPS.Settings.tempTargets,
+    )
+
+    let tempTargetPresets = EntityStorageWithAppend<TempTarget>(
+        file: OpenAPS.FreeAPS.tempTargetsPresets,
+    )
+
+    let uploadedTempTargets = EntityStorageWithFallback<[NigtscoutTreatment]>(
+        file: OpenAPS.Nightscout.uploadedTempTargets,
+        codec: EntityCodecs.json(),
+        fallbackValue: []
+    )
+
+    let uploadedTempTargetsDatabase = EntityStorageWithFallback<[TempTarget]>(
+        file: OpenAPS.Nightscout.uploadedTempTargetsDatabase,
+        codec: EntityCodecs.json(),
+        fallbackValue: []
+    )
+
+    let settings = EntityStorageWithFallback<FreeAPSSettings>(
+        file: OpenAPS.FreeAPS.settings,
+        codec: EntityCodecs.json(),
+        readDefaults: true,
+        fallbackValue: FreeAPSSettings()
+    )
+
+    let cgmState = EntityStorageWithFallback<[NigtscoutTreatment]>(
+        file: OpenAPS.Monitor.cgmState,
+        codec: EntityCodecs.json(),
+        fallbackValue: []
+    )
+
+    let uploadedPumpHistory = EntityStorageWithFallback<[NigtscoutTreatment]>(
+        file: OpenAPS.Nightscout.uploadedPumphistory,
+        codec: EntityCodecs.json(),
+        fallbackValue: []
+    )
+
+    let pumpHistory = EntityStorageWithAppend<PumpHistoryEvent>(
+        file: OpenAPS.Monitor.pumpHistory,
+    )
+
+    let statistics = EntityStorage<Statistics>(
+        file: OpenAPS.Monitor.statistics,
+        codec: EntityCodecs.json(),
+    )
+
+    let pumpStatus = EntityStorage<PumpStatus>(
+        file: OpenAPS.Monitor.status,
+        codec: EntityCodecs.json(),
+    )
+
+    let carbsHistory = EntityStorageWithAppend<CarbsEntry>(
+        file: OpenAPS.Monitor.carbHistory,
+    )
+
+    let uploadedCarbs = EntityStorageWithFallback<[NigtscoutTreatment]>(
+        file: OpenAPS.Nightscout.uploadedCarbs,
+        codec: EntityCodecs.json(),
+        fallbackValue: []
+    )
+
+    let announcements = EntityStorageWithAppend<Announcement>(
+        file: OpenAPS.FreeAPS.announcements,
+    )
+
+    let announcementsEnacted = EntityStorageWithAppend<Announcement>(
+        file: OpenAPS.FreeAPS.announcementsEnacted,
+    )
+
+    let alertHistory = EntityStorageWithAppend<AlertEntry>(
+        file: OpenAPS.Monitor.alertHistory,
+    )
+
+    let iob = EntityStorageWithFallback<[IOBEntry]>(
+        file: OpenAPS.Monitor.iob,
+        codec: EntityCodecs.json(),
+        fallbackValue: []
+    )
+
+    let nsStatus = EntityStorage<NightscoutStatus>(
+        file: OpenAPS.Upload.nsStatus,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedOverridePresets = EntityStorage<OverrideDatabase>(
+        file: OpenAPS.Nightscout.uploadedOverridePresets,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedMealPresets = EntityStorage<MealDatabase>(
+        file: OpenAPS.Nightscout.uploadedMealPresets,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedPumpSettings = EntityStorage<PumpSettings>(
+        file: OpenAPS.Nightscout.uploadedPumpSettings,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedNsSettings = EntityStorage<NightscoutSettings>(
+        file: OpenAPS.Nightscout.uploadedSettings,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedNsPreferences = EntityStorage<NightscoutPreferences>(
+        file: OpenAPS.Nightscout.uploadedPreferences,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedPodAge = EntityStorage<[NigtscoutTreatment]>(
+        file: OpenAPS.Nightscout.uploadedPodAge,
+        codec: EntityCodecs.json(),
+    )
+
+    let podAge = EntityStorage<Date>(
+        file: OpenAPS.Monitor.podAge,
+        codec: EntityCodecs.date,
+    )
+
+    let uploadedProfile = EntityStorage<NightscoutProfileStore>(
+        file: OpenAPS.Nightscout.uploadedProfile,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedProfileToDatabase = EntityStorage<DatabaseProfileStore>(
+        file: OpenAPS.Nightscout.uploadedProfileToDatabase,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedProfileToDatabaseNs = EntityStorage<NightscoutProfileStore>(
+        file: OpenAPS.Nightscout.uploadedProfileToDatabase,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedPreferences = EntityStorage<Preferences>(
+        file: OpenAPS.Nightscout.uploadedPreferences,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedSettings = EntityStorage<FreeAPSSettings>(
+        file: OpenAPS.Nightscout.uploadedSettings,
+        codec: EntityCodecs.json(),
+    )
+
+    let notUploadedOverrides = EntityStorageWithAppend<NigtscoutExercise>(
+        file: OpenAPS.Nightscout.notUploadedOverrides,
+    )
+
+    let uploadedManualGlucose = EntityStorage<[NigtscoutTreatment]>(
+        file: OpenAPS.Nightscout.uploadedManualGlucose,
+        codec: EntityCodecs.json(),
+    )
+
+    let uploadedCGMState = EntityStorage<[NigtscoutTreatment]>(
+        file: OpenAPS.Nightscout.uploadedCGMState,
+        codec: EntityCodecs.json(),
+    )
+
+    let meal = EntityStorage<RecentCarbs>(
+        file: OpenAPS.Monitor.meal,
+        codec: EntityCodecs.json(),
+    )
+
+    let model = EntityStorageWithFallback<String>(
+        file: OpenAPS.Settings.model,
+        codec: EntityCodecs.json(),
+        readDefaults: true,
+        fallbackValue: "722"
+    )
+
+    let middleware = EntityStorage<String>(
+        file: OpenAPS.Middleware.determineBasal,
+        codec: EntityCodecs.string,
+        readDefaults: true,
+    )
 
     func rename(_ name: String, to newName: String) {
-        getQueue(for: name).sync {
+        processQueue.sync {
             try? Disk.rename(name, in: .documents, to: newName)
         }
     }
@@ -160,9 +376,5 @@ final class BaseFileStorage: FileStorage, Injectable {
         processQueue.safeSync {
             exec(self)
         }
-    }
-
-    func urlFor(file: String) -> URL? {
-        try? Disk.url(for: file, in: .documents)
     }
 }

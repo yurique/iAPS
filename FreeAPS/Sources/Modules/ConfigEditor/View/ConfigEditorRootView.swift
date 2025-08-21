@@ -4,7 +4,7 @@ import Swinject
 extension ConfigEditor {
     struct RootView: BaseView {
         let resolver: Resolver
-        let file: String
+        let file: ConfigEditorFile
         @StateObject var state = StateModel()
         @State private var showShareSheet = false
 
@@ -29,7 +29,7 @@ extension ConfigEditor {
                         trailing: Button("Save", action: state.save)
                     )
                     .sheet(isPresented: $showShareSheet) {
-                        ShareSheet(activityItems: [state.provider.urlFor(file: state.file)!])
+                        ShareSheet(activityItems: [state.file.id])
                     }
                     .dynamicTypeSize(...DynamicTypeSize.xxLarge)
                     .onAppear {
@@ -37,7 +37,7 @@ extension ConfigEditor {
                             state.file = file
                         }
                     }
-                    .navigationTitle(file)
+                    .navigationTitle(state.provider?.fileNameFor(file: file) ?? "File")
                     .navigationBarTitleDisplayMode(.inline)
                     .padding()
             }

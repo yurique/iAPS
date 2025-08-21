@@ -14,9 +14,7 @@ extension DataTable {
         }
 
         func pumpSettings() -> PumpSettings {
-            storage.retrieve(OpenAPS.Settings.settings, as: PumpSettings.self)
-                ?? (try? PumpSettings.decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.settings)))
-                ?? PumpSettings(insulinActionCurve: 6, maxBolus: 10, maxBasal: 2)
+            storage.pumpSettings.retrieve()
         }
 
         func tempTargets() -> [TempTarget] {

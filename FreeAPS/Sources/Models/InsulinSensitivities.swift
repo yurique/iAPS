@@ -12,6 +12,10 @@ extension InsulinSensitivities {
         case userPrefferedUnits = "user_preferred_units"
         case sensitivities
     }
+
+    static func defaultValue() -> InsulinSensitivities {
+        InsulinSensitivities(units: .mmolL, userPrefferedUnits: .mmolL, sensitivities: [])
+    }
 }
 
 struct InsulinSensitivityEntry: JSON {

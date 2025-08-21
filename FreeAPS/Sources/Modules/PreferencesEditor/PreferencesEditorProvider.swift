@@ -13,7 +13,7 @@ extension PreferencesEditor {
             processQueue.async {
                 var prefs = preferences
                 prefs.timestamp = Date()
-                self.storage.save(prefs, as: OpenAPS.Settings.preferences)
+                self.storage.preferences.save(prefs)
             }
         }
 
@@ -23,9 +23,7 @@ extension PreferencesEditor {
         }
 
         private func migrateTargets() {
-            let profile = storage.retrieve(OpenAPS.Settings.bgTargets, as: BGTargets.self)
-                ?? (try? BGTargets.decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.bgTargets)))
-                ?? BGTargets(units: .mmolL, userPrefferedUnits: .mmolL, targets: [])
+            let profile = storage.bgTargets.retrieve()
 
             let units = settingsManager.settings.units
             guard units != profile.units else { return }
@@ -49,17 +47,12 @@ extension PreferencesEditor {
             }
 
             let newProfile = BGTargets(units: units, userPrefferedUnits: units, targets: targets)
-            storage.save(newProfile, as: OpenAPS.Settings.bgTargets)
+            storage.bgTargets.save(newProfile)
         }
 
         private func migrateISF() {
-            let profile = storage.retrieve(OpenAPS.Settings.insulinSensitivities, as: InsulinSensitivities.self)
-                ?? (try? InsulinSensitivities.decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.insulinSensitivities)))
-                ?? InsulinSensitivities(
-                    units: .mmolL,
-                    userPrefferedUnits: .mmolL,
-                    sensitivities: []
-                )
+            let profile = storage.insulinSensitivities.retrieve()
+
             let units = settingsManager.settings.units
             guard units != profile.units else { return }
 
@@ -82,7 +75,7 @@ extension PreferencesEditor {
 
             let newProfile = InsulinSensitivities(units: units, userPrefferedUnits: units, sensitivities: sensitivities)
 
-            storage.save(newProfile, as: OpenAPS.Settings.insulinSensitivities)
+            storage.insulinSensitivities.save(newProfile)
         }
     }
 }

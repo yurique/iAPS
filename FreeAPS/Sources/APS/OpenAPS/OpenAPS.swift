@@ -35,10 +35,11 @@ final class OpenAPS {
                         var now = Date.now
 
                         debug(.openAPS, "Start determineBasal")
-                        self.storage.save(clock, as: Monitor.clock)
+//                        self.storage.save(clock, as: Monitor.clock) // TODO: do we need to store the clock?
                         let tempBasal = currentTemp
-                        self.storage.save(tempBasal, as: Monitor.tempBasal)
+                        self.storage.tempBasal.save(tempBasal)
 
+                        now = Date.now
                         let (
                             pumpHistory,
                             carbs,
@@ -89,8 +90,8 @@ final class OpenAPS {
                             autosens: autosens
                         ))
 
-                        self.storage.save(meal, as: Monitor.meal)
-                        self.storage.save(iob, as: Monitor.iob)
+                        self.storage.meal.save(meal)
+                        self.storage.iob.save(iob)
 
                         let cd = CoreDataStorage()
                         _ = cd.saveInsulinData(iobEntries: iob)
@@ -189,7 +190,7 @@ final class OpenAPS {
                         // Update time
                         suggestion.timestamp = suggestion.deliverAt ?? clock
                         // Save
-                        self.storage.save(suggestion, as: Enact.suggested)
+                        self.storage.suggested.save(suggestion)
 
                         promise(.success(suggestion))
                     } catch {
@@ -234,7 +235,7 @@ final class OpenAPS {
                         debug(.openAPS, "AUTOSENS: \(autosensResult)")
                         var autosens = autosensResult
                         autosens.timestamp = Date()
-                        self.storage.save(autosens, as: Settings.autosense)
+                        self.storage.autosens.save(autosens)
                         promise(.success(autosens))
                     } catch {
                         promise(.failure(error))
@@ -280,7 +281,7 @@ final class OpenAPS {
                         debug(.openAPS, "AUTOTUNE RESULT: \(autotuneResult.rawJSON())")
 
                         let autotune = Autotune.from(profile: autotuneResult)
-                        self.storage.save(autotuneResult, as: Settings.autotune)
+                        self.storage.autotune.save(autotuneResult)
                         promise(.success(autotune))
                     } catch {
                         promise(.failure(error))
@@ -381,8 +382,8 @@ final class OpenAPS {
                         )
 
                         now = Date.now
-                        self.storage.save(pumpProfile, as: Settings.pumpProfile)
-                        self.storage.save(profile, as: Settings.profile)
+                        self.storage.pumpProfile.save(pumpProfile)
+                        self.storage.profile.save(profile)
 
                         print(
                             "MakeProfiles: Time for save files \(-1 * now.timeIntervalSinceNow) seconds, total: \(-1 * start.timeIntervalSinceNow)"
@@ -400,15 +401,15 @@ final class OpenAPS {
     // MARK: - Private
 
     private func readPumpHistory() async throws -> [PumpHistoryEvent] {
-        try await loadFileFromStorageAsync(name: OpenAPS.Monitor.pumpHistory, as: [PumpHistoryEvent].self)
+        storage.pumpHistory.retrieveOrEmpty()
     }
 
     private func readCarbHistory() async throws -> [CarbsEntry] {
-        try await loadFileFromStorageAsync(name: Monitor.carbHistory, as: [CarbsEntry].self)
+        storage.carbsHistory.retrieveOrEmpty()
     }
 
     private func readGlucoseHistory() async throws -> [GlucoseEntry0] {
-        let glucose = try await loadFileFromStorageAsync(name: Monitor.glucose, as: [BloodGlucose].self)
+        let glucose = storage.glucose.retrieveOrEmpty()
         return glucose.map { g in
             GlucoseEntry0(
                 date: nil,
@@ -423,63 +424,68 @@ final class OpenAPS {
     }
 
     private func readPreferences() async throws -> Preferences? {
-        try await loadFileFromStorageAsyncOpt(name: Settings.preferences, as: Preferences.self)
+        storage.preferences.retrieveOpt()
     }
 
     private func readBasalSchedule() async throws -> [BasalProfileEntry] {
-        try await loadFileFromStorageAsync(name: Settings.basalProfile, as: [BasalProfileEntry].self)
+        storage.basalProfile.retrieve()
     }
 
     private func readSettings() async throws -> FreeAPSSettings {
-        try await loadFileFromStorageAsync(name: FreeAPS.settings, as: FreeAPSSettings.self)
+        storage.settings.retrieve()
     }
 
     private func readAutosens() async throws -> Autosens? {
-        try await loadFileFromStorageAsyncOpt(name: Settings.autosense, as: Autosens.self)
+        storage.autosens.retrieveOpt()
     }
 
     private func readReservoir() async throws -> Double {
-        try await loadFileFromStorageAsync(name: Monitor.reservoir, as: Double.self)
+        if let reservoir = storage.reservoir.retrieveOpt() {
+            return (reservoir as NSDecimalNumber).doubleValue
+        } else {
+            return 300.0
+        }
     }
 
     private func readProfile() async throws -> Profile {
-        try await loadFileFromStorageAsync(name: Settings.profile, as: Profile.self)
+        try storage.profile.retrieveOrFail()
     }
 
     private func readPumpProfile() async throws -> Profile {
-        try await loadFileFromStorageAsync(name: Settings.pumpProfile, as: Profile.self)
+        try storage.pumpProfile.retrieveOrFail()
     }
 
     private func readPumpSettings() async throws -> PumpSettings {
-        try await loadFileFromStorageAsync(name: Settings.settings, as: PumpSettings.self)
+        storage.pumpSettings.retrieve()
     }
 
     private func bgTargetsHistory() async throws -> BGTargets {
-        try await loadFileFromStorageAsync(name: Settings.bgTargets, as: BGTargets.self)
+        storage.bgTargets.retrieve()
     }
 
     private func readIsfSchedule() async throws -> InsulinSensitivities {
-        try await loadFileFromStorageAsync(name: Settings.insulinSensitivities, as: InsulinSensitivities.self)
+        storage.insulinSensitivities.retrieve()
     }
 
     private func readCrSchedule() async throws -> CarbRatios {
-        try await loadFileFromStorageAsync(name: Settings.carbRatios, as: CarbRatios.self)
+        storage.carbRatios.retrieve()
     }
 
     private func readTempTargets() async throws -> [TempTarget] {
-        try await loadFileFromStorageAsync(name: Settings.tempTargets, as: [TempTarget].self)
+        storage.tempTargets.retrieveOrEmpty()
     }
 
     private func readModel() async throws -> String {
-        try await loadFileFromStorageAsync(name: Settings.model, as: String.self)
+        storage.model.retrieve()
     }
 
     private func readAutotune(useAutotune: Bool) async throws -> Autotune? {
-        useAutotune ? try await loadFileFromStorageAsyncOpt(name: Settings.autotune, as: Autotune.self) : nil
+        guard useAutotune, let profile = storage.autotune.retrieveOpt() else { return nil }
+        return Autotune.from(profile: profile)
     }
 
     private func readAutotuneAsProfile(useAutotune: Bool) async throws -> Profile? {
-        useAutotune ? try await loadFileFromStorageAsyncOpt(name: Settings.autotune, as: Profile.self) : nil
+        useAutotune ? storage.autotune.retrieveOpt() : nil
     }
 
     private func reasons(
@@ -1042,7 +1048,7 @@ final class OpenAPS {
             )
             return averages
         }
-        storage.save(averages, as: OpenAPS.Monitor.dynamicVariables)
+        storage.dynamicVariables.save(averages)
         return averages
     }
 
@@ -1055,7 +1061,7 @@ final class OpenAPS {
         profile: Profile,
         clock: Date,
         autosens: Autosens?
-    ) async throws -> [IOBItem] {
+    ) async throws -> [IOBEntry] {
         try await scriptExecutor.invoke(
             function: "iob",
             with: IobInput(
@@ -1064,13 +1070,13 @@ final class OpenAPS {
                 clock: clock,
                 autosens: autosens,
             ),
-            as: [IOBItem].self
+            as: [IOBEntry].self
         )
     }
 
     func iobSync(
         clock: Date,
-    ) async throws -> [IOBItem] {
+    ) async throws -> [IOBEntry] {
         let (
             autosens,
             profile,
@@ -1089,7 +1095,7 @@ final class OpenAPS {
                 clock: clock,
                 autosens: autosens
             ),
-            as: [IOBItem].self
+            as: [IOBEntry].self
         )
     }
 
@@ -1146,7 +1152,7 @@ final class OpenAPS {
     private func determineBasal(
         glucose: [GlucoseEntry0],
         currentTemp: TempBasal,
-        iob: [IOBItem],
+        iob: [IOBEntry],
         profile: Profile,
         autosens: Autosens?,
         meal: RecentCarbs,
@@ -1236,14 +1242,16 @@ final class OpenAPS {
     private func middleware(
         glucose: [GlucoseEntry0],
         currentTemp: TempBasal,
-        iob: [IOBItem],
+        iob: [IOBEntry],
         profile: Profile,
         autosens: Autosens?,
         meal: RecentCarbs,
         microBolusAllowed: Bool, // not passed to the middleware function
         reservoir: Double
     ) async throws -> Profile {
-        guard let script = try await middlewareScript(name: OpenAPS.Middleware.determineBasal)?.body else {
+        guard let script = try await middlewareScript(name: OpenAPS.Middleware.determineBasal)?.body,
+              !script.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        else {
             return profile
         }
         return try await scriptExecutor.invoke(
@@ -1266,7 +1274,7 @@ final class OpenAPS {
 
     private func autosisf(
         glucose: [GlucoseEntry0],
-        iob: [IOBItem],
+        iob: [IOBEntry],
         profile: Profile,
         autosens: Autosens?,
         pumpHistory: [PumpHistoryEvent],
@@ -1286,33 +1294,33 @@ final class OpenAPS {
         )
     }
 
-    private func loadFileFromStorageAsync<T: Decodable>(name: String, as _: T.Type) async throws -> T {
-        let raw = await storage.retrieveRawAsync(name) ?? OpenAPS.defaults(for: name)
-
-        do {
-            return try T.decodeFrom(json: raw)
-        } catch {
-            print("failed to decode \(name)")
-            throw error
-        }
-    }
-
-    private func loadFileFromStorageAsyncOpt<T: Decodable>(name: String, as _: T.Type) async throws -> T? {
-        let raw = await storage.retrieveRawAsync(name) ?? OpenAPS.defaults(for: name)
-
-        if raw == "" {
-            return nil
-        }
-        do {
-            return try T.decodeFrom(json: raw)
-        } catch {
-            print("failed to decode \(name)")
-            throw error
-        }
-    }
+//    private func loadFileFromStorageAsync<T: Decodable>(name: String, as _: T.Type) async throws -> T {
+//        let raw = await storage.retrieveRawAsync(name) ?? OpenAPS.defaults(for: name)
+//
+//        do {
+//            return try T.decodeFrom(json: raw)
+//        } catch {
+//            print("failed to decode \(name)")
+//            throw error
+//        }
+//    }
+//
+//    private func loadFileFromStorageAsyncOpt<T: Decodable>(name: String, as _: T.Type) async throws -> T? {
+//        let raw = await storage.retrieveRawAsync(name) ?? OpenAPS.defaults(for: name)
+//
+//        if raw == "" {
+//            return nil
+//        }
+//        do {
+//            return try T.decodeFrom(json: raw)
+//        } catch {
+//            print("failed to decode \(name)")
+//            throw error
+//        }
+//    }
 
     private func middlewareScript(name: String) async throws -> Script? {
-        if let body = storage.retrieveRaw(name) {
+        if let body = storage.middleware.retrieveOpt() {
             return Script(name: "Middleware", body: body)
         }
 

@@ -12,11 +12,11 @@ extension Home {
         @Injected() var announcementStorage: AnnouncementsStorage!
 
         var suggestion: Suggestion? {
-            storage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self)
+            storage.suggested.retrieveOpt()
         }
 
         var dynamicVariables: DynamicVariables? {
-            storage.retrieve(OpenAPS.Monitor.dynamicVariables, as: DynamicVariables.self)
+            storage.dynamicVariables.retrieveOpt()
         }
 
         let overrideStorage = OverrideStorage()
@@ -30,7 +30,7 @@ extension Home {
         }
 
         var enactedSuggestion: Suggestion? {
-            storage.retrieve(OpenAPS.Enact.enacted, as: Suggestion.self)
+            storage.enacted.retrieveOpt()
         }
 
         func iob() async throws -> Decimal? {
@@ -104,27 +104,25 @@ extension Home {
         }
 
         func pumpSettings() -> PumpSettings {
-            storage.retrieve(OpenAPS.Settings.settings, as: PumpSettings.self)
-                ?? (try? PumpSettings.decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.settings)))
-                ?? PumpSettings(insulinActionCurve: 6, maxBolus: 10, maxBasal: 2)
+            storage.pumpSettings.retrieve()
         }
 
         func pumpBattery() -> Battery? {
-            storage.retrieve(OpenAPS.Monitor.battery, as: Battery.self)
+            storage.battery.retrieveOpt()
         }
 
         func pumpReservoir() -> Decimal? {
-            storage.retrieve(OpenAPS.Monitor.reservoir, as: Decimal.self)
+            storage.reservoir.retrieveOpt()
         }
 
         func autotunedBasalProfile() -> [BasalProfileEntry] {
-            storage.retrieve(OpenAPS.Settings.profile, as: Autotune.self)?.basalProfile
-                ?? storage.retrieve(OpenAPS.Settings.pumpProfile, as: Autotune.self)?.basalProfile
+            storage.profile.retrieveOpt()?.basalProfile
+                ?? storage.pumpProfile.retrieveOpt()?.basalProfile
                 ?? [BasalProfileEntry(start: "00:00", minutes: 0, rate: 1)]
         }
 
         func basalProfile() -> [BasalProfileEntry] {
-            storage.retrieve(OpenAPS.Settings.pumpProfile, as: Autotune.self)?.basalProfile
+            storage.pumpProfile.retrieveOpt()?.basalProfile
                 ?? [BasalProfileEntry(start: "00:00", minutes: 0, rate: 1)]
         }
     }

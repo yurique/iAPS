@@ -473,6 +473,7 @@
 		F2159A572BA6239F00A0B716 /* ContactTrickManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2159A562BA6239F00A0B716 /* ContactTrickManager.swift */; };
 		F2159A592BA78B7400A0B716 /* ContactTrickState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2159A582BA78B7400A0B716 /* ContactTrickState.swift */; };
 		F2159A5B2BA7939C00A0B716 /* ContactPicture.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2159A5A2BA7939C00A0B716 /* ContactPicture.swift */; };
+		F23E329C2E569AFB00A7D44D /* EntityStorage.swift in Sources */ = {isa = PBXBuildFile; fileRef = F23E329B2E569AFB00A7D44D /* EntityStorage.swift */; };
 		F270F68D2BAE374C00F6D8DD /* FontTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = F270F68C2BAE374C00F6D8DD /* FontTracking.swift */; };
 		F273F9602DE73ABE00BF0FFC /* IOBTick0.swift in Sources */ = {isa = PBXBuildFile; fileRef = F273F95F2DE73ABE00BF0FFC /* IOBTick0.swift */; };
 		F29646AD2E51FEB9004ADE9D /* Bool+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29646AC2E51FEB9004ADE9D /* Bool+Extensions.swift */; };
@@ -486,7 +487,6 @@
 		F29646C02E52B866004ADE9D /* MiddlewareInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29646BF2E52B866004ADE9D /* MiddlewareInput.swift */; };
 		F29646C22E52BF89004ADE9D /* PrepareProfileInput.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29646C12E52BF89004ADE9D /* PrepareProfileInput.swift */; };
 		F2B551EF2E4E07E500EC1029 /* Profile.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B551EE2E4E07E500EC1029 /* Profile.swift */; };
-		F2B551F32E4E1FD700EC1029 /* IOBItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B551F22E4E1FD700EC1029 /* IOBItem.swift */; };
 		F2B551F52E4E44A400EC1029 /* RecentCarbs.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B551F42E4E44A400EC1029 /* RecentCarbs.swift */; };
 		F2FEE7042D2DB1A000A91BB2 /* BGTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FEE7032D2DB1A000A91BB2 /* BGTextField.swift */; };
 		F5CA3DB1F9DC8B05792BBFAA /* CGMDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9B5C0607505A38F256BF99A /* CGMDataFlow.swift */; };
@@ -1139,6 +1139,7 @@
 		F2159A562BA6239F00A0B716 /* ContactTrickManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTrickManager.swift; sourceTree = "<group>"; };
 		F2159A582BA78B7400A0B716 /* ContactTrickState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTrickState.swift; sourceTree = "<group>"; };
 		F2159A5A2BA7939C00A0B716 /* ContactPicture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactPicture.swift; sourceTree = "<group>"; };
+		F23E329B2E569AFB00A7D44D /* EntityStorage.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = EntityStorage.swift; sourceTree = "<group>"; };
 		F270F68C2BAE374C00F6D8DD /* FontTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontTracking.swift; sourceTree = "<group>"; };
 		F273F95F2DE73ABE00BF0FFC /* IOBTick0.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBTick0.swift; sourceTree = "<group>"; };
 		F29646AC2E51FEB9004ADE9D /* Bool+Extensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Bool+Extensions.swift"; sourceTree = "<group>"; };
@@ -1152,7 +1153,6 @@
 		F29646BF2E52B866004ADE9D /* MiddlewareInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MiddlewareInput.swift; sourceTree = "<group>"; };
 		F29646C12E52BF89004ADE9D /* PrepareProfileInput.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PrepareProfileInput.swift; sourceTree = "<group>"; };
 		F2B551EE2E4E07E500EC1029 /* Profile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Profile.swift; sourceTree = "<group>"; };
-		F2B551F22E4E1FD700EC1029 /* IOBItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBItem.swift; sourceTree = "<group>"; };
 		F2B551F42E4E44A400EC1029 /* RecentCarbs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecentCarbs.swift; sourceTree = "<group>"; };
 		F2FEE7032D2DB1A000A91BB2 /* BGTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BGTextField.swift; sourceTree = "<group>"; };
 		F816825D28DB441200054060 /* HeartBeatManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeartBeatManager.swift; sourceTree = "<group>"; };
@@ -1793,6 +1793,7 @@
 				3811DE9925C9D88300A708ED /* Cache */,
 				38E44529274E40F100EC9A94 /* Disk */,
 				3811DE9D25C9D88300A708ED /* Keychain */,
+				F23E329B2E569AFB00A7D44D /* EntityStorage.swift */,
 			);
 			path = Storage;
 			sourceTree = "<group>";
@@ -2094,7 +2095,6 @@
 				191A9D152BED00A500028D48 /* Version.swift */,
 				F273F95F2DE73ABE00BF0FFC /* IOBTick0.swift */,
 				F2B551EE2E4E07E500EC1029 /* Profile.swift */,
-				F2B551F22E4E1FD700EC1029 /* IOBItem.swift */,
 				F2B551F42E4E44A400EC1029 /* RecentCarbs.swift */,
 				F29646AE2E520D65004ADE9D /* GlucoseEntry0.swift */,
 				F29646B02E528806004ADE9D /* IobInput.swift */,
@@ -3266,7 +3266,6 @@
 				3811DE2225C9D48300A708ED /* MainProvider.swift in Sources */,
 				3811DE0C25C9D32F00A708ED /* BaseProvider.swift in Sources */,
 				19F191E02BE4F98F00F6297E /* SharingStateModel.swift in Sources */,
-				F2B551F32E4E1FD700EC1029 /* IOBItem.swift in Sources */,
 				F29646C22E52BF89004ADE9D /* PrepareProfileInput.swift in Sources */,
 				3811DE5C25C9D4D500A708ED /* Formatters.swift in Sources */,
 				3871F39F25ED895A0013ECB5 /* Decimal+Extensions.swift in Sources */,
@@ -3364,6 +3363,7 @@
 				193CA2DC2E1E743500DF9998 /* FunctionScript.swift in Sources */,
 				2BE9A6FA20875F6F4F9CD461 /* PumpSettingsEditorProvider.swift in Sources */,
 				6B9625766B697D1C98E455A2 /* PumpSettingsEditorStateModel.swift in Sources */,
+				F23E329C2E569AFB00A7D44D /* EntityStorage.swift in Sources */,
 				19A910362A24D6D700C8951B /* Configs.swift in Sources */,
 				A0B8EC8CC5CD1DD237D1BCD2 /* PumpSettingsEditorRootView.swift in Sources */,
 				E06B911A275B5EEA003C04B6 /* Array+Extension.swift in Sources */,

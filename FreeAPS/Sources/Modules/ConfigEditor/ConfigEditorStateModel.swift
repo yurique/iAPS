@@ -3,7 +3,7 @@ import Swinject
 
 extension ConfigEditor {
     final class StateModel: BaseStateModel<Provider> {
-        var file: String = ""
+        var file: ConfigEditorFile = .none
         @Published var configText = ""
 
         override func subscribe() {
