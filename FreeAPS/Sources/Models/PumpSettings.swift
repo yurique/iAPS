@@ -12,9 +12,8 @@ extension PumpSettings {
         case maxBolus
         case maxBasal
     }
-    
+
     static func defaultValue() -> PumpSettings {
         PumpSettings(insulinActionCurve: 6, maxBolus: 10, maxBasal: 2)
     }
-    
 }

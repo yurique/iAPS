@@ -39,6 +39,7 @@ final class OpenAPS {
                         let tempBasal = currentTemp
                         self.storage.tempBasal.save(tempBasal)
 
+                        now = Date.now
                         let (
                             pumpHistory,
                             carbs,

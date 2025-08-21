@@ -6,11 +6,9 @@ struct CarbRatios: JSON {
 }
 
 extension CarbRatios {
-    
     static func defaultValue() -> CarbRatios {
         CarbRatios(units: .grams, schedule: [])
     }
-    
 }
 
 struct CarbRatioEntry: JSON {

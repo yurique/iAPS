@@ -12,7 +12,7 @@ extension BGTargets {
         case userPrefferedUnits = "user_preferred_units"
         case targets
     }
-    
+
     static func defaultValue() -> BGTargets {
         BGTargets(units: .mmolL, userPrefferedUnits: .mmolL, targets: [])
     }

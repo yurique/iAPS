@@ -1,6 +1,5 @@
 import Foundation
 
-
 struct EntityCodec<T> {
     let decode: (String) throws -> T
     let encode: (T) throws -> Data
@@ -73,6 +72,9 @@ class EntityStorage<T>: AnyEntityStorage {
 
     fileprivate let queue: DispatchQueue
 
+    private var dataIsSynchronized = false
+    private var currentData: String?
+
     init(file: String, codec: EntityCodec<T>, readDefaults: Bool = false) {
         self.codec = codec
         self.file = file
@@ -127,28 +129,43 @@ class EntityStorage<T>: AnyEntityStorage {
 
     // read outside the queue
     fileprivate func readData() -> String? {
+        if dataIsSynchronized {
+            return currentData
+        }
+        let retrievedData: String?
         if let data = try? Disk.retrieve(file, from: .documents, as: Data.self) {
-            return String(data: data, encoding: .utf8)
+            retrievedData = String(data: data, encoding: .utf8)
         } else if readDefaults {
             let fallback = OpenAPS.defaults(for: file)
             if fallback != "" {
-                return fallback
+                retrievedData = fallback
+            } else {
+                retrievedData = nil
             }
+        } else {
+            retrievedData = nil
         }
-        return nil
+
+        currentData = retrievedData
+        dataIsSynchronized = true
+
+        return retrievedData
     }
 
     // read outside the queue
     fileprivate func doRetrieve() -> T? {
         guard let data = readData() else { return nil }
-        return try? codec.decode(data)
+        let result = try? codec.decode(data)
+        return result
     }
 
     // save outside the queue
-    fileprivate func doSave(_ value: T) {
+    fileprivate final func doSave(_ value: T) {
         do {
             let data = try codec.encode(value)
             try Disk.save(data, to: .documents, as: file)
+            currentData = String(data: data, encoding: .utf8)
+            dataIsSynchronized = true
         } catch {
             print("failed to save data to \(file): \(error.localizedDescription)")
         }

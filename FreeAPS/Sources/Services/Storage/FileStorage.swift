@@ -3,7 +3,7 @@ import Foundation
 protocol FileStorage {
     func rename(_ name: String, to newName: String)
     func transaction(_ exec: (FileStorage) -> Void)
-    
+
     var bgTargets: EntityStorageWithFallback<BGTargets> { get }
     var pumpSettings: EntityStorageWithFallback<PumpSettings> { get }
     var pumpProfile: EntityStorage<Profile> { get }
@@ -57,11 +57,10 @@ protocol FileStorage {
     var meal: EntityStorage<RecentCarbs> { get }
     var model: EntityStorageWithFallback<String> { get }
     var middleware: EntityStorage<String> { get }
-    
+
     // TODO: these two share the same file 🤔
     var uploadedProfileToDatabase: EntityStorage<DatabaseProfileStore> { get }
     var uploadedProfileToDatabaseNs: EntityStorage<NightscoutProfileStore> { get }
-
 }
 
 final class BaseFileStorage: FileStorage, Injectable {
