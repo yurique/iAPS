@@ -15,14 +15,12 @@ extension PumpConfig {
         }
 
         func basalProfile() -> [BasalProfileEntry] {
-            storage.retrieve(OpenAPS.Settings.pumpProfile, as: Autotune.self)?.basalProfile
+            storage.pumpProfile.retrieveOpt()?.basalProfile
                 ?? [BasalProfileEntry(start: "00:00", minutes: 0, rate: 1)]
         }
 
         func pumpSettings() -> PumpSettings {
-            storage.retrieve(OpenAPS.Settings.settings, as: PumpSettings.self)
-                ?? (try? PumpSettings.decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.settings)))
-                ?? PumpSettings(insulinActionCurve: 6, maxBolus: 10, maxBasal: 2)
+            storage.pumpSettings.retrieve()
         }
 
         var alertNotAck: AnyPublisher<Bool, Never> {

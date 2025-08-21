@@ -243,10 +243,10 @@ extension NightscoutConfig {
                         )
                         // IS THERE A PUMP?
                         guard let pump = self.apsManager.pumpManager else {
-                            self.storage.save(carbratiosProfile, as: OpenAPS.Settings.carbRatios)
-                            self.storage.save(basals, as: OpenAPS.Settings.basalProfile)
-                            self.storage.save(sensitivitiesProfile, as: OpenAPS.Settings.insulinSensitivities)
-                            self.storage.save(targetsProfile, as: OpenAPS.Settings.bgTargets)
+                            self.storage.carbRatios.save(carbratiosProfile)
+                            self.storage.basalProfile.save(basals)
+                            self.storage.insulinSensitivities.save(sensitivitiesProfile)
+                            self.storage.bgTargets.save(targetsProfile)
                             debug(
                                 .service,
                                 "Settings were imported but the Basals couldn't be saved to pump (No pump). Check your basal settings and tap ´Save on Pump´ to sync the new basal settings"
@@ -263,22 +263,22 @@ extension NightscoutConfig {
                         pump.syncBasalRateSchedule(items: syncValues) { result in
                             switch result {
                             case .success:
-                                self.storage.save(basals, as: OpenAPS.Settings.basalProfile)
-                                self.storage.save(carbratiosProfile, as: OpenAPS.Settings.carbRatios)
-                                self.storage.save(sensitivitiesProfile, as: OpenAPS.Settings.insulinSensitivities)
-                                self.storage.save(targetsProfile, as: OpenAPS.Settings.bgTargets)
+                                self.storage.basalProfile.save(basals)
+                                self.storage.carbRatios.save(carbratiosProfile)
+                                self.storage.insulinSensitivities.save(sensitivitiesProfile)
+                                self.storage.bgTargets.save(targetsProfile)
                                 debug(.service, "Settings have been imported and the Basals saved to pump!")
                                 // DIA. Save if changed.
                                 let dia = fetchedProfile.dia
                                 print("dia: " + dia.description)
                                 print("pump dia: " + self.dia.description)
                                 if dia != self.dia, dia >= 0 {
-                                    let file = PumpSettings(
+                                    let settings = PumpSettings(
                                         insulinActionCurve: dia,
                                         maxBolus: self.maxBolus,
                                         maxBasal: self.maxBasal
                                     )
-                                    self.storage.save(file, as: OpenAPS.Settings.settings)
+                                    self.storage.pumpSettings.save(settings)
                                     debug(.nightscout, "DIA setting updated to " + dia.description + " after a NS import.")
                                 }
                                 group.leave()

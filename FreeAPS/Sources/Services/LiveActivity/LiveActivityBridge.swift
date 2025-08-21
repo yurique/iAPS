@@ -221,7 +221,7 @@ final class LiveActivityBridge: Injectable, ObservableObject, SettingsObserver {
         // only do this if there is no current activity or the current activity is older than 1h
         if settings.useLiveActivity {
             if force || currentActivity?.needsRecreation() ?? true,
-               let suggestion = storage.retrieveFile(OpenAPS.Enact.suggested, as: Suggestion.self)
+               let suggestion = storage.suggested.retrieveOpt()
             {
                 suggestionDidUpdate(suggestion)
             }

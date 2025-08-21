@@ -34,9 +34,7 @@ final class BaseContactTrickManager: NSObject, ContactTrickManager, Injectable {
         broadcaster.register(SuggestionObserver.self, observer: self)
         broadcaster.register(SettingsObserver.self, observer: self)
 
-        contacts = storage.retrieve(OpenAPS.Settings.contactTrick, as: [ContactTrickEntry].self)
-            ?? (try? [ContactTrickEntry].decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.contactTrick)))
-            ?? []
+        contacts = storage.contactPictureEntries.retrieve()
 
         knownIds = contacts.compactMap(\.contactId)
 
@@ -74,7 +72,7 @@ final class BaseContactTrickManager: NSObject, ContactTrickManager, Injectable {
             let readings = coreDataStorage.fetchGlucose(interval: DateFilter().twoHours)
             let glucoseValues = glucoseText(readings)
 
-            let suggestion: Suggestion? = storage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self)
+            let suggestion: Suggestion? = storage.suggested.retrieveOpt()
 
             let state = ContactTrickState(
                 glucose: glucoseValues.glucose,
@@ -98,7 +96,7 @@ final class BaseContactTrickManager: NSObject, ContactTrickManager, Injectable {
 
             if forceSave || newContacts != contacts {
                 // when we create new contacts we store the IDs, in that case we need to write into the settings storage
-                storage.save(newContacts, as: OpenAPS.Settings.contactTrick)
+                storage.contactPictureEntries.save(newContacts)
             }
             contacts = newContacts
         }

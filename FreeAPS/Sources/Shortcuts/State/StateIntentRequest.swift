@@ -87,7 +87,7 @@ final class StateIntentRequest: BaseIntentsRequest {
     }
 
     private var suggestion: Suggestion? {
-        fileStorage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self)
+        fileStorage.suggested.retrieveOpt()
     }
 
     private var glucoseFormatter: NumberFormatter {

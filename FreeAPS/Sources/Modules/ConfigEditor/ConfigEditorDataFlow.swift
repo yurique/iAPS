@@ -3,6 +3,6 @@ enum ConfigEditor {
 }
 
 protocol ConfigEditorProvider: Provider {
-    func save(_ value: RawJSON, as file: String)
-    func load(file: String) -> RawJSON
+    func save(_ value: String, as file: ConfigEditorFile)
+    func load(file: ConfigEditorFile) -> String
 }

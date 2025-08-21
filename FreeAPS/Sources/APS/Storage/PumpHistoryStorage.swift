@@ -218,14 +218,12 @@ final class BasePumpHistoryStorage: PumpHistoryStorage, Injectable {
 
     func storeEvents(_ events: [PumpHistoryEvent]) {
         processQueue.async {
-            let file = OpenAPS.Monitor.pumpHistory
             var uniqEvents: [PumpHistoryEvent] = []
             self.storage.transaction { storage in
-                storage.append(events, to: file, uniqBy: \.id)
-                uniqEvents = storage.retrieve(file, as: [PumpHistoryEvent].self)?
+                uniqEvents = storage.pumpHistory.append(events, uniqBy: \.id)
                     .filter { $0.timestamp.addingTimeInterval(1.days.timeInterval) > Date() }
-                    .sorted { $0.timestamp > $1.timestamp } ?? []
-                storage.save(Array(uniqEvents), as: file)
+                    .sorted { $0.timestamp > $1.timestamp }
+                storage.pumpHistory.save(Array(uniqEvents))
             }
             self.broadcaster.notify(PumpHistoryObserver.self, on: self.processQueue) {
                 $0.pumpHistoryDidUpdate(uniqEvents)
@@ -234,17 +232,17 @@ final class BasePumpHistoryStorage: PumpHistoryStorage, Injectable {
     }
 
     func recent() -> [PumpHistoryEvent] {
-        storage.retrieve(OpenAPS.Monitor.pumpHistory, as: [PumpHistoryEvent].self)?.reversed() ?? []
+        storage.pumpHistory.retrieveOrEmpty().reversed()
     }
 
     func deleteInsulin(at date: Date) {
         processQueue.sync {
-            var allValues = storage.retrieve(OpenAPS.Monitor.pumpHistory, as: [PumpHistoryEvent].self) ?? []
+            var allValues = storage.pumpHistory.retrieveOrEmpty()
             guard let entryIndex = allValues.firstIndex(where: { $0.timestamp == date }) else {
                 return
             }
             allValues.remove(at: entryIndex)
-            storage.save(allValues, as: OpenAPS.Monitor.pumpHistory)
+            storage.pumpHistory.save(allValues)
             broadcaster.notify(PumpHistoryObserver.self, on: processQueue) {
                 $0.pumpHistoryDidUpdate(allValues)
             }
@@ -407,7 +405,7 @@ final class BasePumpHistoryStorage: PumpHistoryStorage, Injectable {
             }
         }
 
-        let uploaded = storage.retrieve(OpenAPS.Nightscout.uploadedPumphistory, as: [NigtscoutTreatment].self) ?? []
+        let uploaded = storage.uploadedPumpHistory.retrieve()
 
         let treatments = Array(Set([bolusesAndCarbs, temps, misc].flatMap { $0 }).subtracting(Set(uploaded)))
 

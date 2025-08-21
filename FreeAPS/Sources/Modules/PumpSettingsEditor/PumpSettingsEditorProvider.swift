@@ -13,9 +13,7 @@ extension PumpSettingsEditor {
         @Injected() private var broadcaster: Broadcaster!
 
         func settings() -> PumpSettings {
-            storage.retrieve(OpenAPS.Settings.settings, as: PumpSettings.self)
-                ?? (try? PumpSettings.decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.settings)))
-                ?? PumpSettings(insulinActionCurve: 6, maxBolus: 10, maxBasal: 2)
+            storage.pumpSettings.retrieve()
         }
 
         func isDanaPump() -> Bool {
@@ -28,7 +26,7 @@ extension PumpSettingsEditor {
 
         func save(settings: PumpSettings) -> AnyPublisher<Void, Error> {
             func save(_ settings: PumpSettings) {
-                storage.save(settings, as: OpenAPS.Settings.settings)
+                storage.pumpSettings.save(settings)
                 processQueue.async {
                     self.broadcaster.notify(PumpSettingsObserver.self, on: self.processQueue) {
                         $0.pumpSettingsDidChange(settings)

@@ -5,6 +5,14 @@ struct CarbRatios: JSON {
     let schedule: [CarbRatioEntry]
 }
 
+extension CarbRatios {
+    
+    static func defaultValue() -> CarbRatios {
+        CarbRatios(units: .grams, schedule: [])
+    }
+    
+}
+
 struct CarbRatioEntry: JSON {
     let start: String
     let offset: Int

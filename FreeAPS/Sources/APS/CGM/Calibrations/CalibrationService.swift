@@ -41,13 +41,13 @@ final class BaseCalibrationService: CalibrationService, Injectable {
 
     private(set) var calibrations: [Calibration] = [] {
         didSet {
-            storage.save(calibrations, as: OpenAPS.FreeAPS.calibrations)
+            storage.calibrations.save(calibrations)
         }
     }
 
     init(resolver: Resolver) {
         injectServices(resolver)
-        calibrations = storage.retrieve(OpenAPS.FreeAPS.calibrations, as: [Calibration].self) ?? []
+        calibrations = storage.calibrations.retrieve()
         subscribe()
     }
 

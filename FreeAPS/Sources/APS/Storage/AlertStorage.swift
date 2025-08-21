@@ -31,14 +31,12 @@ final class BaseAlertHistoryStorage: AlertHistoryStorage, Injectable {
 
     func storeAlert(_ alert: AlertEntry) {
         processQueue.sync {
-            let file = OpenAPS.Monitor.alertHistory
             var uniqEvents: [AlertEntry] = []
             self.storage.transaction { storage in
-                storage.append(alert, to: file, uniqBy: \.issuedDate)
-                uniqEvents = storage.retrieve(file, as: [AlertEntry].self)?
+                uniqEvents = storage.alertHistory.append(alert, uniqBy: \.issuedDate)
                     .filter { $0.issuedDate.addingTimeInterval(1.days.timeInterval) > Date() }
-                    .sorted { $0.issuedDate > $1.issuedDate } ?? []
-                storage.save(Array(uniqEvents), as: file)
+                    .sorted { $0.issuedDate > $1.issuedDate }
+                storage.alertHistory.save(Array(uniqEvents))
             }
             alertNotAck.send(self.recentNotAck().isNotEmpty)
             broadcaster.notify(AlertObserver.self, on: processQueue) {
@@ -52,14 +50,14 @@ final class BaseAlertHistoryStorage: AlertHistoryStorage, Injectable {
     }
 
     func recentNotAck() -> [AlertEntry] {
-        storage.retrieve(OpenAPS.Monitor.alertHistory, as: [AlertEntry].self)?
+        storage.alertHistory.retrieveOrEmpty()
             .filter { $0.issuedDate.addingTimeInterval(1.days.timeInterval) > Date() && $0.acknowledgedDate == nil }
-            .sorted { $0.issuedDate > $1.issuedDate } ?? []
+            .sorted { $0.issuedDate > $1.issuedDate }
     }
 
     func ackAlert(_ alert: Date, _ error: String?) {
         processQueue.sync {
-            var allValues = storage.retrieve(OpenAPS.Monitor.alertHistory, as: [AlertEntry].self) ?? []
+            var allValues = storage.alertHistory.retrieveOrEmpty()
             guard let entryIndex = allValues.firstIndex(where: { $0.issuedDate == alert }) else {
                 return
             }
@@ -69,19 +67,19 @@ final class BaseAlertHistoryStorage: AlertHistoryStorage, Injectable {
             } else {
                 allValues[entryIndex].acknowledgedDate = Date()
             }
-            storage.save(allValues, as: OpenAPS.Monitor.alertHistory)
+            storage.alertHistory.save(allValues)
             alertNotAck.send(self.recentNotAck().isNotEmpty)
         }
     }
 
     func deleteAlert(identifier: String) {
         processQueue.sync {
-            var allValues = storage.retrieve(OpenAPS.Monitor.alertHistory, as: [AlertEntry].self) ?? []
+            var allValues = storage.alertHistory.retrieveOrEmpty()
             guard let entryIndex = allValues.firstIndex(where: { $0.alertIdentifier == identifier }) else {
                 return
             }
             allValues.remove(at: entryIndex)
-            storage.save(allValues, as: OpenAPS.Monitor.alertHistory)
+            storage.alertHistory.save(allValues)
             alertNotAck.send(self.recentNotAck().isNotEmpty)
             broadcaster.notify(AlertObserver.self, on: processQueue) {
                 $0.AlertDidUpdate(allValues)
@@ -91,9 +89,9 @@ final class BaseAlertHistoryStorage: AlertHistoryStorage, Injectable {
 
     func forceNotification() {
         processQueue.sync {
-            let uniqEvents = storage.retrieve(OpenAPS.Monitor.alertHistory, as: [AlertEntry].self)?
+            let uniqEvents = storage.alertHistory.retrieveOrEmpty()
                 .filter { $0.issuedDate.addingTimeInterval(1.days.timeInterval) > Date() }
-                .sorted { $0.issuedDate > $1.issuedDate } ?? []
+                .sorted { $0.issuedDate > $1.issuedDate }
             alertNotAck.send(self.recentNotAck().isNotEmpty)
             broadcaster.notify(AlertObserver.self, on: processQueue) {
                 $0.AlertDidUpdate(uniqEvents)

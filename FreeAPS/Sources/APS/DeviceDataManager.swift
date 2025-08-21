@@ -349,7 +349,7 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
             string: batteryPercent >= 10 ? .normal : .low,
             display: pumpManager.status.pumpBatteryChargeRemaining != nil
         )
-        storage.save(battery, as: OpenAPS.Monitor.battery)
+        storage.battery.save(battery)
         broadcaster.notify(PumpBatteryObserver.self, on: processQueue) {
             $0.pumpBatteryDidChange(battery)
         }
@@ -362,7 +362,7 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
             // TODO: find the value Pod.maximumReservoirReading
             let reservoir = Decimal(reservoirVal) > 50.0 ? 0xDEAD_BEEF : reservoirVal
 
-            storage.save(Decimal(reservoir), as: OpenAPS.Monitor.reservoir)
+            storage.reservoir.save(Decimal(reservoir))
             broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
                 $0.pumpReservoirDidChange(Decimal(reservoir))
             }
@@ -385,7 +385,7 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
             pumpExpiresAtDate.send(endTime)
 
             if let startTime = omnipod.state.podState?.activatedAt {
-                storage.save(startTime, as: OpenAPS.Monitor.podAge)
+                storage.podAge.save(startTime)
             }
         }
 
@@ -394,7 +394,7 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
             // TODO: find the value Pod.maximumReservoirReading
             let reservoir = Decimal(reservoirVal) > 50.0 ? 0xDEAD_BEEF : reservoirVal
 
-            storage.save(Decimal(reservoir), as: OpenAPS.Monitor.reservoir)
+            storage.reservoir.save(Decimal(reservoir))
             broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
                 $0.pumpReservoirDidChange(Decimal(reservoir))
             }
@@ -418,7 +418,7 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
             pumpExpiresAtDate.send(endTime)
 
             if let startTime = omnipodBLE.state.podState?.activatedAt {
-                storage.save(startTime, as: OpenAPS.Monitor.podAge)
+                storage.podAge.save(startTime)
             }
         }
     }
@@ -467,7 +467,7 @@ extension BaseDeviceDataManager: PumpManagerDelegate {
     ) {
         dispatchPrecondition(condition: .onQueue(processQueue))
         debug(.deviceManager, "Reservoir Value \(units), at: \(date)")
-        storage.save(Decimal(units), as: OpenAPS.Monitor.reservoir)
+        storage.reservoir.save(Decimal(units))
         broadcaster.notify(PumpReservoirObserver.self, on: processQueue) {
             $0.pumpReservoirDidChange(Decimal(units))
         }

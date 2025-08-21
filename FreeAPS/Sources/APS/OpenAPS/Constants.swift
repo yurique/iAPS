@@ -44,7 +44,7 @@ extension OpenAPS {
         static let autosense = "settings/autosense.json"
         static let profile = "settings/profile.json"
         static let pumpProfile = "settings/pumpprofile.json"
-        static let settings = "settings/settings.json"
+        static let pumpSettings = "settings/settings.json"
         static let bgTargets = "settings/bg_targets.json"
         static let insulinSensitivities = "settings/insulin_sensitivities.json"
         static let basalProfile = "settings/basal_profile.json"

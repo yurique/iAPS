@@ -415,11 +415,11 @@ final class BaseWatchManager: NSObject, WatchManager, Injectable {
     }
 
     private var suggestion: Suggestion? {
-        storage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self)
+        storage.suggested.retrieveOpt()
     }
 
     private var enactedSuggestion: Suggestion? {
-        storage.retrieve(OpenAPS.Enact.enacted, as: Suggestion.self)
+        storage.enacted.retrieveOpt()
     }
 }
 

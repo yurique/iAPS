@@ -54,7 +54,7 @@ extension Dynamic {
 
         func saveIfChanged() {
             if !unChanged {
-                var newSettings = storage.retrieve(OpenAPS.Settings.preferences, as: Preferences.self) ?? Preferences()
+                var newSettings = storage.preferences.retrieve()
                 newSettings.enableDynamicCR = enableDynamicCR
                 newSettings.adjustmentFactor = adjustmentFactor
                 newSettings.sigmoid = sigmoid
@@ -62,7 +62,7 @@ extension Dynamic {
                 newSettings.useNewFormula = useNewFormula
                 newSettings.weightPercentage = weightPercentage
                 newSettings.timestamp = Date()
-                storage.save(newSettings, as: OpenAPS.Settings.preferences)
+                storage.preferences.save(newSettings)
             }
         }
 

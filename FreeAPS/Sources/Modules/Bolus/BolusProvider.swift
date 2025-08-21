@@ -8,13 +8,11 @@ extension Bolus {
         let coreDataStorage = CoreDataStorage()
 
         var suggestion: Suggestion? {
-            storage.retrieve(OpenAPS.Enact.suggested, as: Suggestion.self)
+            storage.suggested.retrieveOpt()
         }
 
         func pumpSettings() -> PumpSettings {
-            storage.retrieve(OpenAPS.Settings.settings, as: PumpSettings.self)
-                ?? (try? PumpSettings.decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.settings)))
-                ?? PumpSettings(insulinActionCurve: 6, maxBolus: 10, maxBasal: 2)
+            storage.pumpSettings.retrieve()
         }
 
         func fetchGlucose() -> [Readings] {

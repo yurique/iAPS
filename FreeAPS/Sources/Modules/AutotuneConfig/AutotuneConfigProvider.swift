@@ -5,7 +5,8 @@ extension AutotuneConfig {
         @Injected() private var apsManager: APSManager!
 
         var autotune: Autotune? {
-            storage.retrieve(OpenAPS.Settings.autotune, as: Autotune.self)
+            guard let profile = storage.autotune.retrieveOpt() else { return nil }
+            return Autotune.from(profile: profile)
         }
 
         func runAutotune() -> AnyPublisher<Autotune?, Never> {
@@ -13,13 +14,11 @@ extension AutotuneConfig {
         }
 
         func deleteAutotune() {
-            storage.remove(OpenAPS.Settings.autotune)
+            storage.autotune.remove()
         }
 
         var profile: [BasalProfileEntry] {
-            storage.retrieve(OpenAPS.Settings.basalProfile, as: [BasalProfileEntry].self)
-                ?? (try? [BasalProfileEntry].decodeFrom(json: OpenAPS.defaults(for: OpenAPS.Settings.basalProfile)))
-                ?? []
+            storage.basalProfile.retrieveOpt() ?? []
         }
     }
 }

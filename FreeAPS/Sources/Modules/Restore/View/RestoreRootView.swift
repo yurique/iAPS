@@ -70,7 +70,7 @@ extension Restore {
 
         private func importOpenAPSOnly() {
             if let preferences = openAPS {
-                state.saveFile(preferences, filename: OpenAPS.Settings.preferences)
+                state.saveFile(preferences, { $0.preferences })
                 debug(.service, "Imported OpenAPS Settings have been saved to file storage.")
             }
         }

@@ -418,11 +418,13 @@ extension Home {
                 self.data.tempBasals = self.provider.pumpHistory(hours: self.filteredHours).filter {
                     $0.type == .tempBasal || $0.type == .tempBasalDuration
                 }
+                print("self.data.tempBasals: \(self.data.tempBasals.count)")
                 let lastTempBasal = Array(self.data.tempBasals.suffix(2))
                 guard lastTempBasal.count == 2 else {
                     self.tempRate = nil
                     return
                 }
+                print("lastTempBasal: \(lastTempBasal)")
 
                 guard let lastRate = lastTempBasal[0].rate, let lastDuration = lastTempBasal[1].durationMin else {
                     self.tempRate = nil

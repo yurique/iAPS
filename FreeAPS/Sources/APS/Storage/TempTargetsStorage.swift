@@ -42,17 +42,16 @@ final class BaseTempTargetsStorage: TempTargetsStorage, Injectable {
                 }
             }
 
-            let file = isPresets ? OpenAPS.FreeAPS.tempTargetsPresets : OpenAPS.Settings.tempTargets
+            let tempTargetStorage = isPresets ? self.storage.tempTargetPresets : self.storage.tempTargets
             var uniqEvents: [TempTarget] = []
-            self.storage.transaction { storage in
-                storage.append(targets, to: file, uniqBy: \.createdAt)
-                uniqEvents = storage.retrieve(file, as: [TempTarget].self)?
+            self.storage.transaction { _ in
+                uniqEvents = tempTargetStorage.append(targets, uniqBy: \.createdAt)
                     .filter {
                         guard !isPresets else { return true }
                         return $0.createdAt.addingTimeInterval(1.days.timeInterval) > Date()
                     }
-                    .sorted { $0.createdAt > $1.createdAt } ?? []
-                storage.save(Array(uniqEvents), as: file)
+                    .sorted { $0.createdAt > $1.createdAt }
+                tempTargetStorage.save(Array(uniqEvents))
             }
             broadcaster.notify(TempTargetsObserver.self, on: processQueue) {
                 $0.tempTargetsDidUpdate(uniqEvents)
@@ -65,7 +64,7 @@ final class BaseTempTargetsStorage: TempTargetsStorage, Injectable {
     }
 
     func recent() -> [TempTarget] {
-        storage.retrieve(OpenAPS.Settings.tempTargets, as: [TempTarget].self)?.reversed() ?? []
+        storage.tempTargets.retrieveOrEmpty().reversed()
     }
 
     func current() -> TempTarget? {
@@ -83,7 +82,7 @@ final class BaseTempTargetsStorage: TempTargetsStorage, Injectable {
     }
 
     func nightscoutTretmentsNotUploaded() -> [NigtscoutTreatment] {
-        let uploaded = storage.retrieve(OpenAPS.Nightscout.uploadedTempTargets, as: [NigtscoutTreatment].self) ?? []
+        let uploaded = storage.uploadedTempTargets.retrieve()
 
         let eventsManual = recent().filter { $0.enteredBy == TempTarget.manual }
         let treatments = eventsManual.map {
@@ -108,12 +107,12 @@ final class BaseTempTargetsStorage: TempTargetsStorage, Injectable {
     }
 
     func storePresets(_ targets: [TempTarget]) {
-        storage.remove(OpenAPS.FreeAPS.tempTargetsPresets)
+        storage.tempTargetPresets.remove()
 
         storeTempTargets(targets, isPresets: true)
     }
 
     func presets() -> [TempTarget] {
-        storage.retrieve(OpenAPS.FreeAPS.tempTargetsPresets, as: [TempTarget].self)?.reversed() ?? []
+        storage.tempTargetPresets.retrieveOrEmpty().reversed()
     }
 }
