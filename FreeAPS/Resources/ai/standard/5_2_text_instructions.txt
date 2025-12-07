@@ -1,0 +1,3 @@
+Provide detailed nutrition information for "(query)".
+
+If multiple foods match the query, provide information for the most common one. Use standard serving sizes as described above.

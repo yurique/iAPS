@@ -51,31 +51,59 @@ struct FoodItemCard: View {
 
                 // Portionsinformationen (immer sichtbar)
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Portion: \(foodItem.portionEstimate)")
-                        .font(.subheadline)
-
-                    if let usdaSize = foodItem.usdaServingSize {
-                        Text("USDA Standard: \(usdaSize)")
+                    HStack {
+                        Text("Portion: ")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Text(foodItem.portionEstimate)
                             .font(.caption)
                     }
 
+                    if let servingSize = foodItem.standardServingSize {
+                        HStack {
+                            Text("Serving size:")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text(servingSize)
+                                .font(.caption)
+                        }
+                    }
+
                     if foodItem.servingMultiplier != 1.0 {
-                        Text("Multiplicator: \(foodItem.servingMultiplier, specifier: "%.1f")x")
-                            .font(.caption)
+                        HStack {
+                            Text("Number of servings:")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("\(foodItem.servingMultiplier, specifier: "%.1f")")
+                                .font(.caption)
+                        }
                     }
                 }
                 .foregroundColor(.secondary)
 
                 HStack(spacing: 8) {
-                    NutritionBadge(value: foodItem.carbohydrates, unit: "g", label: "KH", color: .orange)
+                    NutritionBadge(value: foodItem.carbohydrates, unit: "g", label: "Carbs", color: .orange)
 
                     if let protein = foodItem.protein, protein > 0 {
-                        NutritionBadge(value: protein, unit: "g", label: "P", color: .green)
+                        NutritionBadge(value: protein, unit: "g", label: "Protein", color: .green)
                     }
 
                     if let fat = foodItem.fat, fat > 0 {
-                        NutritionBadge(value: fat, unit: "g", label: "F", color: .blue)
+                        NutritionBadge(value: fat, unit: "g", label: "Fat", color: .blue)
                     }
+                }
+
+                if let standardName = foodItem.servingsStandard {
+                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+                        Image(systemName: "text.alignleft")
+                            .font(.footnote)
+                            .foregroundColor(.secondary)
+                        Text(standardName)
+                            .font(.footnote)
+                            .italic()
+                            .foregroundColor(.secondary)
+                    }
+                    .padding(.top, 2)
                 }
             }
 

@@ -1,3 +1,4 @@
+import Foundation
 import SwiftUI
 
 /// Simple secure field that uses proper SwiftUI components
@@ -10,12 +11,12 @@ struct StableSecureField: View {
         if isSecure {
             SecureField(placeholder, text: $text)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                .autocapitalization(.none)
+                .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
         } else {
             TextField(placeholder, text: $text)
                 .textFieldStyle(RoundedBorderTextFieldStyle())
-                .autocapitalization(.none)
+                .textInputAutocapitalization(.never)
                 .autocorrectionDisabled()
         }
     }
@@ -24,13 +25,12 @@ struct StableSecureField: View {
 /// Settings view for configuring AI food analysis
 struct AISettingsView: View {
     @ObservedObject private var aiService = ConfigurableAIService.shared
-    @Environment(\.presentationMode) var presentationMode
+    @Environment(\.dismiss) private var dismiss
+
     @State private var claudeKey: String = ""
-    @State private var claudeQuery: String = ""
     @State private var openAIKey: String = ""
-    @State private var openAIQuery: String = ""
     @State private var googleGeminiKey: String = ""
-    @State private var googleGeminiQuery: String = ""
+
     @State private var showingAPIKeyAlert = false
 
     // API Key visibility toggles - start with keys hidden (secure)
@@ -38,44 +38,85 @@ struct AISettingsView: View {
     @State private var showOpenAIKey: Bool = false
     @State private var showGoogleGeminiKey: Bool = false
 
-    // Feature flag for Advanced Dosing Recommendations - MIT @AppStorage
-    @AppStorage("advancedDosingRecommendationsEnabled") private var advancedDosingRecommendationsEnabled: Bool = UserDefaults
-        .standard.advancedDosingRecommendationsEnabled
+    @AppStorage(UserDefaults.AIKey.openAIVersion.rawValue) private var openAIVersion: UserDefaults.OpenAIVersion = .gpt4o
 
-    // GPT-5 feature flag - MIT @AppStorage
-    @AppStorage("useGPT5ForOpenAI") private var useGPT5ForOpenAI: Bool = UserDefaults.standard.useGPT5ForOpenAI
+    @State private var preferredLanguage: String = ""
+    @State private var preferredRegion: String = ""
+    @State private var overrideLocalization: Bool = false
 
-    init() {
-        _claudeKey = State(initialValue: ConfigurableAIService.shared.getAPIKey(for: .claude) ?? "")
-        _claudeQuery = State(initialValue: ConfigurableAIService.shared.getQuery(for: .claude) ?? "")
-        _openAIKey = State(initialValue: ConfigurableAIService.shared.getAPIKey(for: .openAI) ?? "")
-        _openAIQuery = State(initialValue: ConfigurableAIService.shared.getQuery(for: .openAI) ?? "")
-        _googleGeminiKey = State(initialValue: ConfigurableAIService.shared.getAPIKey(for: .googleGemini) ?? "")
-        _googleGeminiQuery = State(initialValue: ConfigurableAIService.shared.getQuery(for: .googleGemini) ?? "")
+    @State private var languageOptionsState: [(code: String, name: String)] = []
+    @State private var regionOptionsState: [(code: String, name: String)] = []
+
+    private func initializeLanguageIfNeeded() {
+        if preferredLanguage.isEmpty {
+            // Use first preferred language's code if available
+            if let first = Locale.preferredLanguages.first {
+                let loc = Locale(identifier: first)
+                if let lang = loc.language.languageCode?.identifier {
+                    preferredLanguage = lang
+                }
+            } else if let lang = Locale.current.language.languageCode?.identifier {
+                preferredLanguage = lang
+            }
+        }
+    }
+
+    private func initializeRegionIfNeeded() {
+        if preferredRegion.isEmpty {
+            if let region = Locale.current.region?.identifier {
+                preferredRegion = region
+            } else if let regionCode = (Locale.current as NSLocale).object(forKey: .countryCode) as? String {
+                preferredRegion = regionCode
+            }
+        }
+    }
+
+    private func buildLanguageOptions() {
+        let codes = Set(Locale.LanguageCode.isoLanguageCodes.map(\.identifier))
+        let locale = Locale.current
+        var items: [(String, String)] = [("", "Default")]
+        let mapped = codes.compactMap { code -> (String, String)? in
+            let id = Locale.identifier(fromComponents: [NSLocale.Key.languageCode.rawValue: code])
+            let display = locale.localizedString(forLanguageCode: code) ?? Locale(identifier: id)
+                .localizedString(forLanguageCode: code) ?? code
+            return (code, display)
+        }
+        .sorted { $0.1.localizedCaseInsensitiveCompare($1.1) == .orderedAscending }
+        items.append(contentsOf: mapped)
+        languageOptionsState = items
+    }
+
+    private func buildRegionOptions() {
+        let codes = Set(Locale.Region.isoRegions.map(\.identifier))
+        let locale = Locale.current
+        var items: [(String, String)] = [("", "Default")]
+        let mapped = codes.compactMap { code -> (String, String)? in
+            let display = locale.localizedString(forRegionCode: code) ?? code
+            return (code, display)
+        }
+        .sorted { $0.1.localizedCaseInsensitiveCompare($1.1) == .orderedAscending }
+        items.append(contentsOf: mapped)
+        regionOptionsState = items
+    }
+
+    private func displayName(for code: String, in options: [(code: String, name: String)]) -> String {
+        options.first(where: { $0.code == code })?.name ?? "Default"
+    }
+
+    init() {}
+
+    func readPersistedValues() {
+        claudeKey = ConfigurableAIService.shared.getAPIKey(for: .claude) ?? ""
+        openAIKey = ConfigurableAIService.shared.getAPIKey(for: .openAI) ?? ""
+        googleGeminiKey = ConfigurableAIService.shared.getAPIKey(for: .googleGemini) ?? ""
+
+        preferredLanguage = UserDefaults.standard.userPreferredLanguageForAI ?? ""
+        preferredRegion = UserDefaults.standard.userPreferredRegionForAI ?? ""
     }
 
     var body: some View {
-        NavigationView {
+        NavigationStack {
             Form {
-                // GPT-5 Feature Section - Only show when OpenAI is selected for AI Image Analysis
-                if aiService.aiImageSearchProvider.rawValue.contains("OpenAI") {
-                    Section(
-                        header: Text("OpenAI GPT-5 (Latest)"),
-
-                        footer: Text(
-                            "Enable GPT-5, GPT-5-mini, and GPT-5-nano models for OpenAI analysis. Standard Quality uses GPT-5, Fast Mode uses GPT-5-nano for ultra-fast analysis. GPT-5 takes longer to perform analysis but these are the latest models with some improvements in health advisory accuracy. Fallback to GPT-4o if unavailable."
-                        )
-                    ) {
-                        Toggle("Use GPT-5 Models", isOn: $useGPT5ForOpenAI)
-                            .onChange(of: useGPT5ForOpenAI) {
-                                // Trigger view refresh to update Analysis Mode descriptions
-                                aiService.objectWillChange.send()
-                            }
-                    }
-                }
-
-                // Only show configuration sections if feature is enabled
-
                 Section(
                     header: Text("Food Search Provider Configuration"),
 
@@ -148,42 +189,37 @@ struct AISettingsView: View {
                             }
                         }
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text("AI Prompt for Enhanced Results")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-
-                                Spacer()
-
-                                Menu("Examples") {
-                                    Button("Default Query") {
-                                        claudeQuery =
-                                            "Analyze this food image for diabetes management. Describe exactly what you see in detail: colors, textures, cooking methods, plate type, utensils, and food arrangement. Identify each food item with specific preparation details, estimate precise portion sizes using visual references, and provide carbohydrates, protein, fat, and calories for each component. Focus on accurate carbohydrate estimation for insulin dosing."
-                                    }
-
-                                    Button("Detailed Visual Analysis") {
-                                        claudeQuery =
-                                            "Provide extremely detailed visual analysis of this food image. Describe every element you can see: food colors, textures, cooking methods (grilled marks, browning, steaming), plate type and size, utensils present, garnishes, sauces, cooking oils visible, food arrangement, and background elements. Use these visual details to estimate precise portion sizes and calculate accurate nutrition values for diabetes management."
-                                    }
-
-                                    Button("Diabetes Focus") {
-                                        claudeQuery =
-                                            "Focus specifically on carbohydrate analysis for Type 1 diabetes management. Identify all carb sources, estimate absorption timing, and provide detailed carb counts with confidence levels."
-                                    }
-
-                                    Button("Macro Tracking") {
-                                        claudeQuery =
-                                            "Provide complete macronutrient analysis with detailed portion reasoning. For each food component, describe the visual cues you're using for portion estimation: compare to visible objects (fork, plate, hand), note cooking methods affecting nutrition (oils, preparation style), explain food quality indicators (ripeness, doneness), and provide comprehensive nutrition breakdown with your confidence level for each estimate."
-                                    }
-                                }
-                                .font(.caption)
-                            }
-
-                            TextEditor(text: $claudeQuery)
-                                .frame(minHeight: 80)
-                                .border(Color.secondary.opacity(0.3), width: 0.5)
-                        }
+//                        VStack(alignment: .leading, spacing: 4) {
+//                            NavigationLink(destination: ModelQueryEditor(
+//                                title: "Claude Prompt",
+//                                loadText: { ConfigurableAIService.shared.getQuery(for: .claude) ?? "" },
+//                                saveText: { updated in aiService.setQuery(updated, for: .claude) },
+//                                examples: [
+//                                    NSLocalizedString("Default Query", comment: "One of Claude Example queries"):
+//                                        "Analyze this food image for diabetes management. Describe exactly what you see in detail: colors, textures, cooking methods, plate type, utensils, and food arrangement. Identify each food item with specific preparation details, estimate precise portion sizes using visual references, and provide carbohydrates, protein, fat, and calories for each component. Focus on accurate carbohydrate estimation for insulin dosing.",
+//                                    NSLocalizedString("Detailed Visual Analysis", comment: "One of Claude Example queries"):
+//                                        "Provide extremely detailed visual analysis of this food image. Describe every element you can see: food colors, textures, cooking methods (grilled marks, browning, steaming), plate type and size, utensils present, garnishes, sauces, cooking oils visible, food arrangement, and background elements. Use these visual details to estimate precise portion sizes and calculate accurate nutrition values for diabetes management.",
+//                                    NSLocalizedString(
+//                                        "Diabetes Focus",
+//                                        comment: "One of Claude Example queries"
+//                                    ):
+//                                        "Focus specifically on carbohydrate analysis for Type 1 diabetes management. Identify all carb sources, estimate absorption timing, and provide detailed carb counts with confidence levels.",
+//                                    NSLocalizedString(
+//                                        "Macro Tracking",
+//                                        comment: "One of Claude Example queries"
+//                                    ):
+//                                        "Provide complete macronutrient analysis with detailed portion reasoning. For each food component, describe the visual cues you're using for portion estimation: compare to visible objects (fork, plate, hand), note cooking methods affecting nutrition (oils, preparation style), explain food quality indicators (ripeness, doneness), and provide comprehensive nutrition breakdown with your confidence level for each estimate."
+//                                ]
+//                            )) {
+//                                Text("Edit Prompt")
+//                                    .foregroundColor(.blue)
+//                                    .padding(.vertical, 8)
+//                                    .cornerRadius(8)
+//                                    .frame(maxWidth: .infinity, alignment: .leading)
+//                            }
+//                            .buttonStyle(.plain)
+//                            .padding(.top, 4)
+//                        }
                     }
                 }
 
@@ -218,42 +254,34 @@ struct AISettingsView: View {
                             }
                         }
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text("AI Prompt for Enhanced Results")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-
-                                Spacer()
-
-                                Menu("Examples") {
-                                    Button("Default Query") {
-                                        googleGeminiQuery =
-                                            "Analyze this food image for diabetes management. Describe exactly what you see in detail: colors, textures, cooking methods, plate type, utensils, and food arrangement. Identify each food item with specific preparation details, estimate precise portion sizes using visual references, and provide carbohydrates, protein, fat, and calories for each component. Focus on accurate carbohydrate estimation for insulin dosing."
-                                    }
-
-                                    Button("Detailed Visual Analysis") {
-                                        googleGeminiQuery =
-                                            "Provide extremely detailed visual analysis of this food image. Describe every element you can see: food colors, textures, cooking methods (grilled marks, browning, steaming), plate type and size, utensils present, garnishes, sauces, cooking oils visible, food arrangement, and background elements. Use these visual details to estimate precise portion sizes and calculate accurate nutrition values for diabetes management."
-                                    }
-
-                                    Button("Diabetes Focus") {
-                                        googleGeminiQuery =
-                                            "Identify all food items in this image with focus on carbohydrate content for diabetes management. Provide detailed carb counts for each component and total meal carbohydrates."
-                                    }
-
-                                    Button("Macro Tracking") {
-                                        googleGeminiQuery =
-                                            "Break down this meal into individual components with complete macronutrient profiles (carbs, protein, fat, calories) per item and combined totals."
-                                    }
-                                }
-                                .font(.caption)
-                            }
-
-                            TextEditor(text: $googleGeminiQuery)
-                                .frame(minHeight: 80)
-                                .border(Color.secondary.opacity(0.3), width: 0.5)
-                        }
+//                        VStack(alignment: .leading, spacing: 4) {
+//                            NavigationLink(destination: ModelQueryEditor(
+//                                title: "Google Gemini Prompt",
+//                                loadText: { ConfigurableAIService.shared.getQuery(for: .googleGemini) ?? "" },
+//                                saveText: { updated in aiService.setQuery(updated, for: .googleGemini) },
+//                                examples: [
+//                                    NSLocalizedString("Default Query", comment: "One of Google Gemini example queries"):
+//                                        "Analyze this food image for diabetes management. Describe exactly what you see in detail: colors, textures, cooking methods, plate type, utensils, and food arrangement. Identify each food item with specific preparation details, estimate precise portion sizes using visual references, and provide carbohydrates, protein, fat, and calories for each component. Focus on accurate carbohydrate estimation for insulin dosing.",
+//                                    NSLocalizedString(
+//                                        "Detailed Visual Analysis",
+//                                        comment: "One of Google Gemini example queries"
+//                                    ):
+//                                        "Provide extremely detailed visual analysis of this food image. Describe every element you can see: food colors, textures, cooking methods (grilled marks, browning, steaming), plate type and size, utensils present, garnishes, sauces, cooking oils visible, food arrangement, and background elements. Use these visual details to estimate precise portion sizes and calculate accurate nutrition values for diabetes management.",
+//                                    NSLocalizedString("Diabetes Focus", comment: "One of Google Gemini example queries"):
+//                                        "Identify all food items in this image with focus on carbohydrate content for diabetes management. Provide detailed carb counts for each component and total meal carbohydrates.",
+//                                    NSLocalizedString("Macro Tracking", comment: "One of Google Gemini example queries"):
+//                                        "Break down this meal into individual components with complete macronutrient profiles (carbs, protein, fat, calories) per item and combined totals."
+//                                ]
+//                            )) {
+//                                Text("Edit Prompt")
+//                                    .foregroundColor(.blue)
+//                                    .padding(.vertical, 8)
+//                                    .cornerRadius(8)
+//                                    .frame(maxWidth: .infinity, alignment: .leading)
+//                            }
+//                            .buttonStyle(.plain)
+//                            .padding(.top, 4)
+//                        }
                     }
                 }
 
@@ -286,43 +314,103 @@ struct AISettingsView: View {
                                     isSecure: !showOpenAIKey
                                 )
                             }
-                        }
 
-                        VStack(alignment: .leading, spacing: 4) {
-                            HStack {
-                                Text("AI Prompt for Enhanced Results")
-                                    .font(.caption)
-                                    .foregroundColor(.secondary)
-
-                                Spacer()
-
-                                Menu("Examples") {
-                                    Button("Default Query") {
-                                        openAIQuery =
-                                            "Analyze this food image for diabetes management. Describe exactly what you see in detail: colors, textures, cooking methods, plate type, utensils, and food arrangement. Identify each food item with specific preparation details, estimate precise portion sizes using visual references, and provide carbohydrates, protein, fat, and calories for each component. Focus on accurate carbohydrate estimation for insulin dosing."
-                                    }
-
-                                    Button("Detailed Visual Analysis") {
-                                        openAIQuery =
-                                            "Provide extremely detailed visual analysis of this food image. Describe every element you can see: food colors, textures, cooking methods (grilled marks, browning, steaming), plate type and size, utensils present, garnishes, sauces, cooking oils visible, food arrangement, and background elements. Use these visual details to estimate precise portion sizes and calculate accurate nutrition values for diabetes management."
-                                    }
-
-                                    Button("Diabetes Focus") {
-                                        openAIQuery =
-                                            "Identify all food items in this image with focus on carbohydrate content for diabetes management. Provide detailed carb counts for each component and total meal carbohydrates."
-                                    }
-
-                                    Button("Macro Tracking") {
-                                        openAIQuery =
-                                            "Break down this meal into individual components with complete macronutrient profiles (carbs, protein, fat, calories) per item and combined totals."
+                            Section(
+                                header: Text("OpenAI Model Version"),
+                                footer: Text(
+                                    "Choose which OpenAI model family to prefer. This affects which OpenAI models are selected in analysis and may change cost, speed, and accuracy."
+                                )
+                            ) {
+                                Picker("OpenAI Version", selection: $openAIVersion) {
+                                    ForEach(
+                                        [
+                                            UserDefaults.OpenAIVersion.gpt4o,
+                                            UserDefaults.OpenAIVersion.gpt5_0,
+                                            UserDefaults.OpenAIVersion.gpt5_1
+                                        ],
+                                        id: \.self
+                                    ) { version in
+                                        Text(version.rawValue).tag(version)
                                     }
                                 }
-                                .font(.caption)
+                                .pickerStyle(MenuPickerStyle())
                             }
+                        }
 
-                            TextEditor(text: $openAIQuery)
-                                .frame(minHeight: 80)
-                                .border(Color.secondary.opacity(0.3), width: 0.5)
+//                        VStack(alignment: .leading, spacing: 4) {
+//                            NavigationLink(destination: ModelQueryEditor(
+//                                title: "OpenAI Prompt",
+//                                loadText: { ConfigurableAIService.shared.getQuery(for: .openAI) ?? "" },
+//                                saveText: { updated in aiService.setQuery(updated, for: .openAI) },
+//                                examples: [
+//                                    NSLocalizedString("Default Query", comment: "One of Example Prompts for OpenAI"):
+//                                        "Analyze this food image for diabetes management. Describe exactly what you see in detail: colors, textures, cooking methods, plate type, utensils, and food arrangement. Identify each food item with specific preparation details, estimate precise portion sizes using visual references, and provide carbohydrates, protein, fat, and calories for each component. Focus on accurate carbohydrate estimation for insulin dosing.",
+//                                    NSLocalizedString("Detailed Visual Analysis", comment: "One of Example Prompts for OpenAI"):
+//                                        "Provide extremely detailed visual analysis of this food image. Describe every element you can see: food colors, textures, cooking methods (grilled marks, browning, steaming), plate type and size, utensils present, garnishes, sauces, cooking oils visible, food arrangement, and background elements. Use these visual details to estimate precise portion sizes and calculate accurate nutrition values for diabetes management.",
+//                                    NSLocalizedString("Diabetes Focus", comment: "One of Example Prompts for OpenAI"):
+//                                        "Identify all food items in this image with focus on carbohydrate content for diabetes management. Provide detailed carb counts for each component and total meal carbohydrates.",
+//                                    NSLocalizedString("Macro Tracking", comment: "One of Example Prompts for OpenAI"):
+//                                        "Break down this meal into individual components with complete macronutrient profiles (carbs, protein, fat, calories) per item and combined totals."
+//                                ]
+//                            )) {
+//                                Text("Edit Prompt")
+//                                    .foregroundColor(.blue)
+//                                    .padding(.vertical, 8)
+//                                    .cornerRadius(8)
+//                                    .frame(maxWidth: .infinity, alignment: .leading)
+//                            }
+//                            .buttonStyle(.plain)
+//                            .padding(.top, 4)
+//                        }
+                    }
+                }
+
+                Section(
+                    header: Text("Localization Overrides"),
+                    footer: Text(
+                        "Choose a specific language and/or region for AI output. Select 'System Default' to avoid overriding your device settings."
+                    )
+                ) {
+                    Toggle("Override Localization", isOn: $overrideLocalization)
+                        .onChange(of: overrideLocalization) { _, newValue in
+                            if newValue {
+                                initializeLanguageIfNeeded()
+                                initializeRegionIfNeeded()
+                            } else {
+                                preferredLanguage = ""
+                                preferredRegion = ""
+                            }
+                        }
+
+                    if overrideLocalization {
+                        NavigationLink {
+                            OptionSelectionView(
+                                title: "Preferred Language",
+                                options: languageOptionsState,
+                                selection: $preferredLanguage
+                            )
+                        } label: {
+                            HStack {
+                                Text("Preferred Language")
+                                Spacer()
+                                Text(displayName(for: preferredLanguage, in: languageOptionsState))
+                                    .foregroundColor(.secondary)
+                            }
+                        }
+
+                        NavigationLink {
+                            OptionSelectionView(
+                                title: "Preferred Region",
+                                options: regionOptionsState,
+                                selection: $preferredRegion
+                            )
+                        } label: {
+                            HStack {
+                                Text("Preferred Region")
+                                Spacer()
+                                Text(displayName(for: preferredRegion, in: regionOptionsState))
+                                    .foregroundColor(.secondary)
+                            }
                         }
                     }
                 }
@@ -426,20 +514,35 @@ struct AISettingsView: View {
                     .foregroundColor(.secondary)
                 }
             }
+            .toolbar {
+                ToolbarItem(placement: .confirmationAction) {
+                    Button {
+                        saveSettings()
+                    } label: {
+                        HStack {
+                            Text("Save")
+                        }
+                    }
+                }
+                ToolbarItem(placement: .cancellationAction) {
+                    Button {
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Text("Cancel")
+                        }
+                    }
+                }
+            }
         }
         .navigationBarBackButtonHidden(true)
         .navigationTitle("Food Search Settings")
         .navigationBarTitleDisplayMode(.inline)
-        .toolbar {
-            ToolbarItem(placement: .topBarLeading) {
-                Button {
-                    saveSettings()
-                } label: {
-                    HStack {
-                        Image(systemName: "chevron.backward")
-                    }
-                }
-            }
+        .onAppear {
+            readPersistedValues()
+            overrideLocalization = (!preferredLanguage.isEmpty || !preferredRegion.isEmpty)
+            buildLanguageOptions()
+            buildRegionOptions()
         }
         .alert("API Key Required", isPresented: $showingAPIKeyAlert) {
             Button("OK") {}
@@ -459,7 +562,7 @@ struct AISettingsView: View {
                     Text(mode.displayName).tag(mode)
                 }
             }
-            .pickerStyle(SegmentedPickerStyle())
+            .pickerStyle(.segmented)
 
             currentModeDetails
             modelInformation
@@ -531,14 +634,15 @@ struct AISettingsView: View {
         aiService.setAPIKey(claudeKey, for: .claude)
         aiService.setAPIKey(openAIKey, for: .openAI)
         aiService.setAPIKey(googleGeminiKey, for: .googleGemini)
-        aiService.setQuery(claudeQuery, for: .claude)
-        aiService.setQuery(openAIQuery, for: .openAI)
-        aiService.setQuery(googleGeminiQuery, for: .googleGemini)
+
+        // Persist localization overrides
+        UserDefaults.standard.userPreferredLanguageForAI = preferredLanguage.isEmpty ? nil : preferredLanguage
+        UserDefaults.standard.userPreferredRegionForAI = preferredRegion.isEmpty ? nil : preferredRegion
 
         // Feature flags werden automatisch durch @AppStorage gespeichert!
 
         // Dismiss the settings view
-        presentationMode.wrappedValue.dismiss()
+        dismiss()
     }
 
     private func getBindingForSearchType(_ searchType: SearchType) -> Binding<SearchProvider> {
@@ -548,7 +652,7 @@ struct AISettingsView: View {
                 get: { aiService.textSearchProvider },
                 set: { newValue in
                     aiService.textSearchProvider = newValue
-                    UserDefaults.standard.textSearchProvider = newValue.rawValue
+                    UserDefaults.standard.textSearchProvider = newValue
                 }
             )
         case .barcodeSearch:
@@ -556,7 +660,7 @@ struct AISettingsView: View {
                 get: { aiService.barcodeSearchProvider },
                 set: { newValue in
                     aiService.barcodeSearchProvider = newValue
-                    UserDefaults.standard.barcodeSearchProvider = newValue.rawValue
+                    UserDefaults.standard.barcodeSearchProvider = newValue
                 }
             )
         case .aiImageSearch:
@@ -564,10 +668,47 @@ struct AISettingsView: View {
                 get: { aiService.aiImageSearchProvider },
                 set: { newValue in
                     aiService.aiImageSearchProvider = newValue
-                    UserDefaults.standard.aiImageProvider = newValue.rawValue
+                    UserDefaults.standard.aiImageProvider = newValue
                 }
             )
         }
+    }
+}
+
+private struct OptionSelectionView: View {
+    let title: String
+    let options: [(code: String, name: String)]
+    @Binding var selection: String
+    @Environment(\.dismiss) private var dismiss
+    @State private var searchText: String = ""
+
+    private var filteredOptions: [(code: String, name: String)] {
+        let q = searchText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if q.isEmpty { return options }
+        return options.filter { $0.name.localizedCaseInsensitiveContains(q) || $0.code.localizedCaseInsensitiveContains(q) }
+    }
+
+    var body: some View {
+        List {
+            ForEach(filteredOptions, id: \.code) { item in
+                Button {
+                    selection = item.code
+                    dismiss()
+                } label: {
+                    HStack {
+                        Text(item.name)
+                            .foregroundColor(.primary)
+                        Spacer()
+                        if selection == item.code {
+                            Image(systemName: "checkmark")
+                                .foregroundColor(.accentColor)
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle(title)
+        .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
     }
 }
 

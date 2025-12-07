@@ -1,0 +1,4 @@
+FIRST: Determine if this image shows:
+1. ACTUAL FOOD ON A PLATE, PLATTER, or CONTAINER (analyze portions and proceed with portion analysis)
+2. MENU TEXT (identify language, translate food names, provide standard serving estimates as described above)
+3. RECIPE TEXT (assume and provide serving estimates as described above)

@@ -451,11 +451,15 @@
 		F2159A572BA6239F00A0B716 /* ContactTrickManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2159A562BA6239F00A0B716 /* ContactTrickManager.swift */; };
 		F2159A592BA78B7400A0B716 /* ContactTrickState.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2159A582BA78B7400A0B716 /* ContactTrickState.swift */; };
 		F2159A5B2BA7939C00A0B716 /* ContactPicture.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2159A5A2BA7939C00A0B716 /* ContactPicture.swift */; };
+		F222E4D62EE6023B00C2CFA3 /* AnalysisRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = F222E4D52EE6023B00C2CFA3 /* AnalysisRequest.swift */; };
 		F226D4F12E5E0B1400F8F43C /* LoopKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F226D4EF2E5E0B1400F8F43C /* LoopKit.framework */; };
 		F226D4F22E5E0B1400F8F43C /* LoopKit.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F226D4EF2E5E0B1400F8F43C /* LoopKit.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F226D4F32E5E0B1400F8F43C /* LoopKitUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = F226D4F02E5E0B1400F8F43C /* LoopKitUI.framework */; };
 		F226D4F42E5E0B1400F8F43C /* LoopKitUI.framework in Embed Frameworks */ = {isa = PBXBuildFile; fileRef = F226D4F02E5E0B1400F8F43C /* LoopKitUI.framework */; settings = {ATTRIBUTES = (CodeSignOnCopy, RemoveHeadersOnCopy, ); }; };
 		F227E1FD2E76515C0076BADA /* NotificationExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F227E1FC2E76515C0076BADA /* NotificationExtensions.swift */; };
+		F24EB2912EE5B6A100C981A2 /* FoodAnalysisItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24EB2902EE5B6A100C981A2 /* FoodAnalysisItem.swift */; };
+		F24EB2942EE5B8B100C981A2 /* AIFoodAnalysisResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24EB2932EE5B8B100C981A2 /* AIFoodAnalysisResult.swift */; };
+		F24EB2962EE5B8F300C981A2 /* AIFoodAnalysisError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24EB2952EE5B8F300C981A2 /* AIFoodAnalysisError.swift */; };
 		F270F68D2BAE374C00F6D8DD /* FontTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = F270F68C2BAE374C00F6D8DD /* FontTracking.swift */; };
 		F273F9602DE73ABE00BF0FFC /* IOBTick0.swift in Sources */ = {isa = PBXBuildFile; fileRef = F273F95F2DE73ABE00BF0FFC /* IOBTick0.swift */; };
 		F281B4A22ECF9087007185A9 /* LabelPlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F281B4A12ECF9087007185A9 /* LabelPlacement.swift */; };
@@ -464,6 +468,11 @@
 		F2941FA52E787FCC00A9DD5D /* AppGroupCGMSettingsViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2941FA42E787FCC00A9DD5D /* AppGroupCGMSettingsViewController.swift */; };
 		F2941FA72E78806800A9DD5D /* AppGroupCGMSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2941FA62E78806800A9DD5D /* AppGroupCGMSettingsView.swift */; };
 		F2941FA92E78823C00A9DD5D /* AppGroupCGMPlugin.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2941FA82E78823C00A9DD5D /* AppGroupCGMPlugin.swift */; };
+		F29E5E352EE4711D00D2CBC0 /* OpenAIFoodAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29E5E342EE4711D00D2CBC0 /* OpenAIFoodAnalysisService.swift */; };
+		F29E5E372EE4724300D2CBC0 /* GoogleGeminiFoodAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29E5E362EE4724300D2CBC0 /* GoogleGeminiFoodAnalysisService.swift */; };
+		F29E5E392EE4726A00D2CBC0 /* ClaudeFoodAnalysisService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29E5E382EE4726A00D2CBC0 /* ClaudeFoodAnalysisService.swift */; };
+		F29E5E3B2EE473F500D2CBC0 /* USDAFoodDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29E5E3A2EE473F500D2CBC0 /* USDAFoodDataService.swift */; };
+		F29E5E532EE493A400D2CBC0 /* ai in Resources */ = {isa = PBXBuildFile; fileRef = F29E5E522EE4939A00D2CBC0 /* ai */; };
 		F29FC35D2E7F670000DC04FE /* CoreDataStorageGlucoseSaver.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29FC35C2E7F670000DC04FE /* CoreDataStorageGlucoseSaver.swift */; };
 		F29FC35F2E7F6EF800DC04FE /* DateExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F29FC35E2E7F6EF800DC04FE /* DateExtensions.swift */; };
 		F2A4B7922E64985F000E0E85 /* PluiginManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A4B7912E64985F000E0E85 /* PluiginManager.swift */; };
@@ -476,6 +485,7 @@
 		F2C73D642EB6603900B700AB /* MainChartConfigProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C73D632EB6603900B700AB /* MainChartConfigProvider.swift */; };
 		F2C73D662EB6604500B700AB /* MainChartConfigStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C73D652EB6604500B700AB /* MainChartConfigStateModel.swift */; };
 		F2C73D682EB8022C00B700AB /* CalculatedGeometries.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C73D672EB8022C00B700AB /* CalculatedGeometries.swift */; };
+		F2D361002EE21D83004CC6B1 /* ModelQueryEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2D360FF2EE21D83004CC6B1 /* ModelQueryEditor.swift */; };
 		F2EE83BF2E739AD200D7177E /* CalendarShareRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2EE83BE2E739AD200D7177E /* CalendarShareRootView.swift */; };
 		F2EE83C12E739AE500D7177E /* CalendarShareDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2EE83C02E739AE500D7177E /* CalendarShareDataFlow.swift */; };
 		F2EE83C32E739AF200D7177E /* CalendarShareProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2EE83C22E739AF200D7177E /* CalendarShareProvider.swift */; };
@@ -1109,6 +1119,7 @@
 		F2159A562BA6239F00A0B716 /* ContactTrickManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTrickManager.swift; sourceTree = "<group>"; };
 		F2159A582BA78B7400A0B716 /* ContactTrickState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactTrickState.swift; sourceTree = "<group>"; };
 		F2159A5A2BA7939C00A0B716 /* ContactPicture.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContactPicture.swift; sourceTree = "<group>"; };
+		F222E4D52EE6023B00C2CFA3 /* AnalysisRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalysisRequest.swift; sourceTree = "<group>"; };
 		F226D4EF2E5E0B1400F8F43C /* LoopKit.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKit.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F226D4F02E5E0B1400F8F43C /* LoopKitUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LoopKitUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F226D4F82E5E109100F8F43C /* LibreTransmitter.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LibreTransmitter.framework; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -1116,6 +1127,9 @@
 		F226D4FE2E5E111300F8F43C /* LibreTransmitter.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LibreTransmitter.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F226D4FF2E5E111300F8F43C /* LibreTransmitterUI.framework */ = {isa = PBXFileReference; explicitFileType = wrapper.framework; path = LibreTransmitterUI.framework; sourceTree = BUILT_PRODUCTS_DIR; };
 		F227E1FC2E76515C0076BADA /* NotificationExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NotificationExtensions.swift; sourceTree = "<group>"; };
+		F24EB2902EE5B6A100C981A2 /* FoodAnalysisItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodAnalysisItem.swift; sourceTree = "<group>"; };
+		F24EB2932EE5B8B100C981A2 /* AIFoodAnalysisResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIFoodAnalysisResult.swift; sourceTree = "<group>"; };
+		F24EB2952EE5B8F300C981A2 /* AIFoodAnalysisError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIFoodAnalysisError.swift; sourceTree = "<group>"; };
 		F270F68C2BAE374C00F6D8DD /* FontTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontTracking.swift; sourceTree = "<group>"; };
 		F273F95F2DE73ABE00BF0FFC /* IOBTick0.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBTick0.swift; sourceTree = "<group>"; };
 		F281B4A12ECF9087007185A9 /* LabelPlacement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelPlacement.swift; sourceTree = "<group>"; };
@@ -1124,6 +1138,11 @@
 		F2941FA42E787FCC00A9DD5D /* AppGroupCGMSettingsViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupCGMSettingsViewController.swift; sourceTree = "<group>"; };
 		F2941FA62E78806800A9DD5D /* AppGroupCGMSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupCGMSettingsView.swift; sourceTree = "<group>"; };
 		F2941FA82E78823C00A9DD5D /* AppGroupCGMPlugin.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupCGMPlugin.swift; sourceTree = "<group>"; };
+		F29E5E342EE4711D00D2CBC0 /* OpenAIFoodAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OpenAIFoodAnalysisService.swift; sourceTree = "<group>"; };
+		F29E5E362EE4724300D2CBC0 /* GoogleGeminiFoodAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GoogleGeminiFoodAnalysisService.swift; sourceTree = "<group>"; };
+		F29E5E382EE4726A00D2CBC0 /* ClaudeFoodAnalysisService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ClaudeFoodAnalysisService.swift; sourceTree = "<group>"; };
+		F29E5E3A2EE473F500D2CBC0 /* USDAFoodDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = USDAFoodDataService.swift; sourceTree = "<group>"; };
+		F29E5E522EE4939A00D2CBC0 /* ai */ = {isa = PBXFileReference; lastKnownFileType = folder; path = ai; sourceTree = "<group>"; };
 		F29FC35C2E7F670000DC04FE /* CoreDataStorageGlucoseSaver.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataStorageGlucoseSaver.swift; sourceTree = "<group>"; };
 		F29FC35E2E7F6EF800DC04FE /* DateExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DateExtensions.swift; sourceTree = "<group>"; };
 		F2A4B7912E64985F000E0E85 /* PluiginManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PluiginManager.swift; sourceTree = "<group>"; };
@@ -1136,6 +1155,7 @@
 		F2C73D632EB6603900B700AB /* MainChartConfigProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainChartConfigProvider.swift; sourceTree = "<group>"; };
 		F2C73D652EB6604500B700AB /* MainChartConfigStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainChartConfigStateModel.swift; sourceTree = "<group>"; };
 		F2C73D672EB8022C00B700AB /* CalculatedGeometries.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatedGeometries.swift; sourceTree = "<group>"; };
+		F2D360FF2EE21D83004CC6B1 /* ModelQueryEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelQueryEditor.swift; sourceTree = "<group>"; };
 		F2EE83BE2E739AD200D7177E /* CalendarShareRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarShareRootView.swift; sourceTree = "<group>"; };
 		F2EE83C02E739AE500D7177E /* CalendarShareDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarShareDataFlow.swift; sourceTree = "<group>"; };
 		F2EE83C22E739AF200D7177E /* CalendarShareProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalendarShareProvider.swift; sourceTree = "<group>"; };
@@ -1462,6 +1482,10 @@
 				19C3C7232E97AE520000BE4D /* FoodSearchStateModel.swift */,
 				19C3C7242E97AE520000BE4D /* OpenFoodFactsSearchResponse.swift */,
 				19C3C7252E97AE520000BE4D /* UserDefaults+Loop.swift */,
+				F24EB2902EE5B6A100C981A2 /* FoodAnalysisItem.swift */,
+				F24EB2932EE5B8B100C981A2 /* AIFoodAnalysisResult.swift */,
+				F24EB2952EE5B8F300C981A2 /* AIFoodAnalysisError.swift */,
+				F222E4D52EE6023B00C2CFA3 /* AnalysisRequest.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -1474,6 +1498,10 @@
 				19C3C7292E97AE520000BE4D /* FoodSearchRouter.swift */,
 				19C3C72A2E97AE520000BE4D /* FoodSearchService.swift */,
 				19C3C72B2E97AE520000BE4D /* OpenFoodFactsService.swift */,
+				F29E5E342EE4711D00D2CBC0 /* OpenAIFoodAnalysisService.swift */,
+				F29E5E362EE4724300D2CBC0 /* GoogleGeminiFoodAnalysisService.swift */,
+				F29E5E382EE4726A00D2CBC0 /* ClaudeFoodAnalysisService.swift */,
+				F29E5E3A2EE473F500D2CBC0 /* USDAFoodDataService.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -1856,6 +1884,7 @@
 				388E596425AD948E0019842D /* Info.plist */,
 				388E596E25AD96040019842D /* javascript */,
 				388E597125AD9CF10019842D /* json */,
+				F29E5E522EE4939A00D2CBC0 /* ai */,
 			);
 			path = Resources;
 			sourceTree = "<group>";
@@ -2411,6 +2440,7 @@
 				19C3C7412E97AE7B0000BE4D /* FoodSearchResultsView.swift */,
 				19C3C7422E97AE7B0000BE4D /* FoodSearchView.swift */,
 				19C3C7432E97AE7B0000BE4D /* SelectedFoodView.swift */,
+				F2D360FF2EE21D83004CC6B1 /* ModelQueryEditor.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -3087,6 +3117,7 @@
 				38DF178E27733E6800B3528F /* Assets.xcassets in Resources */,
 				19DA48E829CD339B00EEA1E7 /* Assets.xcassets in Resources */,
 				1972ECF52DC25CC4002DD59B /* AppShortcuts.strings in Resources */,
+				F29E5E532EE493A400D2CBC0 /* ai in Resources */,
 				388E596F25AD96040019842D /* javascript in Resources */,
 				B9CAAEFC2AE70836000F68BC /* branch.txt in Resources */,
 				1927C8E62744606D00347C69 /* InfoPlist.strings in Resources */,
@@ -3210,6 +3241,7 @@
 				38D0B3B625EBE24900CB6E88 /* Battery.swift in Sources */,
 				38C4D33725E9A1A300D30B77 /* DispatchQueue+Extensions.swift in Sources */,
 				F90692CF274B999A0037068D /* HealthKitDataFlow.swift in Sources */,
+				F29E5E352EE4711D00D2CBC0 /* OpenAIFoodAnalysisService.swift in Sources */,
 				CE7CA3552A064973004BE681 /* ListStateIntent.swift in Sources */,
 				190141362CDB9D4B00ABD925 /* Token.swift in Sources */,
 				19F191DE2BE4F97F00F6297E /* SharingProvider.swift in Sources */,
@@ -3283,10 +3315,12 @@
 				1947541C2D470F0500A89AD1 /* SuspendResumeShortcut.swift in Sources */,
 				19D466A729AA2C22004D5F33 /* FPUConfigStateModel.swift in Sources */,
 				38E44528274E401C00EC9A94 /* Protected.swift in Sources */,
+				F24EB2942EE5B8B100C981A2 /* AIFoodAnalysisResult.swift in Sources */,
 				3811DEB625C9D88300A708ED /* UnlockManager.swift in Sources */,
 				E00EEC0827368630002FF094 /* NetworkAssembly.swift in Sources */,
 				1920BF5D2B9DF53200E861FE /* BolusShortcut.swift in Sources */,
 				38A13D3225E28B4B00EAA382 /* PumpHistoryEvent.swift in Sources */,
+				F29E5E392EE4726A00D2CBC0 /* ClaudeFoodAnalysisService.swift in Sources */,
 				E00EEC0627368630002FF094 /* UIAssembly.swift in Sources */,
 				1901412F2CDB92F200ABD925 /* RestoreProvider.swift in Sources */,
 				3811DE1825C9D40400A708ED /* Router.swift in Sources */,
@@ -3311,6 +3345,7 @@
 				E00EEC0727368630002FF094 /* APSAssembly.swift in Sources */,
 				38B4F3AF25E2979F00E76A18 /* IndexedCollection.swift in Sources */,
 				F2EE83C72E73A04200D7177E /* KnownPlugins.swift in Sources */,
+				F29E5E3B2EE473F500D2CBC0 /* USDAFoodDataService.swift in Sources */,
 				3811DEAE25C9D88300A708ED /* Cache.swift in Sources */,
 				383420D625FFE38C002D46C1 /* LoopView.swift in Sources */,
 				3811DEAD25C9D88300A708ED /* UserDefaults+Cache.swift in Sources */,
@@ -3385,6 +3420,7 @@
 				F2159A522BA60F7A00A0B716 /* FontWeight.swift in Sources */,
 				CE2FAD3A297D93F0001A872C /* BloodGlucoseExtensions.swift in Sources */,
 				38E4453A274E411700EC9A94 /* Disk+[UIImage].swift in Sources */,
+				F24EB2962EE5B8F300C981A2 /* AIFoodAnalysisError.swift in Sources */,
 				F2941FA72E78806800A9DD5D /* AppGroupCGMSettingsView.swift in Sources */,
 				72F1BD388F42FCA6C52E4500 /* ConfigEditorProvider.swift in Sources */,
 				E39E418C56A5A46B61D960EE /* ConfigEditorStateModel.swift in Sources */,
@@ -3456,6 +3492,7 @@
 				198F67B62CFCBD5D00E538CB /* AutoISFDataFlow.swift in Sources */,
 				CA370FC152BC98B3D1832968 /* BasalProfileEditorRootView.swift in Sources */,
 				195D80BB2AF6980B00D25097 /* DynamicStateModel.swift in Sources */,
+				F24EB2912EE5B6A100C981A2 /* FoodAnalysisItem.swift in Sources */,
 				F2941FA52E787FCC00A9DD5D /* AppGroupCGMSettingsViewController.swift in Sources */,
 				E00EEC0327368630002FF094 /* ServiceAssembly.swift in Sources */,
 				38192E07261BA9960094D973 /* FetchTreatmentsManager.swift in Sources */,
@@ -3491,6 +3528,7 @@
 				F2A4B7C32E6C8CA7000E0E85 /* CGMManagerExtensions.swift in Sources */,
 				A228DF96647338139F152B15 /* PreferencesEditorDataFlow.swift in Sources */,
 				19229B962AFBB84800CD91CA /* Predictions.swift in Sources */,
+				F222E4D62EE6023B00C2CFA3 /* AnalysisRequest.swift in Sources */,
 				389ECE052601144100D86C4F /* ConcurrentMap.swift in Sources */,
 				CE7CA3562A064973004BE681 /* StateIntentRequest.swift in Sources */,
 				E4984C5262A90469788754BB /* PreferencesEditorProvider.swift in Sources */,
@@ -3527,6 +3565,7 @@
 				19C3C72D2E97AE520000BE4D /* AIFoodItem+Extensions.swift in Sources */,
 				19C3C72E2E97AE520000BE4D /* FoodItem.swift in Sources */,
 				19C3C72F2E97AE520000BE4D /* AIAnalysisResultsView.swift in Sources */,
+				F2D361002EE21D83004CC6B1 /* ModelQueryEditor.swift in Sources */,
 				19C3C7302E97AE520000BE4D /* FoodSearchStateModel.swift in Sources */,
 				19C3C7312E97AE520000BE4D /* BarcodeScannerService.swift in Sources */,
 				19C3C7322E97AE520000BE4D /* FoodSearchRouter.swift in Sources */,
@@ -3550,6 +3589,7 @@
 				FEFFA7A22929FE49007B8193 /* UIDevice+Extensions.swift in Sources */,
 				F90692D3274B9A130037068D /* AppleHealthKitRootView.swift in Sources */,
 				3862CC1F273FDC9200BF832C /* CalibrationsChart.swift in Sources */,
+				F29E5E372EE4724300D2CBC0 /* GoogleGeminiFoodAnalysisService.swift in Sources */,
 				19E1F7EC29D082FE005C8D20 /* IconConfigStateModel.swift in Sources */,
 				194C32772B93A9BF0016FB2A /* OverrideShortcuts.swift in Sources */,
 				196809E52D4702AD00BA566F /* TempBasalShortcut.swift in Sources */,

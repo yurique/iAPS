@@ -8,11 +8,9 @@ struct NutritionSummaryBadge: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            Text("\(value, specifier: "%.0f")")
+            Text("\(value, specifier: "%.0f")\(NSLocalizedString(unit, comment: ""))")
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(color)
-            Text(NSLocalizedString(unit, comment: ""))
-                .font(.system(size: 10))
             Text(NSLocalizedString(label, comment: ""))
                 .font(.system(size: 10, weight: .medium))
                 .multilineTextAlignment(.center)

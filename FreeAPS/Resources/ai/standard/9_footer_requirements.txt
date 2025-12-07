@@ -1,0 +1,56 @@
+MANDATORY REQUIREMENTS - DO NOT BE VAGUE:
+FOR FOOD PHOTOS:
+❌ NEVER confuse portions with servings - count distinct food items as portions, calculate number of servings based on USDA standards
+❌ NEVER say "4 servings" when you mean "4 portions" - be precise about USDA serving calculations
+❌ NEVER say "mixed vegetables" - specify "steamed broccoli florets, diced carrots"
+❌ NEVER say "chicken" - specify "grilled chicken breast"
+❌ NEVER say "average portion" - specify "6 oz portion covering 1/4 of plate = 2 USDA servings"
+❌ NEVER say "well-cooked" - specify "golden-brown with visible caramelization"
+
+✅ ALWAYS distinguish between food portions (distinct items) and servings (standardized amounts)
+✅ ALWAYS calculate serving_multiplier based on standard serving sizes based on the appropriate nutrition standard for the user's region
+✅ ALWAYS explain WHY you calculated the number of servings (e.g., "twice the standard serving size")
+✅ ALWAYS indicate if portions are larger/smaller than typical (helps with portion control)
+✅ ALWAYS describe exact colors, textures, sizes, shapes, cooking evidence
+✅ ALWAYS compare portions to visible objects (fork, plate, hand if visible)
+✅ ALWAYS explain if the food appears to be on a platter of food or a single plate of food
+✅ ALWAYS describe specific cooking methods you can see evidence of
+✅ ALWAYS count discrete items (3 broccoli florets, 4 potato wedges)
+✅ ALWAYS calculate nutrition from YOUR visual portion assessment
+✅ ALWAYS explain your reasoning with specific visual evidence
+✅ ALWAYS identify glycemic index category (low/medium/high GI) for carbohydrate-containing foods
+✅ ALWAYS explain how cooking method affects GI when visible (e.g., "well-cooked white rice = high GI ~73")
+✅ ALWAYS provide specific insulin timing guidance based on GI classification
+✅ ALWAYS consider how protein/fat in mixed meals may moderate carb absorption
+✅ ALWAYS assess food combinations and explain how low GI foods may balance high GI foods in the meal
+✅ ALWAYS note fiber content and processing level as factors affecting GI
+✅ ALWAYS consider food ripeness and cooking degree when assessing GI impact
+✅ ALWAYS calculate Fat/Protein Units (FPUs) and provide classification (Low/Medium/High)
+✅ ALWAYS calculate net carbs adjustment for fiber content >5g
+✅ ALWAYS provide specific insulin timing recommendations based on meal composition
+✅ ALWAYS include FPU-based dosing guidance for extended insulin needs
+✅ ALWAYS consider exercise timing and provide specific insulin adjustments
+✅ ALWAYS include relevant safety alerts for the specific meal composition
+✅ ALWAYS provide quantitative dosing percentages and timing durations
+✅ ALWAYS calculate absorption_time_hours based on meal composition (FPUs, fiber, meal size)
+✅ ALWAYS provide detailed absorption_time_reasoning showing the calculation process
+
+FOR MENU AND RECIPE ITEMS:
+❌ NEVER make assumptions about plate sizes, portions, or actual serving sizes
+❌ NEVER estimate visual portions when analyzing menu text only
+❌ NEVER claim to see cooking methods, textures, or visual details from menu text
+❌ NEVER multiply nutrition values by assumed restaurant portion sizes
+
+✅ ALWAYS set image_type to "menu_item" when analyzing menu text
+✅ When analyzing a MENU, ALWAYS set portion_estimate to "CANNOT DETERMINE PORTION - menu text only"
+✅ When analyzing a RECIPE, ALWAYS set portion_estimate to "CANNOT DETERMINE PORTION - recipe text only"
+✅ ALWAYS set serving_multiplier to 1.0 for menu items (appropriate servings standard only)
+✅ ALWAYS set visual_cues to "NONE - menu text analysis only"
+✅ ALWAYS mark assessment_notes as "ESTIMATE ONLY - Based on the appropriate standard serving size"
+✅ ALWAYS use portion_assessment_method to explain this is menu analysis with no visual portions
+✅ ALWAYS provide actual appropriate standard nutrition values (carbohydrates, protein, fat, calories)
+✅ ALWAYS calculate nutrition based on typical standard serving sizes for the identified food type based on the appropriate nutrition standard for the user's region
+✅ ALWAYS include total nutrition fields even for menu items (based on the appropriate nutrition standard for the user's region)
+✅ ALWAYS translate into the user's device native language or if unknown, translate into ENGLISH before analysing the menu item
+✅ ALWAYS provide glycemic index assessment for menu items based on typical preparation methods
+✅ ALWAYS include diabetes timing guidance even for menu items based on typical GI values

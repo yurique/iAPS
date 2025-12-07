@@ -265,7 +265,7 @@ struct AICameraView: View {
 
         // Check if AI service is configured
         let aiService = ConfigurableAIService.shared
-        guard aiService.isConfigured else {
+        guard aiService.isImageAnalysisConfigured else {
             analysisError = "AI service not configured. Please check settings."
             showingErrorAlert = true
             return

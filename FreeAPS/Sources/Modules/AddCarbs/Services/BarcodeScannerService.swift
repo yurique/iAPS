@@ -968,7 +968,7 @@ class BarcodeScannerService: NSObject, ObservableObject {
         }
 
         // Prioritize traditional barcodes over QR codes when both are present
-        UserDefaults.standard.barcodeSearchProvider = "OpenFoodFacts"
+        UserDefaults.standard.barcodeSearchProvider = .openFoodFacts
 
         let bestBarcode = selectBestBarcode(from: validBarcodes)
         guard let selectedBarcode = bestBarcode else {
