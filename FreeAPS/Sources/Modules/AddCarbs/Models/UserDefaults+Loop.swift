@@ -21,9 +21,9 @@ extension UserDefaults {
         case textSearchProvider = "com.loopkit.Loop.textSearchProvider"
         case barcodeSearchProvider = "com.loopkit.Loop.barcodeSearchProvider"
         case aiImageProvider = "com.loopkit.Loop.aiImageProvider"
-        case analysisMode = "com.loopkit.Loop.analysisMode"
-        case advancedDosingRecommendationsEnabled = "com.loopkit.Loop.advancedDosingRecommendationsEnabled"
-        case openAIVersion = "com.loopkit.Loop.OpenAIVersion"
+//        case analysisMode = "com.loopkit.Loop.analysisMode"
+//        case advancedDosingRecommendationsEnabled = "com.loopkit.Loop.advancedDosingRecommendationsEnabled"
+//        case openAIVersion = "com.loopkit.Loop.OpenAIVersion"
         case preferredLanguage = "com.loopkit.Loop.AIPreferredLanguage"
         case preferredRegion = "com.loopkit.Loop.AIPreferredRegion"
     }
@@ -306,12 +306,12 @@ extension UserDefaults {
 //        }
 //    }
 
-    var textSearchProvider: SearchProvider {
+    var textSearchProvider: TextSearchProvider {
         get {
             if let str = string(forKey: AIKey.textSearchProvider.rawValue) {
-                return SearchProvider(rawValue: str) ?? .usdaFoodData
+                return TextSearchProvider(rawValue: str) ?? .defaultProvider
             } else {
-                return .usdaFoodData
+                return .defaultProvider
             }
         }
         set {
@@ -319,12 +319,12 @@ extension UserDefaults {
         }
     }
 
-    var barcodeSearchProvider: SearchProvider {
+    var barcodeSearchProvider: BarcodeSearchProvider {
         get {
             if let str = string(forKey: AIKey.barcodeSearchProvider.rawValue) {
-                return SearchProvider(rawValue: str) ?? .openFoodFacts
+                return BarcodeSearchProvider(rawValue: str) ?? .defaultProvider
             } else {
-                return .openFoodFacts
+                return .defaultProvider
             }
         }
         set {
@@ -332,12 +332,12 @@ extension UserDefaults {
         }
     }
 
-    var aiImageProvider: SearchProvider {
+    var aiImageProvider: ImageSearchProvider {
         get {
             if let str = string(forKey: AIKey.aiImageProvider.rawValue) {
-                return SearchProvider(rawValue: str) ?? .openAI
+                return ImageSearchProvider(rawValue: str) ?? .defaultProvider
             } else {
-                return .openAI
+                return .defaultProvider
             }
         }
         set {
@@ -345,36 +345,36 @@ extension UserDefaults {
         }
     }
 
-    var analysisMode: String {
-        get {
-            string(forKey: AIKey.analysisMode.rawValue) ?? "standard"
-        }
-        set {
-            set(newValue, forKey: AIKey.analysisMode.rawValue)
-        }
-    }
+//    var analysisMode: String {
+//        get {
+//            string(forKey: AIKey.analysisMode.rawValue) ?? "standard"
+//        }
+//        set {
+//            set(newValue, forKey: AIKey.analysisMode.rawValue)
+//        }
+//    }
 
-    var advancedDosingRecommendationsEnabled: Bool {
-        get {
-            bool(forKey: AIKey.advancedDosingRecommendationsEnabled.rawValue)
-        }
-        set {
-            set(newValue, forKey: AIKey.advancedDosingRecommendationsEnabled.rawValue)
-        }
-    }
+//    var advancedDosingRecommendationsEnabled: Bool {
+//        get {
+//            bool(forKey: AIKey.advancedDosingRecommendationsEnabled.rawValue)
+//        }
+//        set {
+//            set(newValue, forKey: AIKey.advancedDosingRecommendationsEnabled.rawValue)
+//        }
+//    }
 
-    var openAIVersion: OpenAIVersion {
-        get {
-            if let version = string(forKey: AIKey.openAIVersion.rawValue) {
-                return OpenAIVersion(rawValue: version) ?? .gpt4o
-            } else {
-                return .gpt4o
-            }
-        }
-        set {
-            set(newValue.rawValue, forKey: AIKey.openAIVersion.rawValue)
-        }
-    }
+//    var openAIVersion: OpenAIVersion {
+//        get {
+//            if let version = string(forKey: AIKey.openAIVersion.rawValue) {
+//                return OpenAIVersion(rawValue: version) ?? .gpt4o
+//            } else {
+//                return .gpt4o
+//            }
+//        }
+//        set {
+//            set(newValue.rawValue, forKey: AIKey.openAIVersion.rawValue)
+//        }
+//    }
 
     var userPreferredLanguageForAI: String? {
         get {

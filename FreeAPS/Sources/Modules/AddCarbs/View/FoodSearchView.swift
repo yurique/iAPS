@@ -10,7 +10,7 @@ struct FoodSearchView: View {
     @State private var navigateToBarcode = false
     @State private var navigateToAICamera = false
     @State private var showingAIAnalysisResults = false
-    @State private var aiAnalysisResult: AIFoodAnalysisResult?
+    @State private var aiAnalysisResult: FoodAnalysisResult?
     @State private var aiAnalysisImage: UIImage?
 
     var body: some View {
@@ -58,14 +58,15 @@ struct FoodSearchView: View {
                         AIAnalysisResultsView(
                             analysisResult: result,
                             onFoodItemSelected: { foodItem in
-                                let selectedFood = FoodItem(
-                                    name: foodItem.name,
-                                    carbs: foodItem.carbs,
-                                    fat: foodItem.fat,
-                                    protein: foodItem.protein,
-                                    source: "AI Analysis",
-                                    imageURL: nil
-                                )
+                                let selectedFood = foodItem
+//                                FoodItem(
+//                                    name: foodItem.name,
+//                                    carbs: foodItem.carbs,
+//                                    fat: foodItem.fat,
+//                                    protein: foodItem.protein,
+//                                    source: "AI Analysis",
+//                                    imageURL: nil
+//                                )
                                 handleFoodItemSelection(selectedFood, image: aiAnalysisImage)
                             },
                             onCompleteMealSelected: { totalMeal in
@@ -133,19 +134,39 @@ struct FoodSearchView: View {
         print("🔍 Search for Barcode: \(barcode)")
     }
 
-    private func handleAIAnalysis(_ analysisResult: AIFoodAnalysisResult, image: UIImage?) { // ✅ Parameter name korrigiert
+    private func handleAIAnalysis(_ analysisResult: FoodAnalysisResult, image: UIImage?) { // ✅ Parameter name korrigiert
         aiAnalysisResult = analysisResult
         showingAIAnalysisResults = true
         aiAnalysisImage = image // ✅ Bild speichern
 
         let aiFoodItems = analysisResult.foodItemsDetailed.map { foodItem in
-            AIFoodItem(
+            var carbs: Double = 0
+            var proteins: Double = 0
+            var fat: Double = 0
+            var calories: Double = 0
+
+            if let portion = foodItem.portionEstimateSize {
+                if let carbsPer100 = foodItem.carbsPer100 {
+                    carbs = carbsPer100 / 100 * portion
+                }
+                if let proteinPer100 = foodItem.proteinPer100 {
+                    proteins = proteinPer100 / 100 * portion
+                }
+                if let fatPer100 = foodItem.fatPer100 {
+                    fat = fatPer100 / 100 * portion
+                }
+                if let caloriesPer100 = foodItem.caloriesPer100 {
+                    calories = caloriesPer100 / 100 * portion
+                }
+            }
+
+            return AIFoodItem(
                 name: foodItem.name,
                 brand: nil,
-                calories: foodItem.calories ?? 0,
-                carbs: foodItem.carbohydrates,
-                protein: foodItem.protein ?? analysisResult.totalProtein ?? 0,
-                fat: foodItem.fat ?? analysisResult.totalFat ?? 0,
+                calories: calories,
+                carbs: carbs,
+                protein: proteins,
+                fat: fat,
                 imageURL: nil
             )
         }

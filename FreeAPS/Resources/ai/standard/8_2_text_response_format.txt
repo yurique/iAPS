@@ -1,9 +1,0 @@
-RESPOND IN JSON FORMAT:
-{
-  "food_name": "name of the food",
-  "serving_size": "typical serving size",
-  "carbohydrates": number (grams per serving),
-  "protein": number (grams per serving),
-  "fat": number (grams per serving),
-  "calories": number (calories per serving)
-}

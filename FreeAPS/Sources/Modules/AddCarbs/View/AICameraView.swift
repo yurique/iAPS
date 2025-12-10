@@ -4,7 +4,7 @@ import UIKit
 
 /// Camera view for AI-powered food analysis - iOS 26 COMPATIBLE
 struct AICameraView: View {
-    let onFoodAnalyzed: (AIFoodAnalysisResult, UIImage?) -> Void
+    let onFoodAnalyzed: (FoodAnalysisResult, UIImage?) -> Void
     let onCancel: () -> Void
 
     @State private var capturedImage: UIImage?

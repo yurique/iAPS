@@ -1,53 +1,84 @@
 import Foundation
 
+enum MealUnits: String, Codable {
+    case grams
+    case milliliters
+
+    var localizedAbbreviation: String {
+        switch self {
+        case .grams: NSLocalizedString("g", comment: "abbreviation for grams")
+        case .milliliters: NSLocalizedString("ml", comment: "abbreviation for milliliters")
+        }
+    }
+}
+
 /// Individual food item analysis with detailed portion assessment
-struct FoodItemAnalysis: JSON {
+struct AnalysedFoodItem {
     let name: String
-    let portionEstimate: String
-    let standardServingSize: String?
-    let servingsStandard: String?
-    let servingMultiplier: Double
+    let portionEstimate: String?
+    let portionEstimateSize: Double?
+    let standardServing: String?
+    let standardServingSize: Double?
+    let units: MealUnits
+//    let servingsStandard: String?
+//    let servingMultiplier: Double
     let preparationMethod: String?
     let visualCues: String?
-    let carbohydrates: Double
-    let calories: Double?
-    let fat: Double?
-    let fiber: Double?
-    let protein: Double?
+//    let carbohydrates: Double
+//    let calories: Double?
+//    let fat: Double?
+//    let fiber: Double?
+//    let protein: Double?
+//    let sugars: Double?
+    let caloriesPer100: Double?
+    let carbsPer100: Double?
+    let fatPer100: Double?
+    let fiberPer100: Double?
+    let proteinPer100: Double?
+    let sugarsPer100: Double?
+
     let assessmentNotes: String?
 }
 
-extension FoodItemAnalysis: Decodable {
+extension AnalysedFoodItem: Decodable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
         let name = try container.decode(String.self, forKey: .name)
-        let portionEstimate = try container.decodeTrimmedNonEmpty(forKey: .portionEstimate)
-        let standardServingSize = try container.decodeTrimmedIfPresent(forKey: .standardServingSize)
-        let servingsStandard = try container.decodeTrimmedIfPresent(forKey: .servingsStandard)
-        let servingMultiplier = try container.decodeNumberIfPresent(forKey: .servingMultiplier) ?? 1.0
+        let portionEstimate = try container.decodeTrimmedIfPresent(forKey: .portionEstimate)
+        let portionEstimateSize = try container.decodeNumberIfPresent(forKey: .portionEstimateSize)
+        let standardServing = try container.decodeTrimmedIfPresent(forKey: .standardServing)
+        let standardServingSize = try container.decodeNumberIfPresent(forKey: .standardServingSize)
+        let units = try container.decodeIfPresent(MealUnits.self, forKey: .units) ?? .grams
+//        let servingsStandard = try container.decodeTrimmedIfPresent(forKey: .servingsStandard)
+//        let servingMultiplier = try container.decodeNumberIfPresent(forKey: .servingMultiplier) ?? 1.0
         let preparationMethod = try container.decodeTrimmedIfPresent(forKey: .preparationMethod)
         let visualCues = try container.decodeTrimmedIfPresent(forKey: .visualCues)
-        let carbohydrates = try container.decodeNumberIfPresent(forKey: .carbohydrates) ?? 0
-        let calories = try container.decodeNumberIfPresent(forKey: .calories)
-        let fat = try container.decodeNumberIfPresent(forKey: .fat)
-        let fiber = try container.decodeNumberIfPresent(forKey: .fiber)
-        let protein = try container.decodeNumberIfPresent(forKey: .protein)
+        let carbsPer100 = try container.decodeNumberIfPresent(forKey: .carbsPer100)
+        let caloriesPer100 = try container.decodeNumberIfPresent(forKey: .caloriesPer100)
+        let fatPer100 = try container.decodeNumberIfPresent(forKey: .fatPer100)
+        let fiberPer100 = try container.decodeNumberIfPresent(forKey: .fiberPer100)
+        let proteinPer100 = try container.decodeNumberIfPresent(forKey: .proteinPer100)
+        let sugarsPer100 = try container.decodeNumberIfPresent(forKey: .sugarsPer100)
         let assessmentNotes = try container.decodeTrimmedIfPresent(forKey: .assessmentNotes)
 
-        self = FoodItemAnalysis(
+        self = AnalysedFoodItem(
             name: name,
             portionEstimate: portionEstimate,
+            portionEstimateSize: portionEstimateSize,
+            standardServing: standardServing,
             standardServingSize: standardServingSize,
-            servingsStandard: servingsStandard,
-            servingMultiplier: servingMultiplier,
+            units: units,
+//            servingsStandard: servingsStandard,
+//            servingMultiplier: servingMultiplier,
             preparationMethod: preparationMethod,
             visualCues: visualCues,
-            carbohydrates: carbohydrates,
-            calories: calories,
-            fat: fat,
-            fiber: fiber,
-            protein: protein,
+            caloriesPer100: caloriesPer100,
+            carbsPer100: carbsPer100,
+            fatPer100: fatPer100,
+            fiberPer100: fiberPer100,
+            proteinPer100: proteinPer100,
+            sugarsPer100: sugarsPer100,
             assessmentNotes: assessmentNotes
         )
     }
@@ -55,16 +86,67 @@ extension FoodItemAnalysis: Decodable {
     private enum CodingKeys: String, CodingKey {
         case name
         case portionEstimate = "portion_estimate"
+        case portionEstimateSize = "portion_estimate_size"
+        case standardServing = "standard_serving"
         case standardServingSize = "standard_serving_size"
-        case servingsStandard = "serving_standard"
-        case servingMultiplier = "serving_multiplier"
+        case units
+//        case servingsStandard = "serving_standard"
+//        case servingMultiplier = "serving_multiplier"
         case preparationMethod = "preparation_method"
         case visualCues = "visual_cues"
-        case carbohydrates
-        case calories
-        case fat
-        case fiber
-        case protein
+//        case carbohydrates
+//        case calories
+//        case fat
+//        case fiber
+//        case protein
+//        case sugars
+        case caloriesPer100 = "calories_per_100"
+        case carbsPer100 = "carbs_per_100"
+        case fatPer100 = "fat_per_100"
+        case fiberPer100 = "fiber_per_100"
+        case proteinPer100 = "protein_per_100"
+        case sugarsPer100 = "sugars_per_100"
+
         case assessmentNotes = "assessment_notes"
+    }
+}
+
+extension AnalysedFoodItem {
+    private static var fields: [AnalysedFoodItem.CodingKeys: Any] {
+        [
+            .name: "specific food name with preparation details",
+            .portionEstimate: "exact portion with visual references",
+            .portionEstimateSize: "decimal, exact portion size, in grams or milliliters; do not include unit;",
+            .units: "grams or milliliters, as appropriate for this meal",
+            .standardServing: "description of a standard serving, if available",
+            .standardServingSize: "decimal, standard serving size based on NUTRITION_AUTHORITY standard, in grams or milliliters; do not include unit; do not include the name of the standard",
+            //        .servingsStandard: "brief name/description of NUTRITION_AUTHORITY",
+            //        .servingMultiplier: "number of servings in this portion",
+            .preparationMethod: "cooking details observed",
+            .visualCues: "visual elements analyzed",
+            //        .carbohydrates: "decimal, grams of carbohydrates for this portion",
+            //        .calories: "decimal, kcal for this portion",
+            //        .fat: "grams of fat for this portion",
+            //        .fiber: "grams of fiber for this portion",
+            //        .protein: "grams of protein for this portion",
+            //        .fat_per_serving: grams_per_standard_serving,
+            //        .fiber_per_serving: grams_per_standard_serving,
+            //            .protein_per_serving: grams_per_standard_serving,
+            .caloriesPer100: "decimal, kcal of carbohydrates per 100 grams or milliliters",
+            .carbsPer100: "decimal, grams of carbohydrates per 100 grams or milliliters",
+            .fatPer100: "decimal, grams of fat per 100 grams or milliliters",
+            .fiberPer100: "decimal, grams of fiber per 100 grams or milliliters",
+            .proteinPer100: "decimal, grams of protein per 100 grams or milliliters",
+            .sugarsPer100: "decimal, grams of added sugars per 100 grams or milliliters",
+            .assessmentNotes: "Explain how you calculated this specific portion size, what visual references you used for measurement, and how you determined the serving multiplier. Write in natural, conversational language."
+        ]
+    }
+
+    static var schema: [String: Any] {
+        var dict: [String: Any] = [:]
+        for (key, value) in fields {
+            dict[key.rawValue] = value
+        }
+        return dict
     }
 }

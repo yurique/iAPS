@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct FoodItemCard: View {
-    let foodItem: FoodItemAnalysis
+    let foodItem: AnalysedFoodItem
     let onSelect: () -> Void
 
     @State private var isExpanded = false
@@ -51,72 +51,82 @@ struct FoodItemCard: View {
 
                 // Portionsinformationen (immer sichtbar)
                 VStack(alignment: .leading, spacing: 4) {
-                    HStack {
-                        Text("Portion: ")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                        Text(foodItem.portionEstimate)
-                            .font(.caption)
-                    }
-
-                    if let servingSize = foodItem.standardServingSize {
+                    if let portionEstimateSize = foodItem.portionEstimateSize {
                         HStack {
-                            Text("Serving size:")
+                            Text("Portion:")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text(servingSize)
+
+                            Text("\(portionEstimateSize, specifier: "%.0f") \(foodItem.units.localizedAbbreviation)")
                                 .font(.caption)
+
+                            if let portionEstimate = foodItem.portionEstimate {
+                                Text("(\(portionEstimate))")
+                                    .font(.caption)
+                            }
+                        }
+                    }
+                    if let standardServingSize = foodItem.standardServingSize {
+                        HStack {
+                            Text("Std serving:")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("\(standardServingSize, specifier: "%.0f") \(foodItem.units.localizedAbbreviation)")
+                                .font(.caption)
+
+                            if let standardServing = foodItem.standardServing {
+                                Text("(\(standardServing))")
+                                    .font(.caption)
+                            }
                         }
                     }
 
-                    if foodItem.servingMultiplier != 1.0 {
-                        HStack {
-                            Text("Number of servings:")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("\(foodItem.servingMultiplier, specifier: "%.1f")")
-                                .font(.caption)
-                        }
-                    }
+                    servingsMultiplierView
                 }
                 .foregroundColor(.secondary)
 
-                HStack(spacing: 8) {
-                    NutritionBadge(value: foodItem.carbohydrates, unit: "g", label: "Carbs", color: .orange)
+                nutritionValueView
 
-                    if let protein = foodItem.protein, protein > 0 {
-                        NutritionBadge(value: protein, unit: "g", label: "Protein", color: .green)
-                    }
-
-                    if let fat = foodItem.fat, fat > 0 {
-                        NutritionBadge(value: fat, unit: "g", label: "Fat", color: .blue)
-                    }
-                }
-
-                if let standardName = foodItem.servingsStandard {
-                    HStack(alignment: .firstTextBaseline, spacing: 4) {
-                        Image(systemName: "text.alignleft")
-                            .font(.footnote)
-                            .foregroundColor(.secondary)
-                        Text(standardName)
-                            .font(.footnote)
-                            .italic()
-                            .foregroundColor(.secondary)
-                    }
-                    .padding(.top, 2)
-                }
+//                if let standardName = foodItem.servingsStandard {
+//                    HStack(alignment: .firstTextBaseline, spacing: 4) {
+//                        Image(systemName: "text.alignleft")
+//                            .font(.footnote)
+//                            .foregroundColor(.secondary)
+//                        Text(standardName)
+//                            .font(.footnote)
+//                            .italic()
+//                            .foregroundColor(.secondary)
+//                    }
+//                    .padding(.top, 2)
+//                }
             }
 
             // Erweiterter Bereich (expandable)
             if isExpanded {
                 VStack(alignment: .leading, spacing: 8) {
                     // Detaillierte Nährwerte
-                    if let calories = foodItem.calories, calories > 0 {
+                    if let portion = foodItem.portionEstimateSize {
                         HStack {
-                            NutritionBadge(value: calories, unit: "kcal", label: "Calories", color: .red)
+                            if let caloriesPer100 = foodItem.caloriesPer100, caloriesPer100 > 0 {
+                                NutritionBadge(
+                                    value: caloriesPer100 / 100 * portion,
+                                    unit: "kcal",
+                                    label: "Calories",
+                                    color: .red
+                                )
+                            }
 
-                            if let fiber = foodItem.fiber, fiber > 0 {
-                                NutritionBadge(value: fiber, unit: "g", label: "Faser", color: .purple)
+                            if let fiberPer100 = foodItem.fiberPer100, fiberPer100 > 0 {
+                                NutritionBadge(value: fiberPer100 / 100 * portion, unit: "g", label: "Fiber", color: .purple)
+                            }
+
+                            if let sugarsPer100 = foodItem.sugarsPer100, sugarsPer100 > 0 {
+                                NutritionBadge(
+                                    value: sugarsPer100 / 100 * portion,
+                                    unit: "g",
+                                    label: "Sugars",
+                                    color: .purple
+                                )
                             }
                         }
                     }
@@ -169,6 +179,35 @@ struct FoodItemCard: View {
         .padding(.horizontal)
     }
 
+    @ViewBuilder private var nutritionValueView: some View {
+        if let portion = foodItem.portionEstimateSize {
+            HStack(spacing: 8) {
+                if let carbsPer100 = foodItem.carbsPer100 {
+                    NutritionBadge(value: carbsPer100 / 100 * portion, unit: "g", label: "Carbs", color: .orange)
+                }
+                if let proteinPer100 = foodItem.proteinPer100, proteinPer100 > 0 {
+                    NutritionBadge(value: proteinPer100 / 100 * portion, unit: "g", label: "Protein", color: .green)
+                }
+
+                if let fatPer100 = foodItem.fatPer100, fatPer100 > 0 {
+                    NutritionBadge(value: fatPer100 / 100 * portion, unit: "g", label: "Fat", color: .blue)
+                }
+            }
+        }
+    }
+
+    @ViewBuilder private var servingsMultiplierView: some View {
+        if let servingSize = foodItem.standardServingSize, let portion = foodItem.portionEstimateSize, portion != servingSize {
+            HStack {
+                Text("Servings:")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Text("\(portion / servingSize, specifier: "%.1f")")
+                    .font(.caption)
+            }
+        }
+    }
+
     private struct NutritionBadge: View {
         let value: Double
         let unit: String
@@ -191,7 +230,7 @@ struct FoodItemCard: View {
                         .font(.system(size: 10))
                 }
                 VStack(spacing: 2) {
-                    Text("\(value, specifier: "%.1f")\(NSLocalizedString(unit, comment: ""))")
+                    Text("\(value, specifier: "%.1f") \(NSLocalizedString(unit, comment: ""))")
                         .font(.system(size: 12, weight: .bold))
                     Text(NSLocalizedString(label, comment: ""))
                         .font(.system(size: 10, weight: .medium))

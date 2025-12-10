@@ -8,55 +8,92 @@ import SwiftUI
 import UIKit
 import Vision
 
-// MARK: - OpenAI Service (Alternative)
+enum OpenAIFoodAnalysisService {
+    static func image(_ model: OpenAIModel, apiKey: String) -> ImageAnalysisService {
+        OpenAIFoodANalysisServiceWithModel(model: model, apiKey: apiKey)
+    }
 
-class OpenAIFoodAnalysisService: FoodAnalysisService {
-    static let shared = OpenAIFoodAnalysisService()
+    static func text(_ model: OpenAIModel, apiKey: String) -> TextAnalysisService {
+        OpenAIFoodANalysisServiceWithModel(model: model, apiKey: apiKey)
+    }
+}
+
+private struct OpenAIFoodANalysisServiceWithModel {
+    let model: OpenAIModel
+    let apiKey: String
+}
+
+extension OpenAIFoodANalysisServiceWithModel: ImageAnalysisService {
+    var needAggressiveImageCompression: Bool { model.needAggressiveImageCompression }
+
+    func analyzeImage(
+        prompt: String,
+        images: [String],
+        telemetryCallback: ((String) -> Void)?
+    ) async throws -> FoodAnalysisResult {
+        let response = try await OpenAIFoodAnalysisServiceImpl.shared.executeQuery(
+            model: model,
+            prompt: prompt,
+            images: images,
+            apiKey: apiKey,
+            telemetryCallback: telemetryCallback
+        )
+
+        return try decode(response, as: FoodAnalysisResult.self)
+    }
+}
+
+extension OpenAIFoodANalysisServiceWithModel: TextAnalysisService {
+    func analyzeText(
+        prompt: String,
+        telemetryCallback: ((String) -> Void)?
+    ) async throws -> [OpenFoodFactsProduct] {
+        let response = try await OpenAIFoodAnalysisServiceImpl.shared.executeQuery(
+            model: model,
+            prompt: prompt,
+            images: [],
+            apiKey: apiKey,
+            telemetryCallback: telemetryCallback
+        )
+
+        let result = try decode(response, as: FoodAnalysisResult.self)
+        return toOpenFoodFactsProducts(model: model, result: result)
+    }
+}
+
+private final class OpenAIFoodAnalysisServiceImpl {
+    static let shared = OpenAIFoodAnalysisServiceImpl()
     private init() {}
 
     private let apiURL = URL(string: "https://api.openai.com/v1/responses")!
 
-    func analyzeFoodImage(
-        _ image: UIImage,
+    func executeQuery(
+        model: OpenAIModel,
+        prompt: String,
+        images: [String],
         apiKey: String,
         telemetryCallback: ((String) -> Void)?
-    ) async throws -> AIFoodAnalysisResult {
-        try await analyzeFoodRequest(.image(image), apiKey: apiKey, telemetryCallback: telemetryCallback)
-    }
-
-    func analyzeFoodQuery(
-        _ query: String,
-        apiKey: String,
-        telemetryCallback: ((String) -> Void)?
-    ) async throws -> AIFoodAnalysisResult {
-        try await analyzeFoodRequest(.query(query), apiKey: apiKey, telemetryCallback: telemetryCallback)
-    }
-
-    private func analyzeFoodRequest(
-        _ request: AnalysisRequest,
-        apiKey: String,
-        telemetryCallback: ((String) -> Void)?
-    ) async throws -> AIFoodAnalysisResult {
+    ) async throws -> String {
         // Get optimal model based on current analysis mode
         telemetryCallback?("⚙️ Configuring OpenAI parameters...")
-        let analysisMode = ConfigurableAIService.shared.analysisMode
-        let model = ConfigurableAIService.optimalModel(for: .openAI, mode: analysisMode)
-        let openaAIVersion = UserDefaults.standard.openAIVersion
+//        let analysisMode = ConfigurableAIService.shared.analysisMode
+//        let model = ConfigurableAIService.optimalModel(for: .openAI, mode: analysisMode)
+//        let openaAIVersion = UserDefaults.standard.openAIVersion
 
         print("🤖 OpenAI Model Selection:")
-        print("   Analysis Mode: \(analysisMode.rawValue)")
-        print("   OpenAI Version: \(openaAIVersion)")
+//        print("   Analysis Mode: \(analysisMode.rawValue)")
         print("   Selected Model: \(model)")
 
         // Optimize image size for faster processing and uploads
         telemetryCallback?("🖼️ Optimizing your image...")
 
-        let urlRequest: URLRequest
-        do {
-            urlRequest = try prepareRequest(request, model: model, apiKey: apiKey, telemetryCallback: telemetryCallback)
-        } catch {
-            throw AIFoodAnalysisError.requestCreationFailed
-        }
+        let urlRequest: URLRequest = try buildRequest(
+            model: model,
+            prompt: prompt,
+            images: images,
+            apiKey: apiKey,
+            telemetryCallback: telemetryCallback
+        )
 
 //        do {
 //            // Debug logging for GPT-5 requests
@@ -146,7 +183,8 @@ class OpenAIFoodAnalysisService: FoodAnalysisService {
                     case "invalid_api_key":
                         throw AIFoodAnalysisError.customError("Invalid OpenAI API key. Please check your configuration.")
                     case "model_not_found":
-                        if model.contains("gpt-5") || model.contains("gpt-5.1") {
+                        // TODO: do we do fallbacks?
+                        if model.isGPT5 {
                             print("⚠️ GPT-5 model not available, falling back to GPT-4o...")
                             throw AIFoodAnalysisError.customError(
                                 "GPT-5 not available yet. Switched to GPT-4o automatically. You can try enabling GPT-5 again later."
@@ -165,7 +203,7 @@ class OpenAIFoodAnalysisService: FoodAnalysisService {
                         } else if message.localizedCaseInsensitiveContains("model"),
                                   message.localizedCaseInsensitiveContains("not found")
                         {
-                            if model.contains("gpt-5") || model.contains("gpt-5.1") {
+                            if model.isGPT5 {
                                 print("⚠️ GPT-5 model not available, falling back to GPT-4o...")
                                 throw AIFoodAnalysisError.customError(
                                     "GPT-5 not available yet. Switched to GPT-4o automatically. You can try enabling GPT-5 again later."
@@ -233,7 +271,7 @@ class OpenAIFoodAnalysisService: FoodAnalysisService {
             // Enhanced JSON extraction from GPT-4's response (like Claude service)
             telemetryCallback?("⚡ Processing AI analysis results...")
 
-            return try parseOpenAIResponse(content: content)
+            return content
         } catch let error as AIFoodAnalysisError {
             throw error
         } catch {
@@ -276,40 +314,14 @@ class OpenAIFoodAnalysisService: FoodAnalysisService {
         return nil
     }
 
-    private func getImageBase64(
-        for request: AnalysisRequest,
-        model: String,
-        telemetryCallback: ((String) -> Void)?
-    ) throws -> String? {
-        switch request {
-        case .query: return nil
-        case let .image(image):
-            let optimizedImage = ConfigurableAIService.optimizeImageForAnalysis(image)
-            // Convert image to base64 with adaptive compression
-            // GPT-5 benefits from more aggressive compression due to slower processing
-            telemetryCallback?("🔄 Encoding image data...")
-            let compressionQuality = model.contains("gpt-5") ?
-                min(0.7, ConfigurableAIService.adaptiveCompressionQuality(for: optimizedImage)) :
-                ConfigurableAIService.adaptiveCompressionQuality(for: optimizedImage)
-            guard let imageData = optimizedImage.jpegData(compressionQuality: compressionQuality) else {
-                throw AIFoodAnalysisError.imageProcessingFailed
-            }
-            return imageData.base64EncodedString()
-        }
-    }
-
-    private func prepareRequest(
-        _ analyticsRequest: AnalysisRequest,
-        model: String,
+    private func buildRequest(
+        model: OpenAIModel,
+        prompt: String,
+        images: [String],
         apiKey: String,
         telemetryCallback: ((String) -> Void)?
     ) throws -> URLRequest {
-        let base64Image = try getImageBase64(for: analyticsRequest, model: model, telemetryCallback: telemetryCallback)
-
-        // Get analysis prompt early to check complexity
         telemetryCallback?("📡 Preparing API request...")
-        let analysisPrompt = getAnalysisPrompt(analyticsRequest)
-        let isAdvancedPrompt = false // analysisPrompt.count > 10000 // TODO: should we look at the length of the query?
 
         // Create OpenAI API request
         var request = URLRequest(url: apiURL)
@@ -318,43 +330,35 @@ class OpenAIFoodAnalysisService: FoodAnalysisService {
         request.setValue("Bearer \(apiKey)", forHTTPHeaderField: "Authorization")
 
         // Set appropriate timeout based on model type and prompt complexity
-        if model.contains("gpt-5") {
+        if model.isGPT5 {
             request.timeoutInterval = 120 // 2 minutes for GPT-5 models
-            print("🔧 \(model) Debug - Set URLRequest timeout to 120 seconds")
         } else {
-            // For GPT-4 models, extend timeout significantly for advanced analysis (very long prompt)
             request.timeoutInterval = 120 // 2 minutes for GPT-4 models
-            print(
-                "🔧 \(model) Timeout - Model: \(model), Advanced: \(isAdvancedPrompt), Timeout: \(request.timeoutInterval)s, Prompt: \(analysisPrompt.count) chars"
-            )
-//            if isAdvancedPrompt {
-//                print("🔧 \(model) Advanced - Using extended 150s timeout for comprehensive analysis (\(analysisPrompt.count) chars)")
-//            }
         }
+        print(
+            "🔧 \(model) Timeout - Model: \(model), Timeout: \(request.timeoutInterval)s, Prompt: \(prompt.count) chars"
+        )
 
         // Use appropriate parameters based on model type
         print("🔍 OpenAI Final Prompt Debug:")
-        print("   Analysis prompt length: \(analysisPrompt.count) characters")
-        print("   First 100 chars of analysis prompt: \(String(analysisPrompt.prefix(100)))")
+        print("   Analysis prompt length: \(prompt.count) characters")
+        print("   First 100 chars of analysis prompt: \(String(prompt.prefix(100)))")
 
-        var contentParts: [OpenAIResponsesContent] = [
-            .input_text(text: analysisPrompt)
-        ]
-
-        if let base64Image, !base64Image.isEmpty {
-            contentParts.append(.input_image(imageURL: "data:image/jpeg;base64,\(base64Image)"))
+        let textPart = OpenAIResponsesContent.input_text(text: prompt)
+        let imageParts = images.map {
+            OpenAIResponsesContent.input_image(imageURL: "data:image/jpeg;base64,\($0)")
         }
 
         let inputMessages: [OpenAIResponsesMessage] = [
-            OpenAIResponsesMessage(role: "user", content: contentParts)
+            OpenAIResponsesMessage(role: "user", content: [textPart] + imageParts)
         ]
 
         var textOptions: OpenAIResponsesTextOptions?
         var stream: Bool?
-        if model.contains("gpt-5") {
+        if model.isGPT5 {
             textOptions = OpenAIResponsesTextOptions(format: .init(type: "json_object"))
             stream = false // Ensure complete response (no streaming)
-            telemetryCallback?("⚡ Using GPT-5 optimized settings...")
+            telemetryCallback?("⚡ Using \(model) optimized settings...")
         } else {
 //            if isAdvancedPrompt {
 //                print("🔧 \(model) Advanced - Using 6000 max_output_tokens for comprehensive analysis")
@@ -370,15 +374,19 @@ class OpenAIFoodAnalysisService: FoodAnalysisService {
             stream: stream
         )
 
-        let encoder = JSONEncoder()
-        request.httpBody = try encoder.encode(body)
+        do {
+            let encoder = JSONEncoder()
+            request.httpBody = try encoder.encode(body)
+        } catch {
+            throw AIFoodAnalysisError.requestCreationFailed
+        }
 
         return request
     }
 
     private func performRequest(
         request: URLRequest,
-        model: String,
+        model: OpenAIModel,
         attempt: Int,
         maxRetries: Int,
         telemetryCallback: ((String) -> Void)?
@@ -388,7 +396,7 @@ class OpenAIFoodAnalysisService: FoodAnalysisService {
             telemetryCallback?("🔄 \(model) attempt \(attempt)/\(maxRetries)...")
 
             let config = URLSessionConfiguration.default
-            if model.contains("gpt-5") {
+            if model.isGPT5 {
                 //  extended timeout for GPT-5
                 config.timeoutIntervalForRequest = 150 // 2.5 minutes request timeout
                 config.timeoutIntervalForResource = 180 // 3 minutes resource timeout
@@ -427,7 +435,7 @@ class OpenAIFoodAnalysisService: FoodAnalysisService {
     /// Performs a GPT-5 request with retry logic and enhanced timeout handling
     private func performRequestWithRetry(
         request: URLRequest,
-        model: String,
+        model: OpenAIModel,
         telemetryCallback: ((String) -> Void)?
     ) async throws -> (Data, URLResponse) {
         let maxRetries = 2
@@ -471,64 +479,13 @@ class OpenAIFoodAnalysisService: FoodAnalysisService {
         throw AIFoodAnalysisError
             .customError("\(model) requests timed out consistently.")
     }
-
-    /// Parse OpenAI response content into AIFoodAnalysisResult
-    private func parseOpenAIResponse(content: String) throws -> AIFoodAnalysisResult {
-        // 1. Remove markdown fences and stray backticks
-        var cleanedContent = content
-            .replacingOccurrences(of: "```json", with: "")
-            .replacingOccurrences(of: "```", with: "")
-            .replacingOccurrences(of: "`", with: "")
-            .trimmingCharacters(in: .whitespacesAndNewlines)
-
-        // 2. Remove UTF-8 BOM or invisible junk before first "{"
-        if let braceIndex = cleanedContent.firstIndex(of: "{") {
-            let prefix = cleanedContent[..<braceIndex]
-            if prefix.contains(where: { !$0.isASCII }) {
-                cleanedContent = String(cleanedContent[braceIndex...])
-            }
-        }
-
-        // 3. Extract JSON substring between first "{" and last "}"
-        let jsonString: String
-        if let jsonStartRange = cleanedContent.range(of: "{"),
-           let jsonEndRange = cleanedContent.range(of: "}", options: .backwards),
-           jsonStartRange.lowerBound < jsonEndRange.upperBound
-        {
-            jsonString = String(cleanedContent[jsonStartRange.lowerBound ..< jsonEndRange.upperBound])
-        } else {
-            jsonString = cleanedContent
-        }
-
-        // 4. Fix common issue: remove trailing commas before }
-        let fixedJson = jsonString.replacingOccurrences(
-            of: ",\\s*}".replacingOccurrences(of: "\\", with: "\\\\"),
-            with: "}"
-        )
-
-        // 5. Decode
-        guard let jsonData = fixedJson.data(using: .utf8) else {
-            print("❌ Failed to convert to Data. JSON was:\n\(fixedJson)")
-            throw AIFoodAnalysisError.responseParsingFailed
-        }
-
-        do {
-            let decoder = JSONDecoder()
-            return try decoder.decode(AIFoodAnalysisResult.self, from: jsonData)
-
-        } catch {
-            print("❌ JSON decode error: \(error)")
-            print("❌ JSON content:\n\(fixedJson)")
-            throw AIFoodAnalysisError.responseParsingFailed
-        }
-    }
 }
 
 // MARK: - OpenAI /responses Codable Payloads (Request/Response/Error)
 
 // Request
 struct OpenAIResponsesRequest: Encodable {
-    let model: String
+    let model: OpenAIModel
     let input: [OpenAIResponsesMessage]
     let max_output_tokens: Int
     let temperature: Double

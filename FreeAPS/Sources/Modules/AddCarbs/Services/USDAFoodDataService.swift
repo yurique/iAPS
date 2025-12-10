@@ -8,21 +8,29 @@ import SwiftUI
 import UIKit
 import Vision
 
-// MARK: - USDA FoodData Central Service
+extension USDAFoodDataService: TextAnalysisService {
+    func analyzeText(
+        prompt: String,
+        telemetryCallback _: ((String) -> Void)?
+    ) async throws -> [OpenFoodFactsProduct] {
+        try await searchProducts(query: prompt, pageSize: 15)
+    }
+}
 
 /// Service for accessing USDA FoodData Central API for comprehensive nutrition data
-class USDAFoodDataService {
+final class USDAFoodDataService {
     static let shared = USDAFoodDataService()
 
     private let baseURL = "https://api.nal.usda.gov/fdc/v1"
     private let session: URLSession
 
+    private let timeout: TimeInterval = 10.0
+
     private init() {
         // Create optimized URLSession configuration for USDA API
         let config = URLSessionConfiguration.default
-        let usdaTimeout = ConfigurableAIService.optimalTimeout(for: .usdaFoodData)
-        config.timeoutIntervalForRequest = usdaTimeout
-        config.timeoutIntervalForResource = usdaTimeout * 2
+        config.timeoutIntervalForRequest = timeout
+        config.timeoutIntervalForResource = timeout * 2
         config.waitsForConnectivity = true
         config.allowsCellularAccess = true
         session = URLSession(configuration: config)
@@ -31,7 +39,7 @@ class USDAFoodDataService {
     /// Search for food products using USDA FoodData Central API
     /// - Parameter query: Search query string
     /// - Returns: Array of OpenFoodFactsProduct for compatibility with existing UI
-    func searchProducts(query: String, pageSize: Int = 15) async throws -> [OpenFoodFactsProduct] {
+    private func searchProducts(query: String, pageSize: Int = 15) async throws -> [OpenFoodFactsProduct] {
         print("🇺🇸 Starting USDA FoodData Central search for: '\(query)'")
 
         guard let url = URL(string: "\(baseURL)/foods/search") else {
@@ -56,7 +64,7 @@ class USDAFoodDataService {
 
         var request = URLRequest(url: finalURL)
         request.setValue("application/json", forHTTPHeaderField: "Accept")
-        request.timeoutInterval = ConfigurableAIService.optimalTimeout(for: .usdaFoodData)
+        request.timeoutInterval = timeout
 
         do {
             // Check for task cancellation before making request

@@ -8,101 +8,86 @@ import SwiftUI
 import UIKit
 import Vision
 
-// MARK: - Google Gemini Food Analysis Service
+enum GoogleGeminiFoodAnalysisService {
+    static func image(_ model: GeminiModel, apiKey: String) -> ImageAnalysisService {
+        GoogleGeminiFoodAnalysisServiceWithModel(model: model, apiKey: apiKey)
+    }
 
-/// Service for food analysis using Google Gemini Vision API (free tier)
-class GoogleGeminiFoodAnalysisService: FoodAnalysisService {
-    static let shared = GoogleGeminiFoodAnalysisService()
+    static func text(_ model: GeminiModel, apiKey: String) -> TextAnalysisService {
+        GoogleGeminiFoodAnalysisServiceWithModel(model: model, apiKey: apiKey)
+    }
+}
+
+private struct GoogleGeminiFoodAnalysisServiceWithModel {
+    let model: GeminiModel
+    let apiKey: String
+}
+
+extension GoogleGeminiFoodAnalysisServiceWithModel: ImageAnalysisService {
+    var needAggressiveImageCompression: Bool { model.needAggressiveImageCompression }
+
+    func analyzeImage(
+        prompt: String,
+        images: [String],
+        telemetryCallback: ((String) -> Void)?
+    ) async throws -> FoodAnalysisResult {
+        let response = try await GoogleGeminiFoodAnalysisServiceImpl.shared.executeQuery(
+            model: model,
+            prompt: prompt,
+            images: images,
+            apiKey: apiKey,
+            telemetryCallback: telemetryCallback
+        )
+
+        return try decode(response, as: FoodAnalysisResult.self)
+    }
+}
+
+extension GoogleGeminiFoodAnalysisServiceWithModel: TextAnalysisService {
+    func analyzeText(
+        prompt: String,
+        telemetryCallback: ((String) -> Void)?
+    ) async throws -> [OpenFoodFactsProduct] {
+        let response = try await GoogleGeminiFoodAnalysisServiceImpl.shared.executeQuery(
+            model: model,
+            prompt: prompt,
+            images: [],
+            apiKey: apiKey,
+            telemetryCallback: telemetryCallback
+        )
+
+        let result = try decode(response, as: FoodAnalysisResult.self)
+        return toOpenFoodFactsProducts(model: model, result: result)
+    }
+}
+
+private final class GoogleGeminiFoodAnalysisServiceImpl {
+    static let shared = GoogleGeminiFoodAnalysisServiceImpl()
 
     private let baseURLTemplate = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
     private init() {}
 
-    func analyzeFoodImage(
-        _ image: UIImage,
+    func executeQuery(
+        model: GeminiModel,
+        prompt: String,
+        images: [String],
         apiKey: String,
         telemetryCallback: ((String) -> Void)?
-    ) async throws -> AIFoodAnalysisResult {
-        try await analyzeFoodRequest(.image(image), apiKey: apiKey, telemetryCallback: telemetryCallback)
-    }
-
-    func analyzeFoodQuery(
-        _ query: String,
-        apiKey: String,
-        telemetryCallback: ((String) -> Void)?
-    ) async throws -> AIFoodAnalysisResult {
-        try await analyzeFoodRequest(.query(query), apiKey: apiKey, telemetryCallback: telemetryCallback)
-    }
-
-    private func getImageBase64(
-        for request: AnalysisRequest,
-        model _: String,
-        telemetryCallback: ((String) -> Void)?
-    ) throws -> String? {
-        switch request {
-        case .query: return nil
-        case let .image(image):
-            let optimizedImage = ConfigurableAIService.optimizeImageForAnalysis(image)
-
-            // Convert image to base64 with adaptive compression
-            telemetryCallback?("🔄 Encoding image data...")
-            let compressionQuality = ConfigurableAIService.adaptiveCompressionQuality(for: optimizedImage)
-            guard let imageData = optimizedImage.jpegData(compressionQuality: compressionQuality) else {
-                throw AIFoodAnalysisError.imageProcessingFailed
-            }
-            return imageData.base64EncodedString()
-        }
-    }
-
-    private func analyzeFoodRequest(
-        _ analysisRequest: AnalysisRequest,
-        apiKey: String,
-        telemetryCallback: ((String) -> Void)?
-    ) async throws -> AIFoodAnalysisResult {
+    ) async throws -> String {
         print("🍱 Starting Google Gemini food analysis")
         telemetryCallback?("⚙️ Configuring Gemini parameters...")
 
         // Get optimal model based on current analysis mode
-        let analysisMode = ConfigurableAIService.shared.analysisMode
-        let model = ConfigurableAIService.optimalModel(for: .googleGemini, mode: analysisMode)
-        let baseURL = baseURLTemplate.replacingOccurrences(of: "{model}", with: model)
+//        let analysisMode = ConfigurableAIService.shared.analysisMode
 
-        guard let url = URL(string: "\(baseURL)?key=\(apiKey)") else {
-            throw AIFoodAnalysisError.requestCreationFailed
-        }
-
-        // Optimize image size for faster processing and uploads
-        telemetryCallback?("🖼️ Optimizing your image...")
-        let base64Image = try getImageBase64(for: analysisRequest, model: "", telemetryCallback: telemetryCallback)
-
-        // Build Gemini request using Codable models
-        let userTextPart = GeminiPart(text: getAnalysisPrompt(analysisRequest))
-        var requestParts: [GeminiPart] = [userTextPart]
-        if let base64Image {
-            let inline = GeminiInlineData(mime_type: "image/jpeg", data: base64Image)
-            requestParts.append(GeminiPart(inline_data: inline))
-        }
-
-        let geminiRequest = GeminiGenerateContentRequest(
-            contents: [GeminiContent(parts: requestParts)],
-            generationConfig: GeminiGenerationConfig(
-                temperature: 0.01,
-                topP: 0.95,
-                topK: 8,
-                maxOutputTokens: 8000
-            )
+        let request = try buildRequest(
+            model: model,
+            prompt: prompt,
+            images: images,
+            apiKey: apiKey,
+            telemetryCallback: telemetryCallback
         )
-
-        var request = URLRequest(url: url)
-        request.httpMethod = "POST"
-        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
-
-        do {
-            let encoder = JSONEncoder()
-            request.httpBody = try encoder.encode(geminiRequest)
-        } catch {
-            throw AIFoodAnalysisError.requestCreationFailed
-        }
 
         telemetryCallback?("🌐 Sending request to Google Gemini...")
 
@@ -123,54 +108,7 @@ class GoogleGeminiFoodAnalysisService: FoodAnalysisService {
                 print("raw response: <non-UTF8 data of length \(data.count)>")
             }
 
-            guard httpResponse.statusCode == 200 else {
-                print("❌ Google Gemini API error: \(httpResponse.statusCode)")
-                if let apiError = try? JSONDecoder().decode(GeminiErrorResponse.self, from: data) {
-                    let message = apiError.error.message
-                    let status = apiError.error.status ?? ""
-                    print("❌ Gemini API Error: status=\(status), message=\(message)")
-
-                    // Handle common Gemini errors with specific error types
-                    if message.localizedCaseInsensitiveContains("quota") ||
-                        message.localizedCaseInsensitiveContains("QUOTA_EXCEEDED") ||
-                        status.localizedCaseInsensitiveContains("QUOTA_EXCEEDED")
-                    {
-                        throw AIFoodAnalysisError.quotaExceeded(provider: "Google Gemini")
-                    } else if message.localizedCaseInsensitiveContains("RATE_LIMIT_EXCEEDED") ||
-                        message.localizedCaseInsensitiveContains("rate limit") ||
-                        status.localizedCaseInsensitiveContains("RATE_LIMIT_EXCEEDED")
-                    {
-                        throw AIFoodAnalysisError.rateLimitExceeded(provider: "Google Gemini")
-                    } else if message.localizedCaseInsensitiveContains("PERMISSION_DENIED") ||
-                        message.localizedCaseInsensitiveContains("API_KEY_INVALID") ||
-                        status.localizedCaseInsensitiveContains("PERMISSION_DENIED")
-                    {
-                        throw AIFoodAnalysisError
-                            .customError("Invalid Google Gemini API key. Please check your configuration.")
-                    } else if message.localizedCaseInsensitiveContains("RESOURCE_EXHAUSTED") ||
-                        status.localizedCaseInsensitiveContains("RESOURCE_EXHAUSTED")
-                    {
-                        throw AIFoodAnalysisError.creditsExhausted(provider: "Google Gemini")
-                    }
-                } else {
-                    print("❌ Gemini: Error data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
-                }
-
-                // Handle HTTP status codes for common credit/quota issues
-                if httpResponse.statusCode == 429 {
-                    throw AIFoodAnalysisError.rateLimitExceeded(provider: "Google Gemini")
-                } else if httpResponse.statusCode == 403 {
-                    throw AIFoodAnalysisError.quotaExceeded(provider: "Google Gemini")
-                }
-
-                throw AIFoodAnalysisError.apiError(httpResponse.statusCode)
-            }
-
-            // Add data validation
-            guard !data.isEmpty else {
-                print("❌ Google Gemini: Empty response data")
-                throw AIFoodAnalysisError.invalidResponse
-            }
+            try handleErrorResponse(httpResponse, data: data)
 
             // Parse Gemini response with Codable models
             let decoder = JSONDecoder()
@@ -202,37 +140,102 @@ class GoogleGeminiFoodAnalysisService: FoodAnalysisService {
 
             print("🔧 Google Gemini: Received text length: \(text.count)")
 
-            var cleanedText = text
-            // Remove markdown fences and stray backticks
-            cleanedText = cleanedText.replacingOccurrences(of: "```json", with: "")
-            cleanedText = cleanedText.replacingOccurrences(of: "```", with: "")
-            cleanedText = cleanedText.replacingOccurrences(of: "`", with: "")
-            cleanedText = cleanedText.trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-
-            // Extract JSON substring between first "{" and last "}" if present
-            if let start = cleanedText.firstIndex(of: "{"),
-               let end = cleanedText.lastIndex(of: "}"),
-               start <= end
-            {
-                cleanedText = String(cleanedText[start ... end])
-            }
-
-            guard let jsonData = cleanedText.data(using: .utf8) else {
-                throw AIFoodAnalysisError.responseParsingFailed
-            }
-
-            do {
-                let resultDecoder = JSONDecoder()
-                return try resultDecoder.decode(AIFoodAnalysisResult.self, from: jsonData)
-            } catch {
-                print("❌ JSON decode error: \(error)")
-                print("❌ JSON content:\n\(cleanedText)")
-                throw AIFoodAnalysisError.responseParsingFailed
-            }
+            return text
         } catch let error as AIFoodAnalysisError {
             throw error
         } catch {
             throw AIFoodAnalysisError.networkError(error)
+        }
+    }
+
+    private func buildRequest(
+        model: GeminiModel,
+        prompt: String,
+        images: [String],
+        apiKey: String,
+        telemetryCallback _: ((String) -> Void)?
+    ) throws -> URLRequest {
+        let baseURL = baseURLTemplate.replacingOccurrences(of: "{model}", with: model.rawValue)
+
+        guard let url = URL(string: "\(baseURL)?key=\(apiKey)") else {
+            throw AIFoodAnalysisError.requestCreationFailed
+        }
+
+        let userTextPart = GeminiPart(text: prompt)
+        let imageParts = images.map {
+            GeminiPart(inline_data: GeminiInlineData(mime_type: "image/jpeg", data: $0))
+        }
+
+        let geminiRequest = GeminiGenerateContentRequest(
+            contents: [GeminiContent(parts: [userTextPart] + imageParts)],
+            generationConfig: GeminiGenerationConfig(
+                temperature: 0.01,
+                topP: 0.95,
+                topK: 8,
+                maxOutputTokens: 8000
+            )
+        )
+
+        var request = URLRequest(url: url)
+        request.httpMethod = "POST"
+        request.setValue("application/json", forHTTPHeaderField: "Content-Type")
+
+        do {
+            let encoder = JSONEncoder()
+            request.httpBody = try encoder.encode(geminiRequest)
+        } catch {
+            throw AIFoodAnalysisError.requestCreationFailed
+        }
+        return request
+    }
+
+    private func handleErrorResponse(_ httpResponse: HTTPURLResponse, data: Data) throws {
+        guard httpResponse.statusCode == 200 else {
+            print("❌ Google Gemini API error: \(httpResponse.statusCode)")
+            if let apiError = try? JSONDecoder().decode(GeminiErrorResponse.self, from: data) {
+                let message = apiError.error.message
+                let status = apiError.error.status ?? ""
+                print("❌ Gemini API Error: status=\(status), message=\(message)")
+
+                // Handle common Gemini errors with specific error types
+                if message.localizedCaseInsensitiveContains("quota") ||
+                    message.localizedCaseInsensitiveContains("QUOTA_EXCEEDED") ||
+                    status.localizedCaseInsensitiveContains("QUOTA_EXCEEDED")
+                {
+                    throw AIFoodAnalysisError.quotaExceeded(provider: "Google Gemini")
+                } else if message.localizedCaseInsensitiveContains("RATE_LIMIT_EXCEEDED") ||
+                    message.localizedCaseInsensitiveContains("rate limit") ||
+                    status.localizedCaseInsensitiveContains("RATE_LIMIT_EXCEEDED")
+                {
+                    throw AIFoodAnalysisError.rateLimitExceeded(provider: "Google Gemini")
+                } else if message.localizedCaseInsensitiveContains("PERMISSION_DENIED") ||
+                    message.localizedCaseInsensitiveContains("API_KEY_INVALID") ||
+                    status.localizedCaseInsensitiveContains("PERMISSION_DENIED")
+                {
+                    throw AIFoodAnalysisError
+                        .customError("Invalid Google Gemini API key. Please check your configuration.")
+                } else if message.localizedCaseInsensitiveContains("RESOURCE_EXHAUSTED") ||
+                    status.localizedCaseInsensitiveContains("RESOURCE_EXHAUSTED")
+                {
+                    throw AIFoodAnalysisError.creditsExhausted(provider: "Google Gemini")
+                }
+            } else {
+                print("❌ Gemini: Error data: \(String(data: data, encoding: .utf8) ?? "Unable to decode")")
+            }
+
+            // Handle HTTP status codes for common credit/quota issues
+            if httpResponse.statusCode == 429 {
+                throw AIFoodAnalysisError.rateLimitExceeded(provider: "Google Gemini")
+            } else if httpResponse.statusCode == 403 {
+                throw AIFoodAnalysisError.quotaExceeded(provider: "Google Gemini")
+            }
+
+            throw AIFoodAnalysisError.apiError(httpResponse.statusCode)
+        }
+
+        guard !data.isEmpty else {
+            print("❌ Google Gemini: Empty response data")
+            throw AIFoodAnalysisError.invalidResponse
         }
     }
 }

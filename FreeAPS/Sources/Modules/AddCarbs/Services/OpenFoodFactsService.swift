@@ -1,15 +1,37 @@
 import Foundation
 import OSLog
 
+extension OpenFoodFactsService: TextAnalysisService {
+    func analyzeText(
+        prompt: String,
+        telemetryCallback _: ((String) -> Void)?
+    ) async throws -> [OpenFoodFactsProduct] {
+        try await searchProducts(query: prompt, pageSize: 15)
+    }
+}
+
+extension OpenFoodFactsService: BarcodeAnalysisService {
+    func analyzeBarcode(
+        barcode: String,
+        telemetryCallback _: ((String) -> Void)?
+    ) async throws -> OpenFoodFactsProduct {
+        try await searchProduct(barcode: barcode)
+    }
+}
+
 /// Service for interacting with the OpenFoodFacts API
 /// Provides food search functionality and barcode lookup for carb counting
-class OpenFoodFactsService {
+final class OpenFoodFactsService {
+    static let shared = OpenFoodFactsService()
+
     // MARK: - Properties
 
     private let session: URLSession
     private let baseURL = "https://world.openfoodfacts.org"
     private let userAgent = "Loop-iOS-Diabetes-App/1.0"
     private let log = OSLog(subsystem: "", category: "OpenFoodFactsService")
+
+    private let timeout: TimeInterval = 30.0
 
     // MARK: - Initialization
 
@@ -21,8 +43,8 @@ class OpenFoodFactsService {
         } else {
             // Create optimized configuration for food database requests
             let config = URLSessionConfiguration.default
-            config.timeoutIntervalForRequest = 30.0
-            config.timeoutIntervalForResource = 60.0
+            config.timeoutIntervalForRequest = timeout
+            config.timeoutIntervalForResource = timeout * 2
             config.waitsForConnectivity = true
             config.networkServiceType = .default
             config.allowsCellularAccess = true
@@ -31,9 +53,7 @@ class OpenFoodFactsService {
         }
     }
 
-    // MARK: - Public API
-
-    func searchProducts(query: String, pageSize: Int = 20) async throws -> [OpenFoodFactsProduct] {
+    private func searchProducts(query: String, pageSize: Int = 20) async throws -> [OpenFoodFactsProduct] {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmedQuery.isEmpty else {
             return []
@@ -191,7 +211,7 @@ class OpenFoodFactsService {
         request.setValue(userAgent, forHTTPHeaderField: "User-Agent")
         request.setValue("application/json", forHTTPHeaderField: "Accept")
         request.setValue("en", forHTTPHeaderField: "Accept-Language")
-        request.timeoutInterval = 30.0 // Increased from 10 to 30 seconds
+        request.timeoutInterval = timeout
         return request
     }
 

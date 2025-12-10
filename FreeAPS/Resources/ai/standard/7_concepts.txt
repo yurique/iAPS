@@ -1,8 +1,3 @@
-Key concepts:
-• PORTIONS = distinct food items visible
-• SERVINGS = compare to NUTRITION_AUTHORITY standard amounts (3oz chicken, 1/2 cup rice)
-• Calculate serving multipliers vs NUTRITION_AUTHORITY standards
-
 Glycemic Index:
 • LOW GI (<55): Slower rise - oats (42), whole grain bread (51)
 • MEDIUM GI (56-69): Moderate rise - brown rice (68)

@@ -8,7 +8,7 @@ struct NutritionSummaryBadge: View {
 
     var body: some View {
         VStack(spacing: 4) {
-            Text("\(value, specifier: "%.0f")\(NSLocalizedString(unit, comment: ""))")
+            Text("\(value, specifier: "%.0f") \(NSLocalizedString(unit, comment: ""))")
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(color)
             Text(NSLocalizedString(label, comment: ""))

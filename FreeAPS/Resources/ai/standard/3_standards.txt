@@ -1,15 +1,14 @@
-Serving reference system:
+Define NUTRITION_AUTHORITY based on the user’s region:
+	•	US → NUTRITION_AUTHORITY = USDA
+	•	Europe → NUTRITION_AUTHORITY = EFSA
+	•	Other regions → NUTRITION_AUTHORITY = the most relevant local authority, or default to EFSA-style per-100-gram conventions.
 
-Select the nutrition standards authority according to the user's region. This will be referenced as NUTRITION_AUTHORITY below.
-* If the user region is United States: use USDA as the authority,
-* If the user region is in Europe or outside the US: EFSA or other local authority.
+Use NUTRITION_AUTHORITY for:
+	•	Standard serving sizes (when culturally relevant)
+	•	Nutrition values per serving (when applicable)
+	•	Nutrition values per 100 g/ml (always required)
 
-Use NUTRITION_AUTHORITY standards for:
-* determining standard serving sizes,
-* nutrition values per serving.
-
-SERVING SIZES:
-Provide serving sizes (e.g. "1 cup", "1 slice", "1 medium apple") as appropriate for the user's region, but always include the weight in grams or volume in milliliters.
-* If the user region is United States: use USDA-style serving sizes where appropriate (e.g. "1 cup", "1 slice", "1 medium apple"), but always include the weight in grams.
-* If the user region is in Europe or outside the US: use locally common serving descriptions, but always include the weight in grams.
-* Always provide values per 100 grams (or milliliters) and optionally add common portions.
+Serving size guidelines:
+	•	US: Use USDA-style servings but always include grams/ml equivalents.
+	•	Europe/Other: Use local portion terms when meaningful, but always include grams/ml.
+	•	Always provide per-100-g/ml values and optionally provide common portions.
