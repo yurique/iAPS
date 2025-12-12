@@ -1,9 +1,24 @@
 import Combine
 import SwiftUI
 
+struct AnalysisRoute: Identifiable, Hashable {
+    let id = UUID()
+    let request: AnalysisRequest
+
+    static func == (lhs: AnalysisRoute, rhs: AnalysisRoute) -> Bool { lhs.id == rhs.id }
+
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+}
+
 final class FoodSearchStateModel: ObservableObject {
     @Published var foodSearchText = ""
     @Published var isBarcode = false
+
+    @Published var navigateToAIAnalysis: AnalysisRoute? = nil
+    @Published var aiAnalysisResult: FoodAnalysisResult?
+    @Published var aiAnalysisRequest: AnalysisRequest?
 
     @Published var searchResults: [OpenFoodFactsProduct] = []
     @Published var aiSearchResults: [AIFoodItem] = []
@@ -46,30 +61,35 @@ final class FoodSearchStateModel: ObservableObject {
         let isBarcode = isBarcode(trimmedQuery)
 
         searchTask?.cancel()
-        isLoading = true
         errorMessage = nil
 
         searchTask = Task { @MainActor in
-            Task { @MainActor in
+            do {
+                if isBarcode {
+                    isLoading = true
+                    if let product = try await ConfigurableAIService.shared.analyzeBarcode(
+                        trimmedQuery,
+                        telemetryCallback: nil
+                    ) {
+                        Task { @MainActor in
+                            self.searchResults = [product]
+                            print("✅ OpenFoodFacts found product: \(product.displayName)")
+                            self.isLoading = false
 
-                do {
-                    if isBarcode {
-                        if let product = try await ConfigurableAIService.shared.analyzeBarcode(
-                            barcode: trimmedQuery,
-                            telemetryCallback: nil
-                        ) {
-                            Task { @MainActor in
-                                self.searchResults = [product]
-                                print("✅ OpenFoodFacts found product: \(product.displayName)")
-                                self.isLoading = false
-
-                                print("🖼️ Barcode Product URLs: \(product.imageURL ?? "nil"), \(product.imageFrontURL ?? "nil")")
-                            }
+                            print("🖼️ Barcode Product URLs: \(product.imageURL ?? "nil"), \(product.imageFrontURL ?? "nil")")
                         }
+                    }
 
-                    } else {
+                } else {
+                    switch UserDefaults.standard.textSearchProvider {
+                    case .aiModel:
+                        isLoading = false
+                        navigateToAIAnalysis = AnalysisRoute(request: .query(trimmedQuery))
+                        return
+                    default:
+                        isLoading = true
                         let openFoodProducts = try await ConfigurableAIService.shared.analyzeFoodQuery(
-                            query: trimmedQuery,
+                            trimmedQuery,
                             telemetryCallback: nil
                         )
 
@@ -79,13 +99,13 @@ final class FoodSearchStateModel: ObservableObject {
                             print("✅ Search completed: \(self.searchResults.count) results")
                         }
                     }
-                } catch {
-                    if !Task.isCancelled {
-                        self.errorMessage = error.localizedDescription
-                        self.isLoading = false
-                        self.searchResults = []
-                        print("❌ Search failed: \(error.localizedDescription)")
-                    }
+                }
+            } catch {
+                if !Task.isCancelled {
+                    self.errorMessage = error.localizedDescription
+                    self.isLoading = false
+                    self.searchResults = []
+                    print("❌ Search failed: \(error.localizedDescription)")
                 }
             }
         }

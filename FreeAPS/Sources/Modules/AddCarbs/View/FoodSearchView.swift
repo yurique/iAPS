@@ -9,9 +9,6 @@ struct FoodSearchView: View {
     // Navigation States
     @State private var navigateToBarcode = false
     @State private var navigateToAICamera = false
-    @State private var showingAIAnalysisResults = false
-    @State private var aiAnalysisResult: FoodAnalysisResult?
-    @State private var aiAnalysisImage: UIImage?
 
     var body: some View {
         NavigationStack {
@@ -65,7 +62,7 @@ struct FoodSearchView: View {
                 .padding(.top, 8)
 
                 ScrollView {
-                    if showingAIAnalysisResults, let result = aiAnalysisResult {
+                    if let result = state.aiAnalysisResult {
                         AIAnalysisResultsView(
                             analysisResult: result,
                             onFoodItemSelected: { foodItem in
@@ -78,10 +75,10 @@ struct FoodSearchView: View {
 //                                    source: "AI Analysis",
 //                                    imageURL: nil
 //                                )
-                                handleFoodItemSelection(selectedFood, image: aiAnalysisImage)
+                                handleFoodItemSelection(selectedFood, image: state.aiAnalysisRequest?.image)
                             },
                             onCompleteMealSelected: { totalMeal in
-                                onSelect(totalMeal, aiAnalysisImage)
+                                onSelect(totalMeal, state.aiAnalysisRequest?.image)
                                 dismiss()
                             }
                         )
@@ -125,13 +122,37 @@ struct FoodSearchView: View {
             }
             .navigationDestination(isPresented: $navigateToAICamera) {
                 AICameraView(
-                    onFoodAnalyzed: { analysisResult, image in
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            handleAIAnalysis(analysisResult, image: image)
-                            navigateToAICamera = false
-                        }
+                    onImageCaptured: { image in
+                        navigateToAICamera = false
+                        state.navigateToAIAnalysis = AnalysisRoute(request: AnalysisRequest.image(image))
                     },
                     onCancel: { navigateToAICamera = false }
+                )
+            }
+            .navigationDestination(item: $state.navigateToAIAnalysis) { analysisRoute in
+                AIProgressView(
+                    analysisRequest: analysisRoute.request,
+                    onFoodAnalyzed: { analysisResult, analysisRequest in
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            handleAIAnalysis(analysisResult, image: analysisRequest.image)
+                            state.aiAnalysisRequest = analysisRequest
+                            navigateToAICamera = false
+                            state.navigateToAIAnalysis = nil
+                        }
+                    },
+                    onFoodSearched: { analysisResult, analysisRequest in
+                        // TODO: implement this
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
+                            self.state.searchResults = analysisResult
+                            state.aiAnalysisRequest = analysisRequest
+                            navigateToAICamera = false
+                            state.navigateToAIAnalysis = nil
+                        }
+                    },
+                    onCancel: {
+                        navigateToAICamera = false
+                        state.navigateToAIAnalysis = nil
+                    }
                 )
             }
         }.background(Color(.systemBackground))
@@ -144,10 +165,8 @@ struct FoodSearchView: View {
         print("🔍 Search for Barcode: \(barcode)")
     }
 
-    private func handleAIAnalysis(_ analysisResult: FoodAnalysisResult, image: UIImage?) { // ✅ Parameter name korrigiert
-        aiAnalysisResult = analysisResult
-        showingAIAnalysisResults = true
-        aiAnalysisImage = image // ✅ Bild speichern
+    private func handleAIAnalysis(_ analysisResult: FoodAnalysisResult, image _: UIImage?) { // ✅ Parameter name korrigiert
+        state.aiAnalysisResult = analysisResult
 
         let aiFoodItems = analysisResult.foodItemsDetailed.map { foodItem in
             var carbs: Double = 0

@@ -495,6 +495,7 @@
 		F2FA688C2EE915A300476D7B /* ImageCompression.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FA688B2EE915A300476D7B /* ImageCompression.swift */; };
 		F2FA688E2EE9180800476D7B /* NetworkQualityMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FA688D2EE9180800476D7B /* NetworkQualityMonitor.swift */; };
 		F2FA68902EEC538F00476D7B /* AIProviderClient.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FA688F2EEC538F00476D7B /* AIProviderClient.swift */; };
+		F2FA68942EEC87D200476D7B /* AIProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FA68932EEC87D200476D7B /* AIProgressView.swift */; };
 		F2FEE7042D2DB1A000A91BB2 /* BGTextField.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2FEE7032D2DB1A000A91BB2 /* BGTextField.swift */; };
 		F5CA3DB1F9DC8B05792BBFAA /* CGMDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9B5C0607505A38F256BF99A /* CGMDataFlow.swift */; };
 		F5F7E6C1B7F098F59EB67EC5 /* TargetsEditorDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA49538D56989D8DA6FCF538 /* TargetsEditorDataFlow.swift */; };
@@ -1169,6 +1170,7 @@
 		F2FA688B2EE915A300476D7B /* ImageCompression.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImageCompression.swift; sourceTree = "<group>"; };
 		F2FA688D2EE9180800476D7B /* NetworkQualityMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NetworkQualityMonitor.swift; sourceTree = "<group>"; };
 		F2FA688F2EEC538F00476D7B /* AIProviderClient.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProviderClient.swift; sourceTree = "<group>"; };
+		F2FA68932EEC87D200476D7B /* AIProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIProgressView.swift; sourceTree = "<group>"; };
 		F2FEE7032D2DB1A000A91BB2 /* BGTextField.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BGTextField.swift; sourceTree = "<group>"; };
 		F816825D28DB441200054060 /* HeartBeatManager.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = HeartBeatManager.swift; sourceTree = "<group>"; };
 		F816825F28DB441800054060 /* BluetoothTransmitter.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = BluetoothTransmitter.swift; sourceTree = "<group>"; };
@@ -2447,6 +2449,7 @@
 			children = (
 				86FC1CFD647CF34508AF9A3B /* AddCarbsRootView.swift */,
 				19C3C73E2E97AE7B0000BE4D /* AICameraView.swift */,
+				F2FA68932EEC87D200476D7B /* AIProgressView.swift */,
 				19C3C73F2E97AE7B0000BE4D /* AISettingsView.swift */,
 				19C3C7402E97AE7B0000BE4D /* BarcodeScannerView.swift */,
 				19C3C7412E97AE7B0000BE4D /* FoodSearchResultsView.swift */,
@@ -3515,6 +3518,7 @@
 				6632A0DC746872439A858B44 /* ISFEditorDataFlow.swift in Sources */,
 				DBA5254DBB2586C98F61220C /* ISFEditorProvider.swift in Sources */,
 				1BBB001DAD60F3B8CEA4B1C7 /* ISFEditorStateModel.swift in Sources */,
+				F2FA68942EEC87D200476D7B /* AIProgressView.swift in Sources */,
 				F816826028DB441800054060 /* BluetoothTransmitter.swift in Sources */,
 				BD7DA9A72AE06E2B00601B20 /* BolusCalculatorConfigProvider.swift in Sources */,
 				F2FA688C2EE915A300476D7B /* ImageCompression.swift in Sources */,

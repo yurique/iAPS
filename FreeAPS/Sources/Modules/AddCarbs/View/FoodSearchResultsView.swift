@@ -46,80 +46,38 @@ struct FoodSearchResultsView: View {
     // MARK: - Subviews
 
     private var searchingView: some View {
-        VStack(spacing: 16) {
-            ZStack {
-                // Outer pulsing ring
-                Circle()
-                    .stroke(Color.blue.opacity(0.3), lineWidth: 2)
-                    .frame(width: 70, height: 70)
-                    .scaleEffect(pulseScale)
-                    .animation(
-                        .easeInOut(duration: 1.2)
-                            .repeatForever(autoreverses: true),
-                        value: pulseScale
-                    )
+        VStack(spacing: 6) {
+            HStack(spacing: 4) {
+                Text(NSLocalizedString("Searching foods", comment: "Text shown while searching for foods"))
+                    .font(.headline)
+                    .foregroundColor(.primary)
 
-                // Inner filled circle
-                Circle()
-                    .fill(Color.blue.opacity(0.15))
-                    .frame(width: 60, height: 60)
-                    .scaleEffect(secondaryPulseScale)
-                    .animation(
-                        .easeInOut(duration: 0.8)
-                            .repeatForever(autoreverses: true),
-                        value: secondaryPulseScale
-                    )
-
-                // Rotating magnifying glass
-                Image(systemName: "magnifyingglass")
-                    .font(.title)
-                    .foregroundColor(.blue)
-                    .rotationEffect(rotationAngle)
-                    .animation(
-                        .linear(duration: 2.0)
-                            .repeatForever(autoreverses: false),
-                        value: rotationAngle
-                    )
-            }
-            .onAppear {
-                pulseScale = 1.3
-                secondaryPulseScale = 1.1
-                rotationAngle = .degrees(360)
+                // Animated dots
+//                HStack(spacing: 2) {
+//                    ForEach(0 ..< 3) { index in
+//                        Circle()
+//                            .fill(Color.blue)
+//                            .frame(width: 4, height: 4)
+//                            .scaleEffect(dotScales[index])
+//                            .animation(
+//                                .easeInOut(duration: 0.6)
+//                                    .repeatForever()
+//                                    .delay(Double(index) * 0.2),
+//                                value: dotScales[index]
+//                            )
+//                    }
+//                }
+//                .onAppear {
+//                    for i in 0 ..< 3 {
+//                        dotScales[i] = 1.5
+//                    }
+//                }
             }
 
-            VStack(spacing: 6) {
-                HStack(spacing: 4) {
-                    Text(NSLocalizedString("Searching foods", comment: "Text shown while searching for foods"))
-                        .font(.headline)
-                        .foregroundColor(.primary)
-
-                    // Animated dots
-                    HStack(spacing: 2) {
-                        ForEach(0 ..< 3) { index in
-                            Circle()
-                                .fill(Color.blue)
-                                .frame(width: 4, height: 4)
-                                .scaleEffect(dotScales[index])
-                                .animation(
-                                    .easeInOut(duration: 0.6)
-                                        .repeatForever()
-                                        .delay(Double(index) * 0.2),
-                                    value: dotScales[index]
-                                )
-                        }
-                    }
-                    .onAppear {
-                        for i in 0 ..< 3 {
-                            dotScales[i] = 1.5
-                        }
-                    }
-                }
-
-                Text(NSLocalizedString("Finding the best matches for you", comment: "Subtitle shown while searching for foods"))
-                    .font(.caption)
-                    .foregroundColor(.secondary)
-                    .multilineTextAlignment(.center)
-            }
+            Text(NSLocalizedString("Finding the best matches for you", comment: "Subtitle shown while searching for foods"))
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .multilineTextAlignment(.center)
         }
         .padding(.vertical, 24)
         .frame(maxWidth: .infinity, alignment: .center)

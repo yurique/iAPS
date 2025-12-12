@@ -1,13 +1,21 @@
 import Foundation
+import UIKit
 
-enum PromtType {
-    case image
+enum AnalysisRequest {
+    case image(_ image: UIImage)
     case query(_ query: String)
+
+    var image: UIImage? {
+        switch self {
+        case let .image(image): image
+        case .query: nil
+        }
+    }
 }
 
 enum AIPrompts {
     static func getAnalysisPrompt(
-        _ request: PromtType,
+        _ request: AnalysisRequest,
         responseSchema: [String: Any]
     ) -> String {
         do {
@@ -61,7 +69,7 @@ private let standardAnalysisFooter: String = PromptLoader
 
 /// Standard analysis prompt for basic diabetes management (used when Advanced Dosing is OFF)
 private func getStandardAnalysisPrompt(
-    _ request: PromtType,
+    _ request: AnalysisRequest,
     responseSchema: [String: Any],
 ) throws -> String {
     let instructions: String = switch request {

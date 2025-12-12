@@ -154,7 +154,7 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
             aggressiveImageCompression: providerImpl.needAggressiveImageCompression,
             telemetryCallback: telemetryCallback
         )
-        let analysisPrompt = AIPrompts.getAnalysisPrompt(.image, responseSchema: FoodAnalysisResult.schemaVisual)
+        let analysisPrompt = AIPrompts.getAnalysisPrompt(.image(image), responseSchema: FoodAnalysisResult.schemaVisual)
 
         let result: FoodAnalysisResult = try await providerImpl.analyzeImage(
             prompt: analysisPrompt,
@@ -171,7 +171,7 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
     }
 
     func analyzeFoodQuery(
-        query: String,
+        _ query: String,
         telemetryCallback: ((String) -> Void)?
     ) async throws -> [OpenFoodFactsProduct] {
         telemetryCallback?("🤖 Connecting to \(UserDefaults.standard.textSearchProvider.description) …")
@@ -193,7 +193,7 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
     }
 
     func analyzeBarcode(
-        barcode: String,
+        _ barcode: String,
         telemetryCallback: ((String) -> Void)?
     ) async throws -> OpenFoodFactsProduct? {
         telemetryCallback?("🤖 Connecting to \(UserDefaults.standard.barcodeSearchProvider.description) …")
