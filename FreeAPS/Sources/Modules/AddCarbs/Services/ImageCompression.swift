@@ -45,11 +45,9 @@ enum ImageCompression {
     static func getImageBase64(
         for image: UIImage,
         aggressiveImageCompression: Bool,
-        telemetryCallback: ((String) -> Void)?
+        telemetryCallback _: ((String) -> Void)?
     ) throws -> String {
         let optimizedImage = ImageCompression.optimizeImageForAnalysis(image)
-        telemetryCallback?("🔄 Encoding image data...")
-
         let adaptiveQuality = ImageCompression.adaptiveCompressionQuality(for: optimizedImage)
 
         let compressionQuality =

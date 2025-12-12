@@ -140,12 +140,10 @@ struct AICameraView: View {
 
                         // Analysis in progress (auto-started)
                         VStack(spacing: 16) {
-                            ProgressView()
-                                .scaleEffect(1.2)
-
-                            Text("Analyzing food with AI...")
-                                .font(.body)
-                                .foregroundColor(.secondary)
+                            AnalyzingPill(title: "Analyzing food with AI…") {
+                                capturedImage = nil
+                                isAnalyzing = false
+                            }
 
                             Text("Use Cancel to retake photo")
                                 .font(.caption)
@@ -174,13 +172,13 @@ struct AICameraView: View {
             .navigationTitle("AI Food Analysis")
             .navigationBarTitleDisplayMode(.inline)
             .navigationBarBackButtonHidden(true)
-            .toolbar {
-                ToolbarItem(placement: .navigationBarLeading) {
-                    Button("Cancel") {
-                        onCancel()
-                    }
-                }
-            }
+//            .toolbar {
+//                ToolbarItem(placement: .navigationBarLeading) {
+//                    Button("Cancel") {
+//                        onCancel()
+//                    }
+//                }
+//            }
         }
         .fullScreenCover(isPresented: $showingImagePicker) {
             if imageSourceType == .camera {
@@ -276,75 +274,13 @@ struct AICameraView: View {
         telemetryLogs = []
         showTelemetry = true
 
-        // Start telemetry logging with progressive steps
-        addTelemetryLog("🔍 Initializing AI food analysis...")
-
         Task {
             do {
-                // Step 1: Image preparation
-                await MainActor.run {
-                    addTelemetryLog("📱 Processing image data...")
-                }
-                try await Task.sleep(nanoseconds: 300_000_000)
-
-                await MainActor.run {
-                    addTelemetryLog("💼 Optimizing image quality...")
-                }
-                try await Task.sleep(nanoseconds: 200_000_000)
-
-                // Step 2: AI connection
-                await MainActor.run {
-                    addTelemetryLog("🧠 Connecting to AI provider...")
-                }
-                try await Task.sleep(nanoseconds: 300_000_000)
-
-                await MainActor.run {
-                    addTelemetryLog("📡 Uploading image for analysis...")
-                }
-                try await Task.sleep(nanoseconds: 250_000_000)
-
-                // Step 3: Analysis stages
-                await MainActor.run {
-                    addTelemetryLog("📊 Analyzing nutritional content...")
-                }
-                try await Task.sleep(nanoseconds: 200_000_000)
-
-                await MainActor.run {
-                    addTelemetryLog("🔬 Identifying food portions...")
-                }
-                try await Task.sleep(nanoseconds: 200_000_000)
-
-                await MainActor.run {
-                    addTelemetryLog("📏 Calculating serving sizes...")
-                }
-                try await Task.sleep(nanoseconds: 200_000_000)
-
-                await MainActor.run {
-                    addTelemetryLog("⚖️ Comparing to USDA standards...")
-                }
-                try await Task.sleep(nanoseconds: 200_000_000)
-
-                // Step 4: AI processing (actual call)
-                await MainActor.run {
-                    addTelemetryLog("🤖 Running AI vision analysis...")
-                }
-
                 let result = try await aiService.analyzeFoodImage(image) { telemetryMessage in
                     Task { @MainActor in
                         addTelemetryLog(telemetryMessage)
                     }
                 }
-
-                // Step 5: Results processing
-                await MainActor.run {
-                    addTelemetryLog("📊 Processing analysis results...")
-                }
-                try await Task.sleep(nanoseconds: 200_000_000)
-
-                await MainActor.run {
-                    addTelemetryLog("🍽️ Generating nutrition summary...")
-                }
-                try await Task.sleep(nanoseconds: 200_000_000)
 
                 await MainActor.run {
                     addTelemetryLog("✅ Analysis complete!")
@@ -356,7 +292,7 @@ struct AICameraView: View {
                 }
             } catch {
                 await MainActor.run {
-                    addTelemetryLog("⚠️ Connection interrupted...")
+                    addTelemetryLog("⚠️ Connection interrupted")
                 }
                 try? await Task.sleep(nanoseconds: 300_000_000)
 
@@ -521,5 +457,167 @@ struct TelemetryWindow: View {
                 .stroke(Color(.systemGray4), lineWidth: 1)
         )
         .padding(.top, 8)
+    }
+}
+
+struct AnalyzingPill: View {
+    var title: LocalizedStringKey = "Analyzing…"
+    var onCancel: (() -> Void)? = nil
+
+    @Environment(\.colorScheme) private var colorScheme
+    @State private var rotation: Double = 0
+    @State private var shimmerPhase: CGFloat = -140
+
+    var body: some View {
+        // Local constants for palette and sizing
+        let baseColors: [Color] = [
+            Color.gray.opacity(0.22), Color.gray.opacity(0.22),
+            Color.teal.opacity(0.45), Color.yellow.opacity(0.45), Color.red.opacity(0.45), Color.purple.opacity(0.45),
+            Color.gray.opacity(0.22), Color.gray.opacity(0.22)
+        ]
+        let waveColors: [Color] = [
+            .clear, .clear,
+            Color.teal.opacity(0.7), Color.yellow.opacity(0.7), Color.red.opacity(0.7), Color.purple.opacity(0.7),
+            .clear, .clear
+        ]
+
+        let innerFillBlur: CGFloat = 22
+        let innerFillOpacityDark: CGFloat = 0.35
+        let innerFillOpacityLight: CGFloat = 0.22
+
+        let outerHaloLineWidth: CGFloat = 2
+        let outerHaloBlur: CGFloat = 6
+        let outerHaloOpacityDark: CGFloat = 0.32
+        let outerHaloOpacityLight: CGFloat = 0.18
+
+        let waveInnerBlur: CGFloat = 28
+        let waveInnerOpacityDark: CGFloat = 0.45
+        let waveInnerOpacityLight: CGFloat = 0.30
+
+        let waveOuterLineWidth: CGFloat = 10
+        let waveOuterBlur: CGFloat = 20
+        let waveOuterOpacityDark: CGFloat = 0.50
+        let waveOuterOpacityLight: CGFloat = 0.35
+
+        let borderLineWidth: CGFloat = 0.6
+        let borderBlur: CGFloat = 0.8
+        let borderOpacity: CGFloat = 0.4
+
+        let content = HStack(spacing: 10) {
+            Text(title)
+                .font(.footnote)
+                .foregroundStyle(.primary.opacity(0.9))
+                .mask(
+                    LinearGradient(
+                        gradient: Gradient(stops: [
+                            .init(color: .white.opacity(0.7), location: 0.0),
+                            .init(color: .white.opacity(1.0), location: 0.5),
+                            .init(color: .white.opacity(0.7), location: 1.0)
+                        ]),
+                        startPoint: .leading,
+                        endPoint: .trailing
+                    )
+                    .offset(x: shimmerPhase)
+                )
+            Spacer(minLength: 8)
+            if let onCancel {
+                Button("Cancel", action: onCancel)
+                    .font(.footnote)
+                    .foregroundStyle(.primary)
+                    .buttonStyle(.borderless)
+                    .padding(.horizontal, 4)
+                    .padding(.vertical, 4)
+                    .contentShape(Capsule())
+                    .accessibilityLabel("Cancel")
+            }
+        }
+
+        return content
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: Capsule())
+            // Inner fill glow covering the whole capsule (subtle, neutral+color)
+            .background(
+                AngularGradient(
+                    gradient: Gradient(colors: baseColors),
+                    center: .center,
+                    angle: .degrees(rotation)
+                )
+                .blur(radius: innerFillBlur)
+                .opacity(colorScheme == .dark ? innerFillOpacityDark : innerFillOpacityLight)
+                .blendMode(.plusLighter)
+                .mask(Capsule())
+            )
+            // Outer halo (soft, subtle)
+            .background(
+                Capsule()
+                    .strokeBorder(
+                        AngularGradient(
+                            gradient: Gradient(colors: baseColors),
+                            center: .center,
+                            angle: .degrees(rotation)
+                        ),
+                        lineWidth: outerHaloLineWidth
+                    )
+                    .blur(radius: outerHaloBlur)
+                    .opacity(colorScheme == .dark ? outerHaloOpacityDark : outerHaloOpacityLight)
+                    .blendMode(.plusLighter)
+            )
+            // Running wave (inner fill) amplifies the glow and spills inside
+            .background(
+                AngularGradient(
+                    gradient: Gradient(colors: waveColors),
+                    center: .center,
+                    angle: .degrees(rotation)
+                )
+                .blur(radius: waveInnerBlur)
+                .opacity(colorScheme == .dark ? waveInnerOpacityDark : waveInnerOpacityLight)
+                .blendMode(.plusLighter)
+                .mask(Capsule())
+            )
+            // Running wave (outer halo) – larger around the hotspot
+            .overlay(
+                Capsule()
+                    .strokeBorder(
+                        AngularGradient(
+                            gradient: Gradient(colors: waveColors),
+                            center: .center,
+                            angle: .degrees(rotation)
+                        ),
+                        lineWidth: waveOuterLineWidth
+                    )
+                    .blur(radius: waveOuterBlur)
+                    .opacity(colorScheme == .dark ? waveOuterOpacityDark : waveOuterOpacityLight)
+                    .blendMode(.plusLighter)
+            )
+            // Subtle border that blends with the glow
+            .overlay(
+                Capsule()
+                    .strokeBorder(
+                        AngularGradient(
+                            gradient: Gradient(colors: baseColors),
+                            center: .center,
+                            angle: .degrees(rotation)
+                        ),
+                        lineWidth: borderLineWidth
+                    )
+                    .blur(radius: borderBlur)
+                    .opacity(borderOpacity)
+                    .blendMode(.plusLighter)
+            )
+            .compositingGroup()
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.1), radius: 10, x: 0, y: 5)
+            .onAppear {
+                rotation = 360
+                withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) {
+                    shimmerPhase = 140
+                }
+            }
+            // 2× slower than before (6s per rotation)
+            .animation(.linear(duration: 6).repeatForever(autoreverses: false), value: rotation)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(title))
+            .accessibilityHint("Analysis in progress")
+            .accessibilityAddTraits(.updatesFrequently)
     }
 }

@@ -17,14 +17,25 @@ struct FoodSearchView: View {
         NavigationStack {
             VStack {
                 HStack(spacing: 8) {
-                    TextField("Food Search...", text: $state.foodSearchText)
-                        .textFieldStyle(RoundedBorderTextFieldStyle())
-                        .autocapitalization(.none)
-                        .disableAutocorrection(true)
-                        .submitLabel(.search)
-                        .onSubmit {
-                            state.performSearch(query: state.foodSearchText)
+                    ZStack(alignment: .trailing) {
+                        TextField("Food Search...", text: $state.foodSearchText)
+                            .textFieldStyle(RoundedBorderTextFieldStyle())
+                            .autocapitalization(.none)
+                            .disableAutocorrection(true)
+                            .submitLabel(.search)
+                            .onSubmit {
+                                state.searchByText(query: state.foodSearchText)
+                            }
+
+                        if state.isBarcode {
+                            Text("barcode")
+                                .font(.caption2)
+                                .foregroundColor(.secondary)
+                                .padding(.horizontal, 6)
+                                .padding(.vertical, 3)
+                                .padding(.trailing, 6)
                         }
+                    }
 
                     Button {
                         navigateToBarcode = true
@@ -129,8 +140,7 @@ struct FoodSearchView: View {
     private func handleBarcodeScan(_ barcode: String) {
         print("📦 Barcode scanned: \(barcode)")
         navigateToBarcode = false
-        state.foodSearchText = barcode
-        state.performSearch(query: barcode)
+        state.enterBarcodeAndSearch(barcode: barcode)
         print("🔍 Search for Barcode: \(barcode)")
     }
 

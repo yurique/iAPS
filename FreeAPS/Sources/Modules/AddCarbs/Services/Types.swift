@@ -14,6 +14,17 @@ enum AIProvider: Hashable {
         }
     }
 
+    var displayName: String {
+        switch self {
+        case .claude:
+            return "Anthropic Claude"
+        case .gemini:
+            return "Google Gemini"
+        case .openAI:
+            return "OpenAI GPT"
+        }
+    }
+
     var description: String {
         switch self {
         case .claude:
@@ -32,6 +43,8 @@ protocol AIModelBase {
     var fast: Bool { get }
 
     var rawValue: String { get }
+
+    var timeoutsConfig: ModelTimeoutsConfig { get }
 }
 
 enum OpenAIModel: String, AIModelBase, Encodable {
@@ -40,6 +53,7 @@ enum OpenAIModel: String, AIModelBase, Encodable {
     case gpt_5 = "gpt-5"
     case gpt_5_mini = "gpt-5-mini"
     case gpt_5_1 = "gpt-5.1"
+    case gpt_5_2 = "gpt-5.2"
 
     var fast: Bool {
         switch self {
@@ -48,6 +62,18 @@ enum OpenAIModel: String, AIModelBase, Encodable {
         case .gpt_5: false
         case .gpt_5_mini: true
         case .gpt_5_1: false
+        case .gpt_5_2: false
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case .gpt_4o: "4o"
+        case .gpt_4o_mini: "4o mini"
+        case .gpt_5: "5"
+        case .gpt_5_mini: "5 mini"
+        case .gpt_5_1: "5.1"
+        case .gpt_5_2: "5.2"
         }
     }
 
@@ -58,6 +84,7 @@ enum OpenAIModel: String, AIModelBase, Encodable {
         case .gpt_5: true
         case .gpt_5_mini: true
         case .gpt_5_1: true
+        case .gpt_5_2: true
         }}
 
     var isGPT5: Bool {
@@ -67,6 +94,23 @@ enum OpenAIModel: String, AIModelBase, Encodable {
         case .gpt_5: true
         case .gpt_5_mini: true
         case .gpt_5_1: true
+        case .gpt_5_2: true
+        }
+    }
+
+    var timeoutsConfig: ModelTimeoutsConfig {
+        if isGPT5 {
+            return ModelTimeoutsConfig(
+                requestTimeoutInterval: 120,
+                timeoutIntervalForRequest: 150,
+                timeoutIntervalForResource: 180
+            )
+        } else {
+            return ModelTimeoutsConfig(
+                requestTimeoutInterval: 120,
+                timeoutIntervalForRequest: 90,
+                timeoutIntervalForResource: 120
+            )
         }
     }
 }
@@ -84,12 +128,28 @@ enum GeminiModel: String, AIModelBase, Encodable {
         }
     }
 
+    var displayName: String {
+        switch self {
+        case .gemini_2_5_pro: "2.5 Pro"
+        case .gemini_2_5_flash: "2.5 Flash"
+        case .gemini_3_pro_preview: "3 Pro Preview"
+        }
+    }
+
     var needAggressiveImageCompression: Bool {
         switch self {
         case .gemini_2_5_pro: return false
         case .gemini_2_5_flash: return false
         case .gemini_3_pro_preview: return false
         }
+    }
+
+    var timeoutsConfig: ModelTimeoutsConfig {
+        ModelTimeoutsConfig(
+            requestTimeoutInterval: 120,
+            timeoutIntervalForRequest: 150,
+            timeoutIntervalForResource: 180
+        )
     }
 }
 
@@ -104,11 +164,26 @@ enum ClaudeModel: String, AIModelBase, Encodable {
         }
     }
 
+    var displayName: String {
+        switch self {
+        case .sonnet_4_5: "Sonnet 4.5"
+        case .haiku_4_5: "Haiku 4.5"
+        }
+    }
+
     var needAggressiveImageCompression: Bool {
         switch self {
         case .sonnet_4_5: return false
         case .haiku_4_5: return false
         }
+    }
+
+    var timeoutsConfig: ModelTimeoutsConfig {
+        ModelTimeoutsConfig(
+            requestTimeoutInterval: 120,
+            timeoutIntervalForRequest: 150,
+            timeoutIntervalForResource: 180
+        )
     }
 }
 
@@ -116,6 +191,22 @@ enum AIModel {
     case openAI(OpenAIModel)
     case gemini(GeminiModel)
     case claude(ClaudeModel)
+
+    var fast: Bool {
+        switch self {
+        case let .openAI(model): model.fast
+        case let .gemini(model): model.fast
+        case let .claude(model): model.fast
+        }
+    }
+
+    var displayName: String {
+        switch self {
+        case let .openAI(model): model.displayName
+        case let .gemini(model): model.displayName
+        case let .claude(model): model.displayName
+        }
+    }
 
     var provider: AIProvider {
         switch self {
@@ -129,12 +220,39 @@ enum AIModel {
 enum ImageSearchProvider {
     case aiModel(AIModel)
 
+    var providerName: String {
+        switch self {
+        case let .aiModel(model): model.provider.displayName
+        }
+    }
+
+    var modelName: String? {
+        switch self {
+        case let .aiModel(model): model.displayName
+        }
+    }
+
+    var description: String {
+        if let model = modelName {
+            "\(providerName) (\(model))"
+        } else {
+            providerName
+        }
+    }
+
+    var fast: Bool? {
+        switch self {
+        case let .aiModel(model): model.fast
+        }
+    }
+
     static let allCases: [ImageSearchProvider] = [
         .aiModel(.openAI(.gpt_4o)),
         .aiModel(.openAI(.gpt_4o_mini)),
         .aiModel(.openAI(.gpt_5)),
         .aiModel(.openAI(.gpt_5_mini)),
         .aiModel(.openAI(.gpt_5_1)),
+        .aiModel(.openAI(.gpt_5_2)),
         .aiModel(.gemini(.gemini_3_pro_preview)),
         .aiModel(.gemini(.gemini_2_5_pro)),
         .aiModel(.gemini(.gemini_2_5_flash)),
@@ -150,12 +268,45 @@ enum TextSearchProvider {
     case usdaFoodData
     case openFoodFacts
 
+    var providerName: String {
+        switch self {
+        case let .aiModel(model): model.provider.displayName
+        case .usdaFoodData: "USDA Food Data"
+        case .openFoodFacts: "OpenFoodFacts"
+        }
+    }
+
+    var modelName: String? {
+        switch self {
+        case let .aiModel(model): model.displayName
+        case .usdaFoodData: nil
+        case .openFoodFacts: nil
+        }
+    }
+
+    var description: String {
+        if let model = modelName {
+            "\(providerName) (\(model))"
+        } else {
+            providerName
+        }
+    }
+
+    var fast: Bool? {
+        switch self {
+        case let .aiModel(model): model.fast
+        case .usdaFoodData: nil
+        case .openFoodFacts: nil
+        }
+    }
+
     static let allCases: [TextSearchProvider] = [
         .aiModel(.openAI(.gpt_4o)),
         .aiModel(.openAI(.gpt_4o_mini)),
         .aiModel(.openAI(.gpt_5)),
         .aiModel(.openAI(.gpt_5_mini)),
         .aiModel(.openAI(.gpt_5_1)),
+        .aiModel(.openAI(.gpt_5_2)),
         .aiModel(.gemini(.gemini_3_pro_preview)),
         .aiModel(.gemini(.gemini_2_5_pro)),
         .aiModel(.gemini(.gemini_2_5_flash)),
@@ -169,43 +320,39 @@ enum TextSearchProvider {
 }
 
 enum BarcodeSearchProvider {
-//    case aiModel(AIModel)
     case openFoodFacts
-//    case usdaFoodData
+
+    var providerName: String {
+        switch self {
+        case .openFoodFacts: "OpenFoodFacts"
+        }
+    }
+
+    var modelName: String? {
+        switch self {
+        case .openFoodFacts: nil
+        }
+    }
+
+    var description: String {
+        if let model = modelName {
+            "\(providerName) (\(model))"
+        } else {
+            providerName
+        }
+    }
+
+    var fast: Bool? {
+        switch self {
+        case .openFoodFacts: nil
+        }
+    }
 
     static let allCases: [BarcodeSearchProvider] = [
-        //        .aiModel(.openAI(.gpt_4o)),
-//        .aiModel(.openAI(.gpt_4o_mini)),
-//        .aiModel(.openAI(.gpt_5)),
-//        .aiModel(.openAI(.gpt_5_mini)),
-//        .aiModel(.openAI(.gpt_5_1)),
-//        .aiModel(.gemini(.gemini_3_pro_preview)),
-//        .aiModel(.gemini(.gemini_2_5_pro)),
-//        .aiModel(.gemini(.gemini_2_5_flash)),
-//        .aiModel(.claude(.sonnet_4_5)),
-//        .aiModel(.claude(.haiku_4_5)),
         .openFoodFacts
     ]
 
     static let defaultProvider: BarcodeSearchProvider = .openFoodFacts
-}
-
-/// Different types of food searches that can use different providers
-enum SearchType: String, CaseIterable {
-    case textSearch = "Text/Voice Search"
-    case barcodeSearch = "Barcode Scanning"
-    case aiImageSearch = "AI Image Analysis"
-
-    var description: String {
-        switch self {
-        case .textSearch:
-            return "Searching by typing food names or using voice input"
-        case .barcodeSearch:
-            return "Scanning product barcodes with camera"
-        case .aiImageSearch:
-            return "Taking photos of food for AI analysis"
-        }
-    }
 }
 
 // MARK: - String serialization for AIModel and providers
@@ -444,4 +591,10 @@ extension BarcodeSearchProvider: Hashable, Identifiable {
     public func hash(into hasher: inout Hasher) {
         hasher.combine(rawValue)
     }
+}
+
+struct ModelTimeoutsConfig {
+    let requestTimeoutInterval: TimeInterval
+    let timeoutIntervalForRequest: TimeInterval
+    let timeoutIntervalForResource: TimeInterval
 }

@@ -379,30 +379,39 @@ extension KeyedDecodingContainer {
 extension FoodAnalysisResult {
     private static var fields: [FoodAnalysisResult.CodingKeys: Any] {
         [
-            .imageType: "food_photo menu_item",
-            .foodItemsDetailed: [AnalysedFoodItem.schema],
-            //            .totalFoodPortions: count_distinct_items,
-            //            .totalStandardServings: sum_serving_multipliers,
             .servingsStandard: "brief name/description of NUTRITION_AUTHORITY",
-            //            .totalCarbohydrates: sum_all_carbs,
-            //            .totalCalories: sum_all_calories,
-            //            .totalFat: sum_all_fat,
-            //            .totalFiber: sum_all_fiber,
-            //            .totalProtein: sum_all_protein,
             .confidence: "decimal 0 to 1",
-            //        .netCarbsAdjustment: "Carb adjustment: total_carbs - (fiber × 0.5 if >5g fiber)",
             .diabetesConsiderations: "Carb sources, GI impact (low/medium/high), timing considerations",
             .insulinTimingRecommendations: "Meal type and pre-meal timing (minutes before eating)",
             .absorptionTimeHours: "absorption hours between 2 and 6",
             .absorptionTimeReasoning: "Brief timing calculation explanation",
-            //        .safetyAlerts: "Any safety considerations",
             .visualAssessmentDetails: "Textures, colors, cooking evidence",
             .overallDescription: "What I see: plate, arrangement, textures, colors",
             .portionAssessmentMethod: "Explain in natural language how you estimated portion sizes using visual references like plate size, utensils, or other objects for scale. Describe your measurement process for each food item and explain how you converted visual portions to serving equivalents. Include your confidence level and what factors affected your accuracy."
         ]
     }
 
-    static var schema: [String: Any] {
+    static var schemaVisual: [String: Any] {
+        var fields = self.fields
+
+        fields[.imageType] = "food_photo or menu_item"
+        fields[.foodItemsDetailed] = [AnalysedFoodItem.schemaVisual]
+        fields[.visualAssessmentDetails] = "Textures, colors, cooking evidence"
+        fields[.portionAssessmentMethod] =
+            "Explain in natural language how you estimated portion sizes using visual references like plate size, utensils, or other objects for scale. Describe your measurement process for each food item and explain how you converted visual portions to serving equivalents. Include your confidence level and what factors affected your accuracy."
+
+        var dict: [String: Any] = [:]
+        for (key, value) in fields {
+            dict[key.rawValue] = value
+        }
+        return dict
+    }
+
+    static var schemaText: [String: Any] {
+        var fields = self.fields
+
+        fields[.foodItemsDetailed] = [AnalysedFoodItem.schemaText]
+
         var dict: [String: Any] = [:]
         for (key, value) in fields {
             dict[key.rawValue] = value

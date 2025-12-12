@@ -1,8 +1,10 @@
 import Combine
 import SwiftUI
 
-class FoodSearchStateModel: ObservableObject {
+final class FoodSearchStateModel: ObservableObject {
     @Published var foodSearchText = ""
+    @Published var isBarcode = false
+
     @Published var searchResults: [OpenFoodFactsProduct] = []
     @Published var aiSearchResults: [AIFoodItem] = []
     @Published var isLoading = false
@@ -12,81 +14,78 @@ class FoodSearchStateModel: ObservableObject {
     private var searchTask: Task<Void, Never>?
 
     init() {
-        print("🔍 FoodSearchStateModel initialized")
-
         $foodSearchText
             .debounce(for: .milliseconds(300), scheduler: DispatchQueue.main)
             .removeDuplicates()
             .sink { [weak self] query in
-                self?.performSearch(query: query)
+                guard let self else {
+                    return
+                }
+                let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+                self.isBarcode = trimmedQuery.isNotEmpty && isBarcode(trimmedQuery)
             }
             .store(in: &cancellables)
     }
 
     deinit {
-        print("🔍 FoodSearchStateModel deinitialized")
         searchTask?.cancel()
     }
 
-    func performSearch(query: String) {
-        guard !query.trimmingCharacters(in: .whitespaces).isEmpty else {
+    func enterBarcodeAndSearch(barcode: String) {
+        foodSearchText = barcode
+        searchByText(query: barcode)
+    }
+
+    func searchByText(query: String) {
+        let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard trimmedQuery.isNotEmpty else {
             searchResults = []
             aiSearchResults = []
             return
         }
+        let isBarcode = isBarcode(trimmedQuery)
 
         searchTask?.cancel()
         isLoading = true
         errorMessage = nil
 
         searchTask = Task { @MainActor in
-            do {
-                let openFoodProducts = try await FoodSearchRouter.shared.searchFoodsByText(query)
+            Task { @MainActor in
 
-                if !Task.isCancelled {
-                    self.searchResults = openFoodProducts
-                    self.isLoading = false
-                    print("✅ Search completed: \(self.searchResults.count) results")
-                }
-            } catch {
-                if !Task.isCancelled {
-                    self.errorMessage = error.localizedDescription
-                    self.isLoading = false
-                    self.searchResults = []
-                    print("❌ Search failed: \(error.localizedDescription)")
-                }
-            }
-        }
-    }
+                do {
+                    if isBarcode {
+                        if let product = try await ConfigurableAIService.shared.analyzeBarcode(
+                            barcode: trimmedQuery,
+                            telemetryCallback: nil
+                        ) {
+                            Task { @MainActor in
+                                self.searchResults = [product]
+                                print("✅ OpenFoodFacts found product: \(product.displayName)")
+                                self.isLoading = false
 
-    func searchWithOpenFoodFacts(barcode: String) {
-        isLoading = true
-        errorMessage = nil
-        foodSearchText = barcode
+                                print("🖼️ Barcode Product URLs: \(product.imageURL ?? "nil"), \(product.imageFrontURL ?? "nil")")
+                            }
+                        }
 
-        Task {
-            do {
-                print("🔍 Searching OpenFoodFacts for barcode: \(barcode)")
+                    } else {
+                        let openFoodProducts = try await ConfigurableAIService.shared.analyzeFoodQuery(
+                            query: trimmedQuery,
+                            telemetryCallback: nil
+                        )
 
-                if let product = try await FoodSearchRouter.shared.searchFoodByBarcode(barcode) {
-                    await MainActor.run {
-                        self.searchResults = [product]
-                        print("✅ OpenFoodFacts found product: \(product.displayName)")
+                        if !Task.isCancelled {
+                            self.searchResults = openFoodProducts
+                            self.isLoading = false
+                            print("✅ Search completed: \(self.searchResults.count) results")
+                        }
+                    }
+                } catch {
+                    if !Task.isCancelled {
+                        self.errorMessage = error.localizedDescription
                         self.isLoading = false
-
-                        print("🖼️ Barcode Product URLs: \(product.imageURL ?? "nil"), \(product.imageFrontURL ?? "nil")")
+                        self.searchResults = []
+                        print("❌ Search failed: \(error.localizedDescription)")
                     }
-                } else {
-                    await MainActor.run {
-                        print("⚠️ No OpenFoodFacts results, using normal search")
-                        self.performSearch(query: barcode)
-                    }
-                }
-            } catch {
-                await MainActor.run {
-                    print("❌ OpenFoodFacts search failed: \(error), using normal search")
-                    self.errorMessage = "OpenFoodFacts search failed: \(error.localizedDescription)"
-                    self.performSearch(query: barcode)
                 }
             }
         }
@@ -98,5 +97,10 @@ class FoodSearchStateModel: ObservableObject {
 
     func clearAISearchResults() {
         aiSearchResults = []
+    }
+
+    private func isBarcode(_ str: String) -> Bool {
+        let numericCharacterSet = CharacterSet.decimalDigits
+        return str.unicodeScalars.allSatisfy { numericCharacterSet.contains($0) }
     }
 }

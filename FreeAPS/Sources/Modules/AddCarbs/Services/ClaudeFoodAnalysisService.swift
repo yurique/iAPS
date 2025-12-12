@@ -8,148 +8,24 @@ import SwiftUI
 import UIKit
 import Vision
 
-enum ClaudeFoodAnalysisService {
-    static func image(_ model: ClaudeModel, apiKey: String) -> ImageAnalysisService {
-        ClaudeFoodAnalysisServiceWithModel(model: model, apiKey: apiKey)
-    }
+struct ClaudeProtocol: AIProviderProtocol {
+    private let url = URL(string: "https://api.anthropic.com/v1/messages")!
 
-    static func text(_ model: ClaudeModel, apiKey: String) -> TextAnalysisService {
-        ClaudeFoodAnalysisServiceWithModel(model: model, apiKey: apiKey)
-    }
-}
-
-private struct ClaudeFoodAnalysisServiceWithModel {
     let model: ClaudeModel
     let apiKey: String
-}
 
-extension ClaudeFoodAnalysisServiceWithModel: ImageAnalysisService {
+    var timeoutsConfig: ModelTimeoutsConfig { model.timeoutsConfig }
+
+    var numberOfRetries: Int { 1 }
+
     var needAggressiveImageCompression: Bool { model.needAggressiveImageCompression }
 
-    func analyzeImage(
+    func buildRequest(
         prompt: String,
         images: [String],
-        telemetryCallback: ((String) -> Void)?
-    ) async throws -> FoodAnalysisResult {
-        let response = try await ClaudeFoodAnalysisServiceImpl.shared.executeQuery(
-            model: model,
-            prompt: prompt,
-            images: images,
-            apiKey: apiKey,
-            telemetryCallback: telemetryCallback
-        )
-
-        return try decode(response, as: FoodAnalysisResult.self)
-    }
-}
-
-extension ClaudeFoodAnalysisServiceWithModel: TextAnalysisService {
-    func analyzeText(
-        prompt: String,
-        telemetryCallback: ((String) -> Void)?
-    ) async throws -> [OpenFoodFactsProduct] {
-        let response = try await ClaudeFoodAnalysisServiceImpl.shared.executeQuery(
-            model: model,
-            prompt: prompt,
-            images: [],
-            apiKey: apiKey,
-            telemetryCallback: telemetryCallback
-        )
-
-        let result = try decode(response, as: FoodAnalysisResult.self)
-        return toOpenFoodFactsProducts(model: model, result: result)
-    }
-}
-
-private final class ClaudeFoodAnalysisServiceImpl {
-    static let shared = ClaudeFoodAnalysisServiceImpl()
-    private init() {}
-
-    func executeQuery(
-        model: ClaudeModel,
-        prompt: String,
-        images: [String],
-        apiKey: String,
-        telemetryCallback: ((String) -> Void)?
-    ) async throws -> String {
-        // Get optimal model based on current analysis mode
-        telemetryCallback?("⚙️ Configuring Claude parameters...")
-//        let analysisMode = ConfigurableAIService.shared.analysisMode
-
-        let request = try buildRequest(
-            model: model,
-            prompt: prompt,
-            images: images,
-            apiKey: apiKey,
-            telemetryCallback: telemetryCallback
-        )
-
-        telemetryCallback?("🌐 Sending request to Claude...")
-
-        let config = URLSessionConfiguration.default
-        config.timeoutIntervalForRequest = 150 // 2.5 minutes request timeout
-        config.timeoutIntervalForResource = 180 // 3 minutes resource timeout
-        let session = URLSession(configuration: config)
-
-        // Make the request
-        telemetryCallback?("⏳ AI is cooking up results...")
-        let (data, response) = try await session.data(for: request)
-
-        telemetryCallback?("📥 Received response from Claude...")
-
-        guard let httpResponse = response as? HTTPURLResponse else {
-            print("❌ Claude: Invalid HTTP response")
-            throw AIFoodAnalysisError.invalidResponse
-        }
-
-        try handleErrorResponse(httpResponse, data: data)
-
-        // Parse response
-        telemetryCallback?("🔍 Parsing Claude response...")
-        let decoder = JSONDecoder()
-        let claudeResponse = try decoder.decode(ClaudeMessagesResponse.self, from: data)
-
-        guard let contentItems = claudeResponse.content, !contentItems.isEmpty else {
-            print("❌ Claude: Invalid response structure - no content items")
-            if let raw = String(data: data, encoding: .utf8) {
-                print("❌ Claude: Raw response: \(raw)")
-            }
-            throw AIFoodAnalysisError.responseParsingFailed
-        }
-
-        // Extract first text segment from content
-        guard let text = contentItems.first(where: { ($0.type == nil || $0.type == "text") && ($0.text?.isEmpty == false) })?
-            .text
-        else {
-            print("❌ Claude: No text content in response")
-            if let raw = String(data: data, encoding: .utf8) {
-                print("❌ Claude: Raw response: \(raw)")
-            }
-            throw AIFoodAnalysisError.responseParsingFailed
-        }
-
-        // Add detailed logging like Gemini
-        print("🔧 Claude: Received text length: \(text.count)")
-
-        // Parse the JSON response from Claude
-
-        return text
-    }
-
-    private func buildRequest(
-        model: ClaudeModel,
-        prompt: String,
-        images: [String],
-        apiKey: String,
-        telemetryCallback: ((String) -> Void)?
+        telemetryCallback _: ((String) -> Void)?
     ) throws -> URLRequest {
-        guard let url = URL(string: "https://api.anthropic.com/v1/messages") else {
-            throw AIFoodAnalysisError.requestCreationFailed
-        }
-
-        telemetryCallback?("📡 Preparing API request...")
         var request = URLRequest(url: url)
-        request.timeoutInterval = 120 // 2 minutes for GPT-5 models
         request.httpMethod = "POST"
         request.setValue("application/json", forHTTPHeaderField: "Content-Type")
         request.setValue(apiKey, forHTTPHeaderField: "x-api-key")
@@ -186,7 +62,11 @@ private final class ClaudeFoodAnalysisServiceImpl {
         return request
     }
 
-    private func handleErrorResponse(_ httpResponse: HTTPURLResponse, data: Data) throws {
+    func handleErrorResponse(
+        httpResponse: HTTPURLResponse,
+        data: Data,
+        telemetryCallback _: ((String) -> Void)?
+    ) throws {
         guard httpResponse.statusCode == 200 else {
             if let apiError = try? JSONDecoder().decode(ClaudeErrorResponse.self, from: data) {
                 let message = apiError.error.message
@@ -232,24 +112,55 @@ private final class ClaudeFoodAnalysisServiceImpl {
             throw AIFoodAnalysisError.invalidResponse
         }
     }
+
+    func extractResponse(
+        data: Data,
+        telemetryCallback _: ((String) -> Void)?
+    ) throws -> String {
+        let decoder = JSONDecoder()
+        let claudeResponse = try decoder.decode(ClaudeMessagesResponse.self, from: data)
+
+        guard let contentItems = claudeResponse.content, !contentItems.isEmpty else {
+            print("❌ Claude: Invalid response structure - no content items")
+            if let raw = String(data: data, encoding: .utf8) {
+                print("❌ Claude: Raw response: \(raw)")
+            }
+            throw AIFoodAnalysisError.responseParsingFailed
+        }
+
+        // Extract first text segment from content
+        guard let text = contentItems.first(where: { ($0.type == nil || $0.type == "text") && ($0.text?.isEmpty == false) })?
+            .text
+        else {
+            print("❌ Claude: No text content in response")
+            if let raw = String(data: data, encoding: .utf8) {
+                print("❌ Claude: Raw response: \(raw)")
+            }
+            throw AIFoodAnalysisError.responseParsingFailed
+        }
+
+        print("🔧 Claude: Received text length: \(text.count)")
+
+        return text
+    }
 }
 
 // MARK: - Claude / Anthropic Codable Models (Request/Response/Error)
 
 // Request
-struct ClaudeMessagesRequest: Encodable {
+private struct ClaudeMessagesRequest: Encodable {
     let model: ClaudeModel
     let max_tokens: Int
     let temperature: Double
     let messages: [ClaudeMessage]
 }
 
-struct ClaudeMessage: Encodable {
+private struct ClaudeMessage: Encodable {
     let role: String
     let content: [ClaudeContent]
 }
 
-enum ClaudeContent: Encodable {
+private enum ClaudeContent: Encodable {
     case text(text: String)
     case image(source: ClaudeImageSource)
 
@@ -268,24 +179,24 @@ enum ClaudeContent: Encodable {
     }
 }
 
-struct ClaudeImageSource: Encodable {
+private struct ClaudeImageSource: Encodable {
     let type: String // "base64"
     let media_type: String // e.g., "image/jpeg"
     let data: String // base64-encoded image
 }
 
 // Response
-struct ClaudeMessagesResponse: Decodable {
+private struct ClaudeMessagesResponse: Decodable {
     let content: [ClaudeMessageContent]?
 }
 
-struct ClaudeMessageContent: Decodable {
+private struct ClaudeMessageContent: Decodable {
     let type: String?
     let text: String?
 }
 
 // Error Response
-struct ClaudeErrorResponse: Decodable {
+private struct ClaudeErrorResponse: Decodable {
     struct APIError: Decodable {
         let type: String?
         let message: String

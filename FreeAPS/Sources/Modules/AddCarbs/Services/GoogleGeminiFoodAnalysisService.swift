@@ -8,151 +8,21 @@ import SwiftUI
 import UIKit
 import Vision
 
-enum GoogleGeminiFoodAnalysisService {
-    static func image(_ model: GeminiModel, apiKey: String) -> ImageAnalysisService {
-        GoogleGeminiFoodAnalysisServiceWithModel(model: model, apiKey: apiKey)
-    }
-
-    static func text(_ model: GeminiModel, apiKey: String) -> TextAnalysisService {
-        GoogleGeminiFoodAnalysisServiceWithModel(model: model, apiKey: apiKey)
-    }
-}
-
-private struct GoogleGeminiFoodAnalysisServiceWithModel {
-    let model: GeminiModel
-    let apiKey: String
-}
-
-extension GoogleGeminiFoodAnalysisServiceWithModel: ImageAnalysisService {
-    var needAggressiveImageCompression: Bool { model.needAggressiveImageCompression }
-
-    func analyzeImage(
-        prompt: String,
-        images: [String],
-        telemetryCallback: ((String) -> Void)?
-    ) async throws -> FoodAnalysisResult {
-        let response = try await GoogleGeminiFoodAnalysisServiceImpl.shared.executeQuery(
-            model: model,
-            prompt: prompt,
-            images: images,
-            apiKey: apiKey,
-            telemetryCallback: telemetryCallback
-        )
-
-        return try decode(response, as: FoodAnalysisResult.self)
-    }
-}
-
-extension GoogleGeminiFoodAnalysisServiceWithModel: TextAnalysisService {
-    func analyzeText(
-        prompt: String,
-        telemetryCallback: ((String) -> Void)?
-    ) async throws -> [OpenFoodFactsProduct] {
-        let response = try await GoogleGeminiFoodAnalysisServiceImpl.shared.executeQuery(
-            model: model,
-            prompt: prompt,
-            images: [],
-            apiKey: apiKey,
-            telemetryCallback: telemetryCallback
-        )
-
-        let result = try decode(response, as: FoodAnalysisResult.self)
-        return toOpenFoodFactsProducts(model: model, result: result)
-    }
-}
-
-private final class GoogleGeminiFoodAnalysisServiceImpl {
-    static let shared = GoogleGeminiFoodAnalysisServiceImpl()
-
+struct GeminiProtocol: AIProviderProtocol {
     private let baseURLTemplate = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
 
-    private init() {}
+    let model: GeminiModel
+    let apiKey: String
 
-    func executeQuery(
-        model: GeminiModel,
+    var timeoutsConfig: ModelTimeoutsConfig { model.timeoutsConfig }
+
+    var numberOfRetries: Int { 1 }
+
+    var needAggressiveImageCompression: Bool { model.needAggressiveImageCompression }
+
+    func buildRequest(
         prompt: String,
         images: [String],
-        apiKey: String,
-        telemetryCallback: ((String) -> Void)?
-    ) async throws -> String {
-        print("🍱 Starting Google Gemini food analysis")
-        telemetryCallback?("⚙️ Configuring Gemini parameters...")
-
-        // Get optimal model based on current analysis mode
-//        let analysisMode = ConfigurableAIService.shared.analysisMode
-
-        let request = try buildRequest(
-            model: model,
-            prompt: prompt,
-            images: images,
-            apiKey: apiKey,
-            telemetryCallback: telemetryCallback
-        )
-
-        telemetryCallback?("🌐 Sending request to Google Gemini...")
-
-        do {
-            telemetryCallback?("⏳ AI is cooking up results...")
-            let (data, response) = try await URLSession.shared.data(for: request)
-
-            telemetryCallback?("📥 Received response from Gemini...")
-
-            guard let httpResponse = response as? HTTPURLResponse else {
-                print("❌ Google Gemini: Invalid HTTP response")
-                throw AIFoodAnalysisError.invalidResponse
-            }
-
-            if let bodyString = String(data: data, encoding: .utf8) {
-                print("raw response: \(bodyString)")
-            } else {
-                print("raw response: <non-UTF8 data of length \(data.count)>")
-            }
-
-            try handleErrorResponse(httpResponse, data: data)
-
-            // Parse Gemini response with Codable models
-            let decoder = JSONDecoder()
-            let geminiResponse = try decoder.decode(GeminiGenerateContentResponse.self, from: data)
-
-            guard let firstCandidate = geminiResponse.candidates?.first else {
-                print("❌ Google Gemini: No candidates in response")
-                if let err = try? decoder.decode(GeminiErrorResponse.self, from: data) {
-                    print("❌ Google Gemini: API returned error: \(err)")
-                }
-                throw AIFoodAnalysisError.responseParsingFailed
-            }
-
-            // Extract text from the first candidate's content parts (Codable)
-            let parts: [GeminiPartResponse] = firstCandidate.content?.parts ?? []
-            var textSegments: [String] = []
-            for part in parts {
-                if let t = part.text, !t.isEmpty {
-                    textSegments.append(t)
-                }
-            }
-            let text = textSegments.joined(separator: "\n").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
-
-            guard !text.isEmpty else {
-                print("❌ Google Gemini: Invalid response structure or empty text")
-                print("❌ Candidate: \(String(describing: firstCandidate))")
-                throw AIFoodAnalysisError.responseParsingFailed
-            }
-
-            print("🔧 Google Gemini: Received text length: \(text.count)")
-
-            return text
-        } catch let error as AIFoodAnalysisError {
-            throw error
-        } catch {
-            throw AIFoodAnalysisError.networkError(error)
-        }
-    }
-
-    private func buildRequest(
-        model: GeminiModel,
-        prompt: String,
-        images: [String],
-        apiKey: String,
         telemetryCallback _: ((String) -> Void)?
     ) throws -> URLRequest {
         let baseURL = baseURLTemplate.replacingOccurrences(of: "{model}", with: model.rawValue)
@@ -189,7 +59,11 @@ private final class GoogleGeminiFoodAnalysisServiceImpl {
         return request
     }
 
-    private func handleErrorResponse(_ httpResponse: HTTPURLResponse, data: Data) throws {
+    func handleErrorResponse(
+        httpResponse: HTTPURLResponse,
+        data: Data,
+        telemetryCallback _: ((String) -> Void)?
+    ) throws {
         guard httpResponse.statusCode == 200 else {
             print("❌ Google Gemini API error: \(httpResponse.statusCode)")
             if let apiError = try? JSONDecoder().decode(GeminiErrorResponse.self, from: data) {
@@ -238,21 +112,55 @@ private final class GoogleGeminiFoodAnalysisServiceImpl {
             throw AIFoodAnalysisError.invalidResponse
         }
     }
+
+    func extractResponse(
+        data: Data,
+        telemetryCallback _: ((String) -> Void)?
+    ) throws -> String {
+        let decoder = JSONDecoder()
+        let geminiResponse = try decoder.decode(GeminiGenerateContentResponse.self, from: data)
+
+        guard let firstCandidate = geminiResponse.candidates?.first else {
+            print("❌ Google Gemini: No candidates in response")
+            if let err = try? decoder.decode(GeminiErrorResponse.self, from: data) {
+                print("❌ Google Gemini: API returned error: \(err)")
+            }
+            throw AIFoodAnalysisError.responseParsingFailed
+        }
+
+        // Extract text from the first candidate's content parts (Codable)
+        let parts: [GeminiPartResponse] = firstCandidate.content?.parts ?? []
+        var textSegments: [String] = []
+        for part in parts {
+            if let t = part.text, !t.isEmpty {
+                textSegments.append(t)
+            }
+        }
+        let text = textSegments.joined(separator: "\n").trimmingCharacters(in: CharacterSet.whitespacesAndNewlines)
+
+        guard !text.isEmpty else {
+            print("❌ Google Gemini: Invalid response structure or empty text")
+            print("❌ Candidate: \(String(describing: firstCandidate))")
+            throw AIFoodAnalysisError.responseParsingFailed
+        }
+
+        print("🔧 Google Gemini: Received text length: \(text.count)")
+
+        return text
+    }
 }
 
-// MARK: - Google Gemini Codable Models
-
 // Request payload
-struct GeminiGenerateContentRequest: Encodable {
+private struct GeminiGenerateContentRequest: Encodable {
     let contents: [GeminiContent]
     let generationConfig: GeminiGenerationConfig
 }
 
-struct GeminiContent: Encodable {
+private struct GeminiContent: Encodable {
     let parts: [GeminiPart]
 }
 
-struct GeminiPart: Encodable {
+private struct GeminiPart: Encodable {
     let text: String?
     let inline_data: GeminiInlineData?
 
@@ -267,12 +175,12 @@ struct GeminiPart: Encodable {
     }
 }
 
-struct GeminiInlineData: Encodable {
+private struct GeminiInlineData: Encodable {
     let mime_type: String
     let data: String
 }
 
-struct GeminiGenerationConfig: Encodable {
+private struct GeminiGenerationConfig: Encodable {
     let temperature: Double
     let topP: Double
     let topK: Int
@@ -280,25 +188,25 @@ struct GeminiGenerationConfig: Encodable {
 }
 
 // Response payload
-struct GeminiGenerateContentResponse: Decodable {
+private struct GeminiGenerateContentResponse: Decodable {
     let candidates: [GeminiCandidate]?
 }
 
-struct GeminiCandidate: Decodable {
+private struct GeminiCandidate: Decodable {
     let content: GeminiContentResponse?
     let finishReason: String?
 }
 
-struct GeminiContentResponse: Decodable {
+private struct GeminiContentResponse: Decodable {
     let parts: [GeminiPartResponse]?
 }
 
-struct GeminiPartResponse: Decodable {
+private struct GeminiPartResponse: Decodable {
     let text: String?
 }
 
 // Error payload
-struct GeminiErrorResponse: Decodable {
+private struct GeminiErrorResponse: Decodable {
     struct APIError: Decodable {
         let code: Int?
         let message: String

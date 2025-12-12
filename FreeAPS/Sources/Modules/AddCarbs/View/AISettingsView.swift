@@ -41,6 +41,12 @@ struct AISettingsView: View {
     @AppStorage(UserDefaults.AIKey.aiImageProvider.rawValue) private var imageSearchProvider: ImageSearchProvider =
         .defaultProvider
 
+    @AppStorage(UserDefaults.AIKey.textSearchProvider.rawValue) private var textSearchProvider: TextSearchProvider =
+        .defaultProvider
+
+    @AppStorage(UserDefaults.AIKey.barcodeSearchProvider.rawValue) private var barcodeSearchProvider: BarcodeSearchProvider =
+        .defaultProvider
+
     @State private var preferredLanguage: String = ""
     @State private var preferredRegion: String = ""
 
@@ -118,13 +124,120 @@ struct AISettingsView: View {
                         "Configure the API service used for each type of food search. AI Image Analysis controls what happens when you take photos of food. Different providers excel at different search methods."
                     )
                 ) {
-                    VStack(alignment: .leading, spacing: 4) {
-                        Picker("Provider for AI Image Analysis", selection: $imageSearchProvider) {
+                    VStack(alignment: .leading, spacing: 6) {
+                        Text("Provider for AI Image Analysis")
+                            .font(.title3)
+
+                        Picker("", selection: $imageSearchProvider) {
                             ForEach(ImageSearchProvider.allCases, id: \.self) { provider in
-                                Text(provider.rawValue).tag(provider)
+                                HStack(spacing: 12) {
+//                                    Image(systemName: icon(for: provider))
+//                                        .foregroundColor(.accentColor)
+
+                                    Text(provider.providerName)
+                                        .font(.caption)
+                                    if let modelName = provider.modelName {
+                                        Text(modelName)
+                                            .font(.subheadline)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.orange.opacity(0.15))
+                                            .cornerRadius(4)
+                                    }
+
+                                    Spacer()
+
+                                    if let fast = provider.fast, fast {
+                                        Text("Fast")
+                                            .font(.caption2)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.green.opacity(0.15))
+                                            .cornerRadius(4)
+                                    }
+                                }
+                                .tag(provider)
                             }
                         }
-                        .pickerStyle(MenuPickerStyle())
+                        .pickerStyle(.navigationLink)
+                    }
+                    .padding(.vertical, 4)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Provider for Text/Voice Search")
+                            .font(.title3)
+
+                        Picker("", selection: $textSearchProvider) {
+                            ForEach(TextSearchProvider.allCases, id: \.self) { provider in
+                                HStack(spacing: 12) {
+//                                    Image(systemName: icon(for: provider))
+//                                        .foregroundColor(.accentColor)
+
+                                    Text(provider.providerName)
+                                        .font(.caption)
+                                    if let modelName = provider.modelName {
+                                        Text(modelName)
+                                            .font(.subheadline)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.orange.opacity(0.15))
+                                            .cornerRadius(4)
+                                    }
+
+                                    Spacer()
+
+                                    if let fast = provider.fast, fast {
+                                        Text("Fast")
+                                            .font(.caption2)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.green.opacity(0.15))
+                                            .cornerRadius(4)
+                                    }
+                                }
+                                .tag(provider)
+                            }
+                        }
+                        .pickerStyle(.navigationLink)
+                    }
+                    .padding(.vertical, 4)
+
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Provider for Barcode Scanning")
+                            .font(.title3)
+
+                        Picker("", selection: $barcodeSearchProvider) {
+                            ForEach(BarcodeSearchProvider.allCases, id: \.self) { provider in
+                                HStack(spacing: 12) {
+//                                    Image(systemName: icon(for: provider))
+//                                        .foregroundColor(.accentColor)
+
+                                    Text(provider.providerName)
+                                        .font(.caption)
+                                    if let modelName = provider.modelName {
+                                        Text(modelName)
+                                            .font(.subheadline)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.orange.opacity(0.15))
+                                            .cornerRadius(4)
+                                    }
+
+                                    Spacer()
+
+                                    if let fast = provider.fast, fast {
+                                        Text("Fast")
+                                            .font(.caption2)
+                                            .padding(.horizontal, 6)
+                                            .padding(.vertical, 2)
+                                            .background(Color.green.opacity(0.15))
+                                            .cornerRadius(4)
+                                    }
+                                }
+                                .tag(provider)
+                            }
+                        }
+                        .pickerStyle(.navigationLink)
                     }
                     .padding(.vertical, 4)
                 }
@@ -231,7 +344,7 @@ struct AISettingsView: View {
                 Section(
                     header: Text("Localization"),
                     footer: Text(
-                        "Choose a specific language and region for AI output. If you don't choose, your device's current settings are used. Once selected, your choice is saved."
+                        "Choose a specific language and region for AI output."
                     )
                 ) {
                     NavigationLink {
@@ -299,12 +412,6 @@ struct AISettingsView: View {
                         )
                         .font(.caption)
                         .foregroundColor(.blue)
-
-                        Text(
-                            "❌ If you select 'OpenFoodFacts' or 'USDA', camera analysis will use basic estimation instead of AI"
-                        )
-                        .font(.caption)
-                        .foregroundColor(.orange)
                     }
                 }
 

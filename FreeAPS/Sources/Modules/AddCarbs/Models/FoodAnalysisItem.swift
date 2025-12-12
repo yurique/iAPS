@@ -115,15 +115,12 @@ extension AnalysedFoodItem {
     private static var fields: [AnalysedFoodItem.CodingKeys: Any] {
         [
             .name: "specific food name with preparation details",
-            .portionEstimate: "exact portion with visual references",
-            .portionEstimateSize: "decimal, exact portion size, in grams or milliliters; do not include unit;",
-            .units: "grams or milliliters, as appropriate for this meal",
+            .units: "string enum; one of: 'grams' or 'milliliters'; as appropriate for this meal; do NOT translate!",
             .standardServing: "description of a standard serving, if available",
             .standardServingSize: "decimal, standard serving size based on NUTRITION_AUTHORITY standard, in grams or milliliters; do not include unit; do not include the name of the standard",
             //        .servingsStandard: "brief name/description of NUTRITION_AUTHORITY",
             //        .servingMultiplier: "number of servings in this portion",
-            .preparationMethod: "cooking details observed",
-            .visualCues: "visual elements analyzed",
+
             //        .carbohydrates: "decimal, grams of carbohydrates for this portion",
             //        .calories: "decimal, kcal for this portion",
             //        .fat: "grams of fat for this portion",
@@ -137,12 +134,31 @@ extension AnalysedFoodItem {
             .fatPer100: "decimal, grams of fat per 100 grams or milliliters",
             .fiberPer100: "decimal, grams of fiber per 100 grams or milliliters",
             .proteinPer100: "decimal, grams of protein per 100 grams or milliliters",
-            .sugarsPer100: "decimal, grams of added sugars per 100 grams or milliliters",
-            .assessmentNotes: "Explain how you calculated this specific portion size, what visual references you used for measurement, and how you determined the serving multiplier. Write in natural, conversational language."
+            .sugarsPer100: "decimal, grams of added sugars per 100 grams or milliliters"
         ]
     }
 
-    static var schema: [String: Any] {
+    static var schemaVisual: [String: Any] {
+        var fields = self.fields
+        fields[.portionEstimate] = "portion desription with visual references"
+        fields[.portionEstimateSize] = "decimal, exact portion size, in grams or milliliters; do not include unit;"
+        fields[.visualCues] = "visual elements analyzed"
+        fields[.preparationMethod] = "cooking details observed"
+        fields[.assessmentNotes] =
+            "Explain how you calculated this specific portion size, what visual references you used for measurement, and how you determined the serving multiplier. Write in natural, conversational language."
+
+        var dict: [String: Any] = [:]
+        for (key, value) in fields {
+            dict[key.rawValue] = value
+        }
+        return dict
+    }
+
+    static var schemaText: [String: Any] {
+        var fields = self.fields
+        fields[.portionEstimateSize] =
+            "decimal, assume the portion matches the standard serving size, in grams or milliliters; do not include unit;"
+
         var dict: [String: Any] = [:]
         for (key, value) in fields {
             dict[key.rawValue] = value

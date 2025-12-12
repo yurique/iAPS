@@ -553,7 +553,7 @@ class BarcodeScannerService: NSObject, ObservableObject {
             // Wait longer before attempting to rebuild
             Thread.sleep(forTimeInterval: 0.5)
 
-            print("🎥 Attempting to rebuild session...")
+            print("🎥 Attempting to rebuild session …")
             do {
                 try self.setupCaptureSession()
                 DispatchQueue.main.async {

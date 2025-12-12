@@ -110,17 +110,3 @@ struct ModelQueryEditor: View {
         }
     }
 }
-
-#Preview {
-    ModelQueryEditor(
-        title: "System Prompt",
-        loadText: { "You are a helpful assistant.\nAnswer concisely." },
-        saveText: { newText in
-            print("Saved text of length: \(newText.count)")
-        },
-        examples: [
-            "Default Query": "Analyze this food image for diabetes management...",
-            "Detailed Visual Analysis": "Provide extremely detailed visual analysis..."
-        ]
-    )
-}

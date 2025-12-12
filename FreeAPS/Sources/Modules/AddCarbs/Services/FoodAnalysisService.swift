@@ -26,6 +26,59 @@ protocol BarcodeAnalysisService: Sendable, AnalysisServiceBase {
     ) async throws -> OpenFoodFactsProduct
 }
 
+struct AIAnalysisService {
+    private let proto: AIProviderProtocol
+    private let client: AIProviderClient
+
+    init(_ proto: AIProviderProtocol) {
+        self.proto = proto
+        client = AIProviderClient(proto: proto)
+    }
+
+    static func create(for aiModel: AIModel, apiKey: String) -> AIAnalysisService {
+        let proto: AIProviderProtocol = switch aiModel {
+        case let .openAI(model): OpenAIProtocol(model: model, apiKey: apiKey)
+        case let .gemini(model): GeminiProtocol(model: model, apiKey: apiKey)
+        case let .claude(model): ClaudeProtocol(model: model, apiKey: apiKey)
+        }
+        return AIAnalysisService(proto)
+    }
+}
+
+extension AIAnalysisService: ImageAnalysisService {
+    var needAggressiveImageCompression: Bool { proto.needAggressiveImageCompression }
+
+    func analyzeImage(
+        prompt: String,
+        images: [String],
+        telemetryCallback: ((String) -> Void)?
+    ) async throws -> FoodAnalysisResult {
+        let response = try await client.executeQuery(
+            prompt: prompt,
+            images: images,
+            telemetryCallback: telemetryCallback
+        )
+
+        return try decode(response, as: FoodAnalysisResult.self)
+    }
+}
+
+extension AIAnalysisService: TextAnalysisService {
+    func analyzeText(
+        prompt: String,
+        telemetryCallback: ((String) -> Void)?
+    ) async throws -> [OpenFoodFactsProduct] {
+        let response = try await client.executeQuery(
+            prompt: prompt,
+            images: [],
+            telemetryCallback: telemetryCallback
+        )
+
+        let result = try decode(response, as: FoodAnalysisResult.self)
+        return toOpenFoodFactsProducts(result: result)
+    }
+}
+
 extension AnalysisServiceBase {
     func decode<T: Decodable>(
         _ content: String,
@@ -83,10 +136,9 @@ extension AnalysisServiceBase {
 
 extension TextAnalysisService {
     func toOpenFoodFactsProducts(
-        model: AIModelBase,
         result: FoodAnalysisResult
     ) -> [OpenFoodFactsProduct] {
-        let syntheticID = "\(model.rawValue)_\(Date.now.hashValue)"
+        let syntheticID = "\(Date.now.hashValue)"
         return result.foodItemsDetailed.map { item in
             var carbs: Double = 0
             var proteins: Double = 0

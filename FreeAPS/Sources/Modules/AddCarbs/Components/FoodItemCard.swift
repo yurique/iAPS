@@ -33,7 +33,64 @@ struct FoodItemCard: View {
                     .buttonStyle(PlainButtonStyle())
                 }
 
-                // Auswahl-Button
+                if let portion = foodItem.portionEstimateSize {
+                    HStack(spacing: 8) {
+                        PortionSizeBadge(
+                            value: portion,
+                            unit: foodItem.units.localizedAbbreviation,
+                            color: .yellow
+                        )
+
+                        if let carbsPer100 = foodItem.carbsPer100 {
+                            NutritionBadge(value: carbsPer100 / 100 * portion, unit: "g", label: "Carbs", color: .orange)
+                        }
+                        if let proteinPer100 = foodItem.proteinPer100, proteinPer100 > 0 {
+                            NutritionBadge(value: proteinPer100 / 100 * portion, unit: "g", label: "Protein", color: .green)
+                        }
+
+                        if let fatPer100 = foodItem.fatPer100, fatPer100 > 0 {
+                            NutritionBadge(value: fatPer100 / 100 * portion, unit: "g", label: "Fat", color: .blue)
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 4) {
+                    if let portionEstimate = foodItem.portionEstimate {
+                        HStack {
+                            Text("Portion:")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            Text(portionEstimate)
+                                .font(.caption)
+
+                            if let servingSize = foodItem.standardServingSize, let portion = foodItem.portionEstimateSize
+                            {
+                                Text("\(portion / servingSize, specifier: "%.1f") \(NSLocalizedString("servings", comment: ""))")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    if let standardServingSize = foodItem.standardServingSize {
+                        HStack {
+                            Text("Standard serving:")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("\(standardServingSize, specifier: "%.0f") \(foodItem.units.localizedAbbreviation)")
+                                .font(.caption)
+                        }
+                        if let standardServing = foodItem.standardServing {
+                            HStack {
+                                Text(standardServing)
+                                    .font(.caption2)
+                                    .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+                }
+
                 Button(action: onSelect) {
                     HStack {
                         Image(systemName: "plus.circle.fill")
@@ -48,44 +105,6 @@ struct FoodItemCard: View {
                     .cornerRadius(8)
                 }
                 .buttonStyle(PlainButtonStyle())
-
-                // Portionsinformationen (immer sichtbar)
-                VStack(alignment: .leading, spacing: 4) {
-                    if let portionEstimateSize = foodItem.portionEstimateSize {
-                        HStack {
-                            Text("Portion:")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-
-                            Text("\(portionEstimateSize, specifier: "%.0f") \(foodItem.units.localizedAbbreviation)")
-                                .font(.caption)
-
-                            if let portionEstimate = foodItem.portionEstimate {
-                                Text("(\(portionEstimate))")
-                                    .font(.caption)
-                            }
-                        }
-                    }
-                    if let standardServingSize = foodItem.standardServingSize {
-                        HStack {
-                            Text("Std serving:")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text("\(standardServingSize, specifier: "%.0f") \(foodItem.units.localizedAbbreviation)")
-                                .font(.caption)
-
-                            if let standardServing = foodItem.standardServing {
-                                Text("(\(standardServing))")
-                                    .font(.caption)
-                            }
-                        }
-                    }
-
-                    servingsMultiplierView
-                }
-                .foregroundColor(.secondary)
-
-                nutritionValueView
 
 //                if let standardName = foodItem.servingsStandard {
 //                    HStack(alignment: .firstTextBaseline, spacing: 4) {
@@ -179,35 +198,6 @@ struct FoodItemCard: View {
         .padding(.horizontal)
     }
 
-    @ViewBuilder private var nutritionValueView: some View {
-        if let portion = foodItem.portionEstimateSize {
-            HStack(spacing: 8) {
-                if let carbsPer100 = foodItem.carbsPer100 {
-                    NutritionBadge(value: carbsPer100 / 100 * portion, unit: "g", label: "Carbs", color: .orange)
-                }
-                if let proteinPer100 = foodItem.proteinPer100, proteinPer100 > 0 {
-                    NutritionBadge(value: proteinPer100 / 100 * portion, unit: "g", label: "Protein", color: .green)
-                }
-
-                if let fatPer100 = foodItem.fatPer100, fatPer100 > 0 {
-                    NutritionBadge(value: fatPer100 / 100 * portion, unit: "g", label: "Fat", color: .blue)
-                }
-            }
-        }
-    }
-
-    @ViewBuilder private var servingsMultiplierView: some View {
-        if let servingSize = foodItem.standardServingSize, let portion = foodItem.portionEstimateSize, portion != servingSize {
-            HStack {
-                Text("Servings:")
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                Text("\(portion / servingSize, specifier: "%.1f")")
-                    .font(.caption)
-            }
-        }
-    }
-
     private struct NutritionBadge: View {
         let value: Double
         let unit: String
@@ -234,6 +224,38 @@ struct FoodItemCard: View {
                         .font(.system(size: 12, weight: .bold))
                     Text(NSLocalizedString(label, comment: ""))
                         .font(.system(size: 10, weight: .medium))
+                }
+            }
+            .foregroundColor(color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(color.opacity(0.15))
+            .cornerRadius(8)
+        }
+    }
+
+    private struct PortionSizeBadge: View {
+        let value: Double
+        let unit: String
+        let color: Color
+        let icon: String
+
+        init(value: Double, unit: String, color: Color, icon: String? = nil) {
+            self.value = value
+            self.unit = unit
+            self.color = color
+            self.icon = icon ?? ""
+        }
+
+        var body: some View {
+            HStack(spacing: 4) {
+                if !icon.isEmpty {
+                    Image(systemName: icon)
+                        .font(.system(size: 10))
+                }
+                VStack(spacing: 2) {
+                    Text("\(value, specifier: "%.0f") \(NSLocalizedString(unit, comment: ""))")
+                        .font(.system(size: 15, weight: .bold))
                 }
             }
             .foregroundColor(color)
