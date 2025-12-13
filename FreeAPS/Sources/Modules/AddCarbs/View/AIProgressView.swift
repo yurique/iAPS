@@ -288,24 +288,46 @@ struct AnalyzingPill: View {
     var onCancel: (() -> Void)? = nil
 
     @Environment(\.colorScheme) private var colorScheme
-    @State private var baseRotation: Double = 0
-    @State private var spotlightProgress: Double = 0
+    @State private var rotation: Double = 0
     @State private var shimmerPhase: CGFloat = -140
 
     var body: some View {
-        // Subtle color palette for the base glow
-        let glowColors: [Color] = [
-            Color.cyan.opacity(0.53),
-            Color.blue.opacity(0.53),
-            Color.purple.opacity(0.53),
-            Color.pink.opacity(0.53),
-            Color.orange.opacity(0.53),
-            Color.yellow.opacity(0.53),
-            Color.cyan.opacity(0.53)
+        // Local constants for palette and sizing
+        let baseColors: [Color] = [
+            Color.gray.opacity(0.22), Color.gray.opacity(0.22),
+            Color.teal.opacity(0.45), Color.yellow.opacity(0.45), Color.red.opacity(0.45), Color.purple.opacity(0.45),
+            Color.gray.opacity(0.22), Color.gray.opacity(0.22)
+        ]
+        let waveColors: [Color] = [
+            .clear, .clear,
+            Color.teal.opacity(0.7), Color.yellow.opacity(0.7), Color.red.opacity(0.7), Color.purple.opacity(0.7),
+            .clear, .clear
         ]
 
-        HStack(spacing: 10) {
-            // Text with shimmer effect
+        let innerFillBlur: CGFloat = 22
+        let innerFillOpacityDark: CGFloat = 0.35
+        let innerFillOpacityLight: CGFloat = 0.22
+
+        let outerHaloLineWidth: CGFloat = 2
+        let outerHaloBlur: CGFloat = 6
+        let outerHaloOpacityDark: CGFloat = 0.32
+        let outerHaloOpacityLight: CGFloat = 0.18
+
+        let waveInnerBlur: CGFloat = 28
+        let waveInnerOpacityDark: CGFloat = 0.45
+        let waveInnerOpacityLight: CGFloat = 0.30
+
+        let waveOuterLineWidth: CGFloat = 10
+        let waveOuterBlur: CGFloat = 20
+        let waveOuterOpacityDark: CGFloat = 0.50
+        let waveOuterOpacityLight: CGFloat = 0.35
+
+        let borderLineWidth: CGFloat = 0.6
+        let borderBlur: CGFloat = 0.8
+        let borderOpacity: CGFloat = 0.4
+
+        let content = HStack(spacing: 10) {
+            // Base text at 50% opacity, with a moving highlight overlay masked to the same glyphs
             Text(title)
                 .font(.footnote)
                 .foregroundStyle(.primary)
@@ -314,13 +336,12 @@ struct AnalyzingPill: View {
                     Text(title)
                         .font(.footnote)
                         .foregroundStyle(.primary)
-                        .opacity(0.8)
                         .mask(
                             LinearGradient(
                                 gradient: Gradient(stops: [
-                                    .init(color: .clear, location: 0.0),
+                                    .init(color: .black.opacity(0.0), location: 0.0),
                                     .init(color: .white, location: 0.5),
-                                    .init(color: .clear, location: 1.0)
+                                    .init(color: .black.opacity(0.0), location: 1.0)
                                 ]),
                                 startPoint: .leading,
                                 endPoint: .trailing
@@ -333,111 +354,110 @@ struct AnalyzingPill: View {
                 Text(startDate, style: .relative)
                     .font(.footnote.monospacedDigit())
                     .foregroundStyle(.secondary)
+                    .padding(.trailing, 6)
             }
-            Spacer(minLength: 2)
+
             if let onCancel {
                 Button("Cancel", action: onCancel)
                     .font(.footnote)
                     .foregroundStyle(.primary)
-                    .backgroundStyle(.regularMaterial)
+                    .backgroundStyle(.ultraThinMaterial)
                     .buttonStyle(.bordered)
                     .padding(.horizontal, -6)
                     .padding(.vertical, -4)
+                    .buttonBorderShape(.capsule)
                     .accessibilityLabel("Cancel")
             }
         }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(.ultraThinMaterial, in: Capsule())
 
-        // Base glowing border layers
-        .overlay(
-            Capsule()
-                .strokeBorder(
-                    AngularGradient(
-                        gradient: Gradient(colors: glowColors),
-                        center: .center,
-                        angle: .degrees(baseRotation)
-                    ),
-                    lineWidth: 2
+        return content
+            .padding(.horizontal, 14)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial, in: Capsule())
+            // Inner fill glow covering the whole capsule (subtle, neutral+color)
+            .background(
+                AngularGradient(
+                    gradient: Gradient(colors: baseColors),
+                    center: .center,
+                    angle: .degrees(rotation)
                 )
-                .blur(radius: 3)
-                .opacity(colorScheme == .dark ? 0.47 : 0.33)
+                .blur(radius: innerFillBlur)
+                .opacity(colorScheme == .dark ? innerFillOpacityDark : innerFillOpacityLight)
                 .blendMode(.plusLighter)
-                .allowsHitTesting(false)
-        )
-        .overlay(
-            Capsule()
-                .strokeBorder(
-                    AngularGradient(
-                        gradient: Gradient(colors: glowColors),
-                        center: .center,
-                        angle: .degrees(baseRotation)
-                    ),
-                    lineWidth: 20
+                .mask(Capsule())
+            )
+            // Outer halo (soft, subtle)
+            .background(
+                Capsule()
+                    .strokeBorder(
+                        AngularGradient(
+                            gradient: Gradient(colors: baseColors),
+                            center: .center,
+                            angle: .degrees(rotation)
+                        ),
+                        lineWidth: outerHaloLineWidth
+                    )
+                    .blur(radius: outerHaloBlur)
+                    .opacity(colorScheme == .dark ? outerHaloOpacityDark : outerHaloOpacityLight)
+                    .blendMode(.plusLighter)
+            )
+            // Running wave (inner fill) amplifies the glow and spills inside
+            .background(
+                AngularGradient(
+                    gradient: Gradient(colors: waveColors),
+                    center: .center,
+                    angle: .degrees(rotation)
                 )
-                .blur(radius: 15)
-                .opacity(colorScheme == .dark ? 0.27 : 0.20)
+                .blur(radius: waveInnerBlur)
+                .opacity(colorScheme == .dark ? waveInnerOpacityDark : waveInnerOpacityLight)
                 .blendMode(.plusLighter)
-                .allowsHitTesting(false)
-        )
-        .overlay(
-            Capsule()
-                .strokeBorder(
-                    AngularGradient(
-                        gradient: Gradient(colors: glowColors),
-                        center: .center,
-                        angle: .degrees(baseRotation)
-                    ),
-                    lineWidth: 4
-                )
-                .blur(radius: 8)
-                .opacity(colorScheme == .dark ? 0.33 : 0.23)
-                .blendMode(.plusLighter)
-                .allowsHitTesting(false)
-        )
+                .mask(Capsule())
+            )
+            // Running wave (outer halo) – larger around the hotspot
+            .overlay(
+                Capsule()
+                    .strokeBorder(
+                        AngularGradient(
+                            gradient: Gradient(colors: waveColors),
+                            center: .center,
+                            angle: .degrees(rotation)
+                        ),
+                        lineWidth: waveOuterLineWidth
+                    )
+                    .blur(radius: waveOuterBlur)
+                    .opacity(colorScheme == .dark ? waveOuterOpacityDark : waveOuterOpacityLight)
+                    .blendMode(.plusLighter)
+            )
+            // Subtle border that blends with the glow
+            .overlay(
+                Capsule()
+                    .strokeBorder(
+                        AngularGradient(
+                            gradient: Gradient(colors: baseColors),
+                            center: .center,
+                            angle: .degrees(rotation)
+                        ),
+                        lineWidth: borderLineWidth
+                    )
+                    .blur(radius: borderBlur)
+                    .opacity(borderOpacity)
+                    .blendMode(.plusLighter)
+            )
+            // Traveling spotlight using trim with wrap-around handling (timeline-driven)
+            .overlay(
+                TimelineView(.animation) { context in
+                    let duration: TimeInterval = 5 // seconds per full revolution
+                    let t = context.date.timeIntervalSinceReferenceDate
+                    let phase = t.truncatingRemainder(dividingBy: duration) / duration
+                    let seg: CGFloat = 0.05
+                    let start = CGFloat(phase)
+                    let end = start + seg
 
-        // Traveling spotlight using trim with wrap-around handling (timeline-driven)
-        .overlay(
-            TimelineView(.animation) { context in
-                let duration: TimeInterval = 5 // seconds per full revolution
-                let t = context.date.timeIntervalSinceReferenceDate
-                let phase = t.truncatingRemainder(dividingBy: duration) / duration
-                let seg: CGFloat = 0.05
-                let start = CGFloat(phase)
-                let end = start + seg
-
-                ZStack {
-                    // Head segment (start ..< min(end, 1))
-                    Capsule()
-                        .inset(by: 1.5)
-                        .trim(from: start, to: min(end, 1))
-                        .stroke(
-                            Color.white,
-                            style: StrokeStyle(lineWidth: 2, lineCap: .round)
-                        )
-                        .blur(radius: 1)
-                        .opacity(colorScheme == .dark ? 0.2 : 0.2)
-                        .blendMode(.plusLighter)
-                        .allowsHitTesting(false)
-
-                    Capsule()
-                        .inset(by: 1.5)
-                        .trim(from: start, to: min(end, 1))
-                        .stroke(
-                            Color.white,
-                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                        )
-                        .blur(radius: 4)
-                        .opacity(colorScheme == .dark ? 0.2 : 0.2)
-                        .blendMode(.plusLighter)
-                        .allowsHitTesting(false)
-
-                    // Tail segment (wraps from 0 when end > 1)
-                    if end > 1 {
+                    ZStack {
+                        // Head segment (start ..< min(end, 1))
                         Capsule()
                             .inset(by: 1.5)
-                            .trim(from: 0, to: end - 1)
+                            .trim(from: start, to: min(end, 1))
                             .stroke(
                                 Color.white,
                                 style: StrokeStyle(lineWidth: 2, lineCap: .round)
@@ -449,7 +469,7 @@ struct AnalyzingPill: View {
 
                         Capsule()
                             .inset(by: 1.5)
-                            .trim(from: 0, to: end - 1)
+                            .trim(from: start, to: min(end, 1))
                             .stroke(
                                 Color.white,
                                 style: StrokeStyle(lineWidth: 8, lineCap: .round)
@@ -458,32 +478,54 @@ struct AnalyzingPill: View {
                             .opacity(colorScheme == .dark ? 0.2 : 0.2)
                             .blendMode(.plusLighter)
                             .allowsHitTesting(false)
+
+                        // Tail segment (wraps from 0 when end > 1)
+                        if end > 1 {
+                            Capsule()
+                                .inset(by: 1.5)
+                                .trim(from: 0, to: end - 1)
+                                .stroke(
+                                    Color.white,
+                                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                                )
+                                .blur(radius: 1)
+                                .opacity(colorScheme == .dark ? 0.2 : 0.2)
+                                .blendMode(.plusLighter)
+                                .allowsHitTesting(false)
+
+                            Capsule()
+                                .inset(by: 1.5)
+                                .trim(from: 0, to: end - 1)
+                                .stroke(
+                                    Color.white,
+                                    style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                                )
+                                .blur(radius: 4)
+                                .opacity(colorScheme == .dark ? 0.2 : 0.2)
+                                .blendMode(.plusLighter)
+                                .allowsHitTesting(false)
+                        }
+                    }
+                }
+            )
+            .compositingGroup()
+            .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.1), radius: 10, x: 0, y: 5)
+            .onAppear {
+                // Delay animations slightly to allow navigation to complete
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
+                        rotation = 360
+                    }
+
+                    withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) {
+                        shimmerPhase = 140
                     }
                 }
             }
-        )
-
-        .compositingGroup()
-        .shadow(color: Color.black.opacity(colorScheme == .dark ? 0.45 : 0.1), radius: 10, x: 0, y: 5)
-        .onAppear {
-            // Delay animations slightly to allow navigation to complete
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
-                // Start animations with linear timing for smooth constant motion
-                withAnimation(.linear(duration: 8).repeatForever(autoreverses: false)) {
-                    baseRotation = 360
-                }
-                // Spotlight travels around - animates from 0 to 1 (full circle)
-                withAnimation(.linear(duration: 5).repeatForever(autoreverses: false)) {
-                    spotlightProgress = 1.0
-                }
-                withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) {
-                    shimmerPhase = 140
-                }
-            }
-        }
-        .accessibilityElement(children: .combine)
-        .accessibilityLabel(Text(title))
-        .accessibilityHint("Analysis in progress")
-        .accessibilityAddTraits(.updatesFrequently)
+//            .animation(.linear(duration: 6).repeatForever(autoreverses: false), value: rotation)
+            .accessibilityElement(children: .combine)
+            .accessibilityLabel(Text(title))
+            .accessibilityHint("Analysis in progress")
+            .accessibilityAddTraits(.updatesFrequently)
     }
 }

@@ -162,8 +162,6 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
             telemetryCallback: telemetryCallback
         )
 
-        print("analysis result:\n\n\(result)\n\n")
-
 //        telemetryCallback?("💾 Caching analysis result …")
 //        imageAnalysisCache.cacheResult(result, for: image)
 
