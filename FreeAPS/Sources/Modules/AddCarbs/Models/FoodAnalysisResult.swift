@@ -160,7 +160,7 @@ extension FoodAnalysisResult: Decodable {
 
 //        let fatProteinUnits: String? = try container.decodeTrimmedIfPresent(forKey: .fatProteinUnits)
 //        let netCarbsAdjustment: String? = try container.decodeTrimmedIfPresent(forKey: .netCarbsAdjustment)
-        let insulinTimingRecommendations: String? = try container.decodeTrimmedNonEmpty(forKey: .insulinTimingRecommendations)
+//        let insulinTimingRecommendations: String? = try container.decodeTrimmedIfPresent(forKey: .insulinTimingRecommendations)
 //        let fpuDosingGuidance: String? = try container.decodeTrimmedIfPresent(forKey: .fpuDosingGuidance)
 //        let exerciseConsiderations: String? = try container.decodeTrimmedIfPresent(forKey: .exerciseConsiderations)
         let absorptionTimeHours: Double? = try container.decodeNumberIfPresent(forKey: .absorptionTimeHours)
@@ -296,6 +296,7 @@ extension AIConfidenceLevel {
 enum ImageAnalysisType: String, JSON, Identifiable, CaseIterable {
     case foodPhoto = "food_photo"
     case menuItem = "menu_item"
+    case recipePhoto = "recipe_photo"
 
     var id: ImageAnalysisType { self }
 }
@@ -382,10 +383,9 @@ extension FoodAnalysisResult {
             .servingsStandard: "brief name/description of NUTRITION_AUTHORITY",
             .confidence: "decimal 0 to 1",
             .diabetesConsiderations: "Carb sources, GI impact (low/medium/high), timing considerations",
-            .insulinTimingRecommendations: "Meal type and pre-meal timing (minutes before eating)",
-            .absorptionTimeHours: "absorption hours between 2 and 6",
-            .absorptionTimeReasoning: "Brief timing calculation explanation",
-            .overallDescription: "What I see: plate, arrangement, textures, colors",
+//            .insulinTimingRecommendations: "Meal type and pre-meal timing (minutes before eating)",
+//            .absorptionTimeHours: "absorption hours between 2 and 6",
+//            .absorptionTimeReasoning: "Brief timing calculation explanation",
             .portionAssessmentMethod: "Explain in natural language how you estimated portion sizes using visual references like plate size, utensils, or other objects for scale. Describe your measurement process for each food item and explain how you converted visual portions to serving equivalents. Include your confidence level and what factors affected your accuracy."
         ]
     }
@@ -393,9 +393,10 @@ extension FoodAnalysisResult {
     static var schemaVisual: [String: Any] {
         var fields = self.fields
 
-        fields[.imageType] = "food_photo or menu_item"
+        fields[.imageType] = "string enum: food_photo or menu_item or recipe_photo"
         fields[.foodItemsDetailed] = [AnalysedFoodItem.schemaVisual]
         fields[.visualAssessmentDetails] = "Textures, colors, cooking evidence"
+        fields[.overallDescription] = "What I see: plate, arrangement, textures, colors"
         fields[.portionAssessmentMethod] =
             "Explain in natural language how you estimated portion sizes using visual references like plate size, utensils, or other objects for scale. Describe your measurement process for each food item and explain how you converted visual portions to serving equivalents. Include your confidence level and what factors affected your accuracy."
 

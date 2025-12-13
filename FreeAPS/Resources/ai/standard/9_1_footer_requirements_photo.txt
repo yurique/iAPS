@@ -1,54 +1,74 @@
-MANDATORY REQUIREMENTS - DO NOT BE VAGUE:
+IMAGE TYPE DETERMINATION (REQUIRED)
 
-FOR FOOD PHOTOS:
-❌ NEVER confuse portions with servings - count distinct food items as portions, calculate number of servings based on USDA standards
-❌ NEVER say "4 servings" when you mean "4 portions" - be precise about USDA serving calculations
-❌ NEVER say "mixed vegetables" - specify "steamed broccoli florets, diced carrots"
-❌ NEVER say "chicken" - specify "grilled chicken breast"
-❌ NEVER say "average portion" - specify "6 oz portion covering 1/4 of plate = 2 USDA servings"
-❌ NEVER say "well-cooked" - specify "golden-brown with visible caramelization"
+After inspecting the image, you MUST first classify the image into exactly one of the following types:
+	•	food_photo – a photo of prepared food intended for consumption (e.g., plated meal, bowl, snack, packaged food with visible contents).
+	•	menu_photo – a photo of a restaurant menu, menu board, or menu page showing dish names and descriptions.
+	•	recipe_photo – a photo of a printed or handwritten recipe, cookbook page, or ingredient list with preparation instructions.
 
-✅ ALWAYS distinguish between food portions (distinct items) and servings (standardized amounts)
-✅ ALWAYS explain WHY you calculated the number of servings (e.g., "twice the standard serving size")
-✅ ALWAYS indicate if portions are larger/smaller than typical (helps with portion control)
-✅ ALWAYS describe exact colors, textures, sizes, shapes, cooking evidence
-✅ ALWAYS compare portions to visible objects (fork, plate, hand if visible)
-✅ ALWAYS explain if the food appears to be on a platter of food or a single plate of food
-✅ ALWAYS describe specific cooking methods you can see evidence of
-✅ ALWAYS count discrete items (3 broccoli florets, 4 potato wedges)
-✅ ALWAYS calculate nutrition from YOUR visual portion assessment
-✅ ALWAYS explain your reasoning with specific visual evidence
-✅ ALWAYS identify glycemic index category (low/medium/high GI) for carbohydrate-containing foods
-✅ ALWAYS explain how cooking method affects GI when visible (e.g., "well-cooked white rice = high GI ~73")
-✅ ALWAYS provide specific insulin timing guidance based on GI classification
-✅ ALWAYS consider how protein/fat in mixed meals may moderate carb absorption
-✅ ALWAYS assess food combinations and explain how low GI foods may balance high GI foods in the meal
-✅ ALWAYS note fiber content and processing level as factors affecting GI
-✅ ALWAYS consider food ripeness and cooking degree when assessing GI impact
-✅ ALWAYS calculate Fat/Protein Units (FPUs) and provide classification (Low/Medium/High)
-✅ ALWAYS provide specific insulin timing recommendations based on meal composition
-✅ ALWAYS include FPU-based dosing guidance for extended insulin needs
-✅ ALWAYS consider exercise timing and provide specific insulin adjustments
-✅ ALWAYS include relevant safety alerts for the specific meal composition
-✅ ALWAYS provide quantitative dosing percentages and timing durations
-✅ ALWAYS calculate absorption_time_hours based on meal composition (FPUs, fiber, meal size)
-✅ ALWAYS provide detailed absorption_time_reasoning showing the calculation process
+This classification determines which rules apply below.
 
-FOR MENU AND RECIPE ITEMS:
-❌ NEVER make assumptions about plate sizes, portions, or actual serving sizes
-❌ NEVER estimate visual portions when analyzing menu text only
-❌ NEVER claim to see cooking methods, textures, or visual details from menu text
-❌ NEVER multiply nutrition values by assumed restaurant portion sizes
+If the image is ambiguous, choose the most conservative applicable type and explicitly state the uncertainty.
 
-✅ ALWAYS set image_type to "menu_item" when analyzing menu text
-✅ When analyzing a MENU, ALWAYS set portion_estimate to "CANNOT DETERMINE PORTION - menu text only"
-✅ When analyzing a RECIPE, ALWAYS set portion_estimate to "CANNOT DETERMINE PORTION - recipe text only"
-✅ ALWAYS set visual_cues to "NONE - menu text analysis only"
-✅ ALWAYS mark assessment_notes as "ESTIMATE ONLY - Based on the appropriate standard serving size"
-✅ ALWAYS use portion_assessment_method to explain this is menu analysis with no visual portions
-✅ ALWAYS provide actual appropriate standard nutrition values (carbohydrates, protein, fat, calories)
-✅ ALWAYS calculate nutrition based on typical standard serving sizes for the identified food type based on the appropriate nutrition standard for the user's region
-✅ ALWAYS include total nutrition fields even for menu items (based on the appropriate nutrition standard for the user's region)
-✅ ALWAYS translate into the user's device native language or if unknown, translate into ENGLISH before analysing the menu item
-✅ ALWAYS provide glycemic index assessment for menu items based on typical preparation methods
-✅ ALWAYS include diabetes timing guidance even for menu items based on typical GI values
+FOR FOOD PHOTOS (food_photo)
+
+Apply all rules in the FOR FOOD PHOTOS (IMAGE ANALYSIS) section.
+
+This includes:
+	•	portion estimation from visual evidence
+	•	portion vs serving distinction
+	•	visual reasoning and counting
+	•	authority-based nutrition calculation
+
+FOR MENU PHOTOS (menu_photo)
+
+Menu photos are text-only sources, even though they are images.
+
+You MUST:
+	1.	Do not estimate visual portions
+	•	Do not infer plate size, portion size, or food quantity.
+	2.	Explicitly mark portion as unknown
+	•	Set:
+	•	portion_estimate = "CANNOT DETERMINE PORTION – menu photo"
+	•	assessment_notes = "ESTIMATE ONLY – based on standard reference amounts"
+	3.	Use standard reference amounts
+	•	Base nutrition on NUTRITION_AUTHORITY standard serving or per-100 g values.
+	•	Never multiply by assumed restaurant portions.
+	4.	No visual claims
+	•	Do not claim to see:
+	•	cooking methods
+	•	textures
+	•	colors
+	•	browning or doneness
+	•	Treat menu descriptions as text only.
+	5.	Absorption context (bounded)
+	•	Provide qualitative absorption classification (fast/medium/slow) based on typical preparation.
+	•	Explicitly state uncertainty when preparation details are missing.
+
+FOR RECIPE PHOTOS (recipe_photo)
+
+Recipe photos are instructional text, not evidence of prepared food.
+
+You MUST:
+	1.	Do not infer cooked appearance
+	•	Do not claim the dish is cooked, plated, or served.
+	2.	Explicitly mark portion as unknown
+	•	Set:
+	•	portion_estimate = "CANNOT DETERMINE PORTION – recipe photo"
+	•	assessment_notes = "ESTIMATE ONLY – based on standard reference amounts"
+	3.	Use standard reference amounts
+	•	Base nutrition on NUTRITION_AUTHORITY standard serving or per-100 g values.
+	•	Do not assume yield size unless explicitly stated.
+	4.	Ingredient-based analysis only
+	•	Use listed ingredients and quantities if present.
+	•	If quantities are missing or unclear, state the limitation.
+	5.	Absorption context (bounded)
+	•	Provide qualitative absorption classification (fast/medium/slow) based on ingredients and processing level.
+	•	Acknowledge uncertainty when quantities or preparation steps are incomplete.
+
+⚠️ IMPORTANT SAFETY NOTE
+
+If the image is a menu or recipe photo, you MUST NOT:
+	•	estimate visual portions
+	•	infer serving size
+	•	describe food appearance
+	•	treat the dish as already prepared or consumed

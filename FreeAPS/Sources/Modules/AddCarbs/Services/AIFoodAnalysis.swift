@@ -148,6 +148,22 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
             )
         }
 
+        // Get the AI model for statistics tracking
+        let aiModel = switch UserDefaults.standard.aiImageProvider {
+        case let .aiModel(model):
+            model
+        }
+
+        // Use average processing time from statistics, or fall back to default ETA
+        if let stats = UserDefaults.standard.getAIStatistics(model: aiModel, requestType: .image),
+           stats.averageSuccessProcessingTime > 0
+        {
+            let eta = String(format: "%.1f", stats.averageSuccessProcessingTime)
+            telemetryCallback?("ETA: \(eta)")
+        } else {
+            telemetryCallback?("ETA: \(String(format: "%.0f", aiModel.defaultETA))")
+        }
+
         telemetryCallback?("🖼️ Optimizing your image …")
         let base64Image = try ImageCompression.getImageBase64(
             for: image,
@@ -156,16 +172,40 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
         )
         let analysisPrompt = AIPrompts.getAnalysisPrompt(.image(image), responseSchema: FoodAnalysisResult.schemaVisual)
 
-        let result: FoodAnalysisResult = try await providerImpl.analyzeImage(
-            prompt: analysisPrompt,
-            images: [base64Image],
-            telemetryCallback: telemetryCallback
-        )
+        // Track processing time
+        let startTime = Date()
 
-//        telemetryCallback?("💾 Caching analysis result …")
-//        imageAnalysisCache.cacheResult(result, for: image)
+        do {
+            let result: FoodAnalysisResult = try await providerImpl.analyzeImage(
+                prompt: analysisPrompt,
+                images: [base64Image],
+                telemetryCallback: telemetryCallback
+            )
 
-        return result
+            // Record successful request statistics
+            let processingTime = Date().timeIntervalSince(startTime)
+            UserDefaults.standard.recordAIRequest(
+                model: aiModel,
+                requestType: .image,
+                processingTime: processingTime,
+                success: true
+            )
+
+//            telemetryCallback?("💾 Caching analysis result …")
+//            imageAnalysisCache.cacheResult(result, for: image)
+
+            return result
+        } catch {
+            // Record failed request statistics
+            let processingTime = Date().timeIntervalSince(startTime)
+            UserDefaults.standard.recordAIRequest(
+                model: aiModel,
+                requestType: .image,
+                processingTime: processingTime,
+                success: false
+            )
+            throw error
+        }
     }
 
     func analyzeFoodQuery(
@@ -178,12 +218,46 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
             let providerImpl = try getAIImplementation(for: model, telemetryCallback: telemetryCallback)
             let analysisPrompt = AIPrompts.getAnalysisPrompt(.query(query), responseSchema: FoodAnalysisResult.schemaText)
 
-            let result = try await providerImpl.analyzeText(
-                prompt: analysisPrompt,
-                telemetryCallback: telemetryCallback
-            )
+            // Use average processing time from statistics, or fall back to default ETA
+            if let stats = UserDefaults.standard.getAIStatistics(model: model, requestType: .text),
+               stats.averageSuccessProcessingTime > 0
+            {
+                let eta = String(format: "%.1f", stats.averageSuccessProcessingTime)
+                telemetryCallback?("ETA: \(eta)")
+            } else {
+                telemetryCallback?("ETA: \(String(format: "%.1f", model.defaultETA))")
+            }
 
-            return result
+            // Track processing time
+            let startTime = Date()
+
+            do {
+                let result = try await providerImpl.analyzeText(
+                    prompt: analysisPrompt,
+                    telemetryCallback: telemetryCallback
+                )
+
+                // Record successful request statistics
+                let processingTime = Date().timeIntervalSince(startTime)
+                UserDefaults.standard.recordAIRequest(
+                    model: model,
+                    requestType: .text,
+                    processingTime: processingTime,
+                    success: true
+                )
+
+                return result
+            } catch {
+                // Record failed request statistics
+                let processingTime = Date().timeIntervalSince(startTime)
+                UserDefaults.standard.recordAIRequest(
+                    model: model,
+                    requestType: .text,
+                    processingTime: processingTime,
+                    success: false
+                )
+                throw error
+            }
         case .usdaFoodData:
             return try await USDAFoodDataService.shared.analyzeText(prompt: query, telemetryCallback: telemetryCallback)
         case .openFoodFacts:

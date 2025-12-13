@@ -45,6 +45,10 @@ protocol AIModelBase {
     var rawValue: String { get }
 
     var timeoutsConfig: ModelTimeoutsConfig { get }
+
+    var defaultETA: TimeInterval { get }
+
+    var provider: AIProvider { get }
 }
 
 enum OpenAIModel: String, AIModelBase, Encodable {
@@ -98,6 +102,17 @@ enum OpenAIModel: String, AIModelBase, Encodable {
         }
     }
 
+    var defaultETA: TimeInterval {
+        switch self {
+        case .gpt_4o: 35
+        case .gpt_4o_mini: 25
+        case .gpt_5: 40
+        case .gpt_5_mini: 30
+        case .gpt_5_1: 45
+        case .gpt_5_2: 50
+        }
+    }
+
     var timeoutsConfig: ModelTimeoutsConfig {
         if isGPT5 {
             return ModelTimeoutsConfig(
@@ -113,6 +128,8 @@ enum OpenAIModel: String, AIModelBase, Encodable {
             )
         }
     }
+
+    var provider: AIProvider { .openAI }
 }
 
 enum GeminiModel: String, AIModelBase, Encodable {
@@ -138,9 +155,17 @@ enum GeminiModel: String, AIModelBase, Encodable {
 
     var needAggressiveImageCompression: Bool {
         switch self {
-        case .gemini_2_5_pro: return false
-        case .gemini_2_5_flash: return false
-        case .gemini_3_pro_preview: return false
+        case .gemini_2_5_pro: false
+        case .gemini_2_5_flash: false
+        case .gemini_3_pro_preview: false
+        }
+    }
+
+    var defaultETA: TimeInterval {
+        switch self {
+        case .gemini_2_5_pro: 40
+        case .gemini_2_5_flash: 30
+        case .gemini_3_pro_preview: 45
         }
     }
 
@@ -151,6 +176,8 @@ enum GeminiModel: String, AIModelBase, Encodable {
             timeoutIntervalForResource: 180
         )
     }
+
+    var provider: AIProvider { .gemini }
 }
 
 enum ClaudeModel: String, AIModelBase, Encodable {
@@ -178,6 +205,13 @@ enum ClaudeModel: String, AIModelBase, Encodable {
         }
     }
 
+    var defaultETA: TimeInterval {
+        switch self {
+        case .sonnet_4_5: 55
+        case .haiku_4_5: 40
+        }
+    }
+
     var timeoutsConfig: ModelTimeoutsConfig {
         ModelTimeoutsConfig(
             requestTimeoutInterval: 120,
@@ -185,6 +219,8 @@ enum ClaudeModel: String, AIModelBase, Encodable {
             timeoutIntervalForResource: 180
         )
     }
+
+    var provider: AIProvider { .claude }
 }
 
 enum AIModel {
@@ -213,6 +249,14 @@ enum AIModel {
         case .openAI: return .openAI
         case .gemini: return .gemini
         case .claude: return .claude
+        }
+    }
+
+    var defaultETA: TimeInterval {
+        switch self {
+        case let .openAI(model): model.defaultETA
+        case let .gemini(model): model.defaultETA
+        case let .claude(model): model.defaultETA
         }
     }
 }
@@ -597,4 +641,111 @@ struct ModelTimeoutsConfig {
     let requestTimeoutInterval: TimeInterval
     let timeoutIntervalForRequest: TimeInterval
     let timeoutIntervalForResource: TimeInterval
+}
+
+enum NutritionAuthority: String {
+    case US_USDA
+    case EU_EFSA
+    case UK_COFID
+    case CA_HEALTH
+    case AU_NZ_FSANZ
+    case JP_MHLW
+    case INTL_WHO_FAO
+
+    var description: String {
+        switch self {
+        case .US_USDA: "United States (USDA / FDA)"
+        case .EU_EFSA: "European Union (EFSA / EU labeling)"
+        case .UK_COFID: "United Kingdom (CoFID / NHS)"
+        case .CA_HEALTH: "Canada (Health Canada)"
+        case .AU_NZ_FSANZ: "Australia & New Zealand (FSANZ)"
+        case .JP_MHLW: "Japan (MHLW)"
+        case .INTL_WHO_FAO: "International (WHO / FAO / Codex)"
+        }
+    }
+
+    var descriptionForAI: String {
+        switch self {
+        case .US_USDA: "United States Department of Agriculture (USDA), FDA Nutrition Facts"
+        case .EU_EFSA: "European Food Safety Authority (EFSA), EU food labeling standards"
+        case .UK_COFID: "UK Composition of Foods Integrated Dataset (CoFID), NHS"
+        case .CA_HEALTH: "Health Canada, Canadian Nutrition Facts Table"
+        case .AU_NZ_FSANZ: "Food Standards Australia New Zealand (FSANZ)"
+        case .JP_MHLW: "Ministry of Health, Labour and Welfare (MHLW), Japanese Food Labeling Standards"
+        case .INTL_WHO_FAO: "World Health Organization (WHO), FAO, Codex Alimentarius"
+        }
+    }
+
+    static let allCases: [NutritionAuthority] = [
+        //        .INTL_WHO_FAO,
+        .US_USDA,
+        .EU_EFSA,
+        .UK_COFID,
+        .CA_HEALTH,
+        .AU_NZ_FSANZ,
+        .JP_MHLW
+    ]
+
+    static var localDefault: NutritionAuthority {
+        guard let countryCode = Locale.current.region?.identifier.uppercased()
+        else {
+            return .INTL_WHO_FAO
+        }
+
+        switch countryCode {
+        case "US":
+            return .US_USDA
+
+        case "GB":
+            return .UK_COFID
+
+        case "CA":
+            return .CA_HEALTH
+
+        case "AU",
+             "NZ":
+            return .AU_NZ_FSANZ
+
+        case "JP":
+            return .JP_MHLW
+
+        // EU / EEA / Switzerland
+        case
+            "AT",
+            "BE",
+            "BG",
+            "CH",
+            "CY",
+            "CZ",
+            "DE",
+            "DK",
+            "EE",
+            "ES",
+            "FI",
+            "FR",
+            "GR",
+            "HR",
+            "HU",
+            "IE",
+            "IS",
+            "IT",
+            "LI",
+            "LT",
+            "LU",
+            "LV",
+            "MT",
+            "NL",
+            "NO",
+            "PL",
+            "PT",
+            "RO",
+            "SE",
+            "SI",
+            "SK":
+            return .EU_EFSA
+
+        default:
+            return .EU_EFSA
+        }
+    }
 }

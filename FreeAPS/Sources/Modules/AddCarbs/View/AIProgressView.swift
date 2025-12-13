@@ -16,64 +16,73 @@ struct AIProgressView: View {
 
     @State private var searchTask: Task<Void, Never>? = nil
     @State private var analysisStart: Date? = nil
+    @State private var analysisEnd: Date? = nil
+    @State private var analysisEta: TimeInterval?
+    @State private var latestTelemetry: String?
 
     var body: some View {
-        ZStack {
+        VStack {
+            // Background layer - full screen image or text query display
+            switch analysisRequest {
+            case .image:
+                EmptyView()
+
+            case let .query(query):
+                Spacer()
+                    .frame(height: 100)
+
+                HStack {
+                    Image(systemName: "magnifyingglass")
+                        .foregroundColor(.secondary)
+                    Text(query)
+                        .font(.title3)
+                        .foregroundColor(.primary)
+                    Spacer()
+                }
+                .padding()
+                .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
+                .padding(.horizontal)
+            }
+            Spacer()
+//            TelemetryWindow(logs: telemetryLogs).padding(.horizontal)
+//            Spacer()
+//                .frame(height: 30)
+
+            AnalyzingPill(
+                //                title: latestTelemetry ?? NSLocalizedString("Analyzing food with AI…", comment: ""),
+                title: NSLocalizedString("Analyzing food with AI…", comment: ""),
+                startDate: analysisStart,
+                eta: analysisEta,
+                endDate: analysisEnd
+            ) {
+                searchTask?.cancel()
+                searchTask = nil
+                analysisStart = nil
+                analysisEnd = nil
+                isAnalyzing = false
+                onCancel()
+            }
+            .padding(.horizontal)
+            .padding(.bottom, 60)
+        }
+        .background {
             // Background layer - full screen image or text query display
             switch analysisRequest {
             case let .image(image):
-                GeometryReader { proxy in
-                    Image(uiImage: image)
-                        .resizable()
-                        .aspectRatio(contentMode: .fill)
-                        .frame(width: proxy.size.width, height: proxy.size.height)
-                        .clipped()
-                }
+                Image(uiImage: image)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+                    .clipped()
+                    .ignoresSafeArea()
 
-            case let .query(query):
-                VStack {
-                    Spacer()
-                        .frame(height: 100)
-
-                    // Search query display styled like user input
-                    HStack {
-                        Image(systemName: "magnifyingglass")
-                            .foregroundColor(.secondary)
-                        Text(query)
-                            .font(.title3)
-                            .foregroundColor(.primary)
-                        Spacer()
-                    }
-                    .padding()
-                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 12))
-                    .padding(.horizontal)
-
-                    Spacer()
-                }
+            case .query:
+                EmptyView()
             }
-
-            // Foreground layer - analyzing pill at bottom (respects safe area)
-            VStack {
-                Spacer()
-                    .allowsHitTesting(false)
-
-                AnalyzingPill(title: "Analyzing food with AI…", startDate: analysisStart) {
-                    searchTask?.cancel()
-                    searchTask = nil
-                    analysisStart = self.analysisStart
-                    onCancel()
-                }
-                .padding(.horizontal)
-                .padding(.bottom, 80)
-            }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
-        .clipped()
         .background(Color(.systemBackground))
         .onAppear {
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) {
                 if !isAnalyzing, analysisError == nil {
-                    analysisStart = Date()
                     analyzeImage()
                 }
             }
@@ -82,11 +91,7 @@ struct AIProgressView: View {
             searchTask?.cancel()
             searchTask = nil
         }
-        .navigationTitle("AI Food Analysis")
-        .navigationBarTitleDisplayMode(.inline)
-        .navigationBarBackButtonHidden(true)
-        .toolbarBackground(.visible, for: .navigationBar)
-        .toolbarBackground(Color(.systemBackground), for: .navigationBar)
+        .navigationBarHidden(true)
         .alert("Analysis Error", isPresented: $showingErrorAlert) {
             // Credit/quota exhaustion errors - provide direct guidance
             if analysisError?.contains("credits exhausted") == true || analysisError?.contains("quota exceeded") == true {
@@ -149,6 +154,10 @@ struct AIProgressView: View {
         isAnalyzing = true
         analysisError = nil
         telemetryLogs = []
+        analysisStart = Date()
+        analysisEnd = nil
+        analysisEta = nil
+        latestTelemetry = nil
 
         searchTask?.cancel()
         searchTask = Task {
@@ -157,28 +166,44 @@ struct AIProgressView: View {
                 case let .image(image):
                     let result = try await aiService.analyzeFoodImage(image) { telemetryMessage in
                         Task { @MainActor in
-                            addTelemetryLog(telemetryMessage)
+                            if telemetryMessage.hasPrefix("ETA: ") {
+                                let etaString = telemetryMessage.dropFirst(5)
+                                if let etaValue = Double(etaString.trimmingCharacters(in: .whitespaces)) {
+                                    analysisEta = etaValue * 1.2
+                                }
+                            } else {
+                                latestTelemetry = telemetryMessage
+                                addTelemetryLog(telemetryMessage)
+                            }
                         }
                     }
                     await MainActor.run {
                         addTelemetryLog("✅ Analysis complete!")
+                        analysisEnd = Date.now
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                             isAnalyzing = false
-                            analysisStart = nil
                             onFoodAnalyzed(result, analysisRequest)
                         }
                     }
                 case let .query(query):
                     let result = try await aiService.analyzeFoodQuery(query) { telemetryMessage in
                         Task { @MainActor in
-                            addTelemetryLog(telemetryMessage)
+                            if telemetryMessage.hasPrefix("ETA: ") {
+                                let etaString = telemetryMessage.dropFirst(5)
+                                if let etaValue = Double(etaString.trimmingCharacters(in: .whitespaces)) {
+                                    analysisEta = etaValue * 1.2
+                                }
+                            } else {
+                                latestTelemetry = telemetryMessage
+                                addTelemetryLog(telemetryMessage)
+                            }
                         }
                     }
                     await MainActor.run {
                         addTelemetryLog("✅ Analysis complete!")
+                        analysisEnd = Date.now
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                             isAnalyzing = false
-                            analysisStart = nil
                             onFoodAnalyzed(result, analysisRequest)
                         }
                     }
@@ -193,10 +218,10 @@ struct AIProgressView: View {
                 await MainActor.run {
                     addTelemetryLog("❌ Analysis failed")
 
-                    // ✅ VERBESSERT: Stabilere Fehlerbehandlung
                     DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                         isAnalyzing = false
                         analysisStart = nil
+                        analysisEnd = nil
                         analysisError = error.localizedDescription
                         showingErrorAlert = true
                     }
@@ -216,41 +241,55 @@ struct AIProgressView: View {
 struct TelemetryWindow: View {
     let logs: [String]
 
+    @Environment(\.colorScheme) private var colorScheme
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             // Header
             HStack {
-                Spacer()
                 Image(systemName: "antenna.radiowaves.left.and.right")
                     .foregroundColor(.green)
                     .font(.caption2)
+                    .symbolEffect(.variableColor.iterative.reversing, options: .repeating)
                 Text("Analysis Status")
                     .font(.caption2)
-                    .fontWeight(.medium)
-                    .foregroundColor(.secondary)
+                    .fontWeight(.semibold)
+                    .foregroundColor(.primary)
+                Spacer()
             }
-            .padding(.horizontal, 12)
-            .padding(.vertical, 8)
-            .background(Color(.systemGray6))
+            .padding(.horizontal, 16)
+            .padding(.vertical, 10)
+            .background(.ultraThinMaterial)
+
+            Divider()
+                .opacity(0.3)
 
             // Scrolling logs
             ScrollView {
                 ScrollViewReader { proxy in
-                    LazyVStack(alignment: .leading, spacing: 4) {
+                    LazyVStack(alignment: .leading, spacing: 6) {
                         ForEach(Array(logs.enumerated()), id: \.offset) { index, log in
-                            HStack {
+                            HStack(alignment: .top, spacing: 8) {
+                                Text("•")
+                                    .font(.system(.caption2, design: .monospaced))
+                                    .foregroundColor(.secondary)
+                                    .opacity(0.6)
+
                                 Text(NSLocalizedString(log, comment: "Log"))
                                     .font(.system(.caption2, design: .monospaced))
                                     .foregroundColor(.primary)
                                     .multilineTextAlignment(.leading)
+
                                 Spacer()
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 2)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 4)
                             .id(index)
+                            .transition(.opacity.combined(with: .move(edge: .top)))
                         }
-                        Color.clear.frame(height: 56)
+                        Color.clear.frame(height: 12)
                     }
+                    .padding(.top, 8)
                     .onAppear {
                         if !logs.isEmpty {
                             withAnimation(.easeInOut(duration: 0.3)) {
@@ -267,28 +306,61 @@ struct TelemetryWindow: View {
                     }
                 }
             }
-            .padding(.bottom, 14)
-            .frame(height: 320)
-            .background(Color(.systemBackground))
+            .frame(height: 280)
         }
-        .background(Color(.systemGray6))
-        .cornerRadius(12)
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(Color(.systemGray4), lineWidth: 1)
+        .background(.regularMaterial)
+        .clipShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
+        .shadow(
+            color: Color.black.opacity(colorScheme == .dark ? 0.5 : 0.15),
+            radius: 20,
+            x: 0,
+            y: 10
         )
-        .padding(.top, 8)
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .strokeBorder(
+                    LinearGradient(
+                        colors: [
+                            Color.white.opacity(colorScheme == .dark ? 0.2 : 0.4),
+                            Color.white.opacity(colorScheme == .dark ? 0.05 : 0.1)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    ),
+                    lineWidth: 1
+                )
+        )
     }
 }
 
 struct AnalyzingPill: View {
-    var title: LocalizedStringKey = "Analyzing…"
+    var title: String
     var startDate: Date? = nil
+    var eta: TimeInterval? = nil
+    var endDate: Date? = nil
     var onCancel: (() -> Void)? = nil
 
     @Environment(\.colorScheme) private var colorScheme
     @State private var rotation: Double = 0
     @State private var shimmerPhase: CGFloat = -140
+    @State private var progress: CGFloat = 0.0
+    @State private var isOvertime: Bool = false
+
+    // Computed property to determine if finished
+    private var isFinished: Bool {
+        endDate != nil
+    }
+
+    // Helper function to format elapsed time
+    private func formatElapsedTime(_ interval: TimeInterval) -> String {
+        let minutes = Int(interval) / 60
+        let seconds = Int(interval) % 60
+        if minutes > 0 {
+            return String(format: "%d:%02d", minutes, seconds)
+        } else {
+            return String(format: "%ds", seconds)
+        }
+    }
 
     var body: some View {
         // Local constants for palette and sizing
@@ -304,8 +376,8 @@ struct AnalyzingPill: View {
         ]
 
         let innerFillBlur: CGFloat = 22
-        let innerFillOpacityDark: CGFloat = 0.35
-        let innerFillOpacityLight: CGFloat = 0.22
+        let innerFillOpacityDark: CGFloat = 0.15
+        let innerFillOpacityLight: CGFloat = 0.10
 
         let outerHaloLineWidth: CGFloat = 2
         let outerHaloBlur: CGFloat = 6
@@ -325,14 +397,26 @@ struct AnalyzingPill: View {
         let borderBlur: CGFloat = 0.8
         let borderOpacity: CGFloat = 0.4
 
+        // Determine the display text based on state
+        let displayText: String = {
+            if let startDate = self.startDate, let endDate = self.endDate {
+                let elapsed = endDate.timeIntervalSince(startDate)
+                let formattedElapsedTime = formatElapsedTime(elapsed)
+                return "\(NSLocalizedString("Finished in", comment: "AI analysis finished in...")) \(formattedElapsedTime)"
+            } else if isOvertime {
+                return NSLocalizedString("Taking longer than usual…", comment: "AI analysis taking longer than expected")
+            } else {
+                return title
+            }
+        }()
+
         let content = HStack(spacing: 10) {
-            // Base text at 50% opacity, with a moving highlight overlay masked to the same glyphs
-            Text(title)
+            Text(displayText)
                 .font(.footnote)
                 .foregroundStyle(.primary)
-                .opacity(0.5)
+                .opacity(isFinished ? 0.9 : 0.5)
                 .overlay(
-                    Text(title)
+                    Text(displayText)
                         .font(.footnote)
                         .foregroundStyle(.primary)
                         .mask(
@@ -349,11 +433,24 @@ struct AnalyzingPill: View {
                         )
                 )
             Spacer(minLength: 8)
-            if let startDate {
-                Text(startDate, style: .relative)
-                    .font(.footnote.monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    .padding(.trailing, 6)
+            if let startDate = startDate {
+                if endDate == nil {
+                    TimelineView(.periodic(from: .now, by: 0.1)) { context in
+                        let elapsed = context.date.timeIntervalSince(startDate)
+
+                        // Check if we've exceeded the ETA
+                        if let eta = eta, elapsed > eta, !isOvertime {
+                            DispatchQueue.main.async {
+                                isOvertime = true
+                            }
+                        }
+
+                        return Text(formatElapsedTime(elapsed))
+                            .font(.footnote.monospacedDigit())
+                            .foregroundStyle(.secondary)
+                            .padding(.trailing, 6)
+                    }
+                }
             }
 
             if let onCancel {
@@ -366,6 +463,8 @@ struct AnalyzingPill: View {
                     .padding(.vertical, -4)
                     .buttonBorderShape(.capsule)
                     .accessibilityLabel("Cancel")
+                    .opacity(endDate == nil ? 1 : 0)
+                    .disabled(endDate != nil)
             }
         }
 
@@ -373,6 +472,20 @@ struct AnalyzingPill: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 10)
             .background(.ultraThinMaterial, in: Capsule())
+            // Progress bar underneath the inner glow
+            .background(
+                GeometryReader { geometry in
+                    let progressColor = isFinished ? Color.green : Color.cyan
+                    let progressOpacity = isFinished ? 0.9 : 0.9
+                    let progressWidth = geometry.size.width * progress
+
+                    return Capsule()
+                        .fill(progressColor.opacity(progressOpacity))
+                        .frame(width: progressWidth)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
+                .mask(Capsule())
+            )
             // Inner fill glow covering the whole capsule (subtle, neutral+color)
             .background(
                 AngularGradient(
@@ -413,20 +526,20 @@ struct AnalyzingPill: View {
                 .mask(Capsule())
             )
             // Running wave (outer halo) – larger around the hotspot
-            .overlay(
-                Capsule()
-                    .strokeBorder(
-                        AngularGradient(
-                            gradient: Gradient(colors: waveColors),
-                            center: .center,
-                            angle: .degrees(rotation)
-                        ),
-                        lineWidth: waveOuterLineWidth
-                    )
-                    .blur(radius: waveOuterBlur)
-                    .opacity(colorScheme == .dark ? waveOuterOpacityDark : waveOuterOpacityLight)
-                    .blendMode(.plusLighter)
-            )
+//            .overlay(
+//                Capsule()
+//                    .strokeBorder(
+//                        AngularGradient(
+//                            gradient: Gradient(colors: waveColors),
+//                            center: .center,
+//                            angle: .degrees(rotation)
+//                        ),
+//                        lineWidth: waveOuterLineWidth
+//                    )
+//                    .blur(radius: waveOuterBlur)
+//                    .opacity(colorScheme == .dark ? waveOuterOpacityDark : waveOuterOpacityLight)
+//                    .blendMode(.plusLighter)
+//            )
             // Subtle border that blends with the glow
             .overlay(
                 Capsule()
@@ -444,65 +557,69 @@ struct AnalyzingPill: View {
             )
             // Traveling spotlight using trim with wrap-around handling (timeline-driven)
             .overlay(
-                TimelineView(.animation) { context in
-                    let duration: TimeInterval = 5 // seconds per full revolution
-                    let t = context.date.timeIntervalSinceReferenceDate
-                    let phase = t.truncatingRemainder(dividingBy: duration) / duration
-                    let seg: CGFloat = 0.05
-                    let start = CGFloat(phase)
-                    let end = start + seg
+                Group {
+                    if !isFinished {
+                        TimelineView(.animation) { context in
+                            let duration: TimeInterval = 5 // seconds per full revolution
+                            let t = context.date.timeIntervalSinceReferenceDate
+                            let phase = t.truncatingRemainder(dividingBy: duration) / duration
+                            let seg: CGFloat = 0.05
+                            let start = CGFloat(phase)
+                            let end = start + seg
 
-                    ZStack {
-                        // Head segment (start ..< min(end, 1))
-                        Capsule()
-                            .inset(by: 1.5)
-                            .trim(from: start, to: min(end, 1))
-                            .stroke(
-                                Color.white,
-                                style: StrokeStyle(lineWidth: 2, lineCap: .round)
-                            )
-                            .blur(radius: 1)
-                            .opacity(colorScheme == .dark ? 0.2 : 0.2)
-                            .blendMode(.plusLighter)
-                            .allowsHitTesting(false)
+                            ZStack {
+                                // Head segment (start ..< min(end, 1))
+                                Capsule()
+                                    .inset(by: 1.5)
+                                    .trim(from: start, to: min(end, 1))
+                                    .stroke(
+                                        Color.white,
+                                        style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                                    )
+                                    .blur(radius: 1)
+                                    .opacity(colorScheme == .dark ? 0.2 : 0.2)
+                                    .blendMode(.plusLighter)
+                                    .allowsHitTesting(false)
 
-                        Capsule()
-                            .inset(by: 1.5)
-                            .trim(from: start, to: min(end, 1))
-                            .stroke(
-                                Color.white,
-                                style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                            )
-                            .blur(radius: 4)
-                            .opacity(colorScheme == .dark ? 0.2 : 0.2)
-                            .blendMode(.plusLighter)
-                            .allowsHitTesting(false)
+                                Capsule()
+                                    .inset(by: 1.5)
+                                    .trim(from: start, to: min(end, 1))
+                                    .stroke(
+                                        Color.white,
+                                        style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                                    )
+                                    .blur(radius: 4)
+                                    .opacity(colorScheme == .dark ? 0.2 : 0.2)
+                                    .blendMode(.plusLighter)
+                                    .allowsHitTesting(false)
 
-                        // Tail segment (wraps from 0 when end > 1)
-                        if end > 1 {
-                            Capsule()
-                                .inset(by: 1.5)
-                                .trim(from: 0, to: end - 1)
-                                .stroke(
-                                    Color.white,
-                                    style: StrokeStyle(lineWidth: 2, lineCap: .round)
-                                )
-                                .blur(radius: 1)
-                                .opacity(colorScheme == .dark ? 0.2 : 0.2)
-                                .blendMode(.plusLighter)
-                                .allowsHitTesting(false)
+                                // Tail segment (wraps from 0 when end > 1)
+                                if end > 1 {
+                                    Capsule()
+                                        .inset(by: 1.5)
+                                        .trim(from: 0, to: end - 1)
+                                        .stroke(
+                                            Color.white,
+                                            style: StrokeStyle(lineWidth: 2, lineCap: .round)
+                                        )
+                                        .blur(radius: 1)
+                                        .opacity(colorScheme == .dark ? 0.2 : 0.2)
+                                        .blendMode(.plusLighter)
+                                        .allowsHitTesting(false)
 
-                            Capsule()
-                                .inset(by: 1.5)
-                                .trim(from: 0, to: end - 1)
-                                .stroke(
-                                    Color.white,
-                                    style: StrokeStyle(lineWidth: 8, lineCap: .round)
-                                )
-                                .blur(radius: 4)
-                                .opacity(colorScheme == .dark ? 0.2 : 0.2)
-                                .blendMode(.plusLighter)
-                                .allowsHitTesting(false)
+                                    Capsule()
+                                        .inset(by: 1.5)
+                                        .trim(from: 0, to: end - 1)
+                                        .stroke(
+                                            Color.white,
+                                            style: StrokeStyle(lineWidth: 8, lineCap: .round)
+                                        )
+                                        .blur(radius: 4)
+                                        .opacity(colorScheme == .dark ? 0.2 : 0.2)
+                                        .blendMode(.plusLighter)
+                                        .allowsHitTesting(false)
+                                }
+                            }
                         }
                     }
                 }
@@ -519,12 +636,45 @@ struct AnalyzingPill: View {
                     withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) {
                         shimmerPhase = 140
                     }
+
+                    // Animate progress based on eta
+                    if let eta = eta, !isFinished {
+                        withAnimation(.easeOut(duration: eta)) {
+                            progress = 1.0
+                        }
+                    }
                 }
             }
-//            .animation(.linear(duration: 6).repeatForever(autoreverses: false), value: rotation)
-            .accessibilityElement(children: .combine)
-            .accessibilityLabel(Text(title))
-            .accessibilityHint("Analysis in progress")
-            .accessibilityAddTraits(.updatesFrequently)
+            .onChange(of: startDate) { _, newStartDate in
+                // Reset progress when a new analysis starts
+                if newStartDate != nil {
+                    progress = 0.0
+                    isOvertime = false
+                }
+            }
+            .onChange(of: eta) { _, newEta in
+                // Trigger progress animation when ETA is received from telemetry
+                if let newEta = newEta, !isFinished, progress < 0.95 {
+                    withAnimation(.easeOut(duration: newEta)) {
+                        progress = 1.0
+                    }
+                }
+            }
+            .onChange(of: isOvertime) { _, overtime in
+                if overtime {
+                    // Keep progress at 100% when overtime
+                    progress = 1.0
+                }
+            }
+            .onChange(of: endDate) { _, newEndDate in
+                if newEndDate != nil {
+                    isOvertime = false
+                    DispatchQueue.main.async {
+                        withAnimation(.easeInOut(duration: 0.15)) {
+                            progress = 1.0
+                        }
+                    }
+                }
+            }
     }
 }

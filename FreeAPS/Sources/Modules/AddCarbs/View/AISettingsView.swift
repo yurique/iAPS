@@ -47,6 +47,9 @@ struct AISettingsView: View {
     @AppStorage(UserDefaults.AIKey.barcodeSearchProvider.rawValue) private var barcodeSearchProvider: BarcodeSearchProvider =
         .defaultProvider
 
+    @AppStorage(UserDefaults.AIKey.nutritionAuthority.rawValue) private var preferredNutritionAuthority: NutritionAuthority =
+        .localDefault
+
     @State private var preferredLanguage: String = ""
     @State private var preferredRegion: String = ""
 
@@ -347,6 +350,12 @@ struct AISettingsView: View {
                         "Choose a specific language and region for AI output."
                     )
                 ) {
+                    Picker("Nutrition Authority", selection: $preferredNutritionAuthority) {
+                        ForEach(NutritionAuthority.allCases, id: \.self) { authority in
+                            Text(authority.description).tag(authority)
+                        }
+                    }
+
                     NavigationLink {
                         OptionSelectionView(
                             title: "Preferred Language",
@@ -382,6 +391,29 @@ struct AISettingsView: View {
                                     : displayName(for: preferredRegion, in: regionOptionsState)
                             )
                             .foregroundColor(.secondary)
+                        }
+                    }
+                }
+
+                // Statistics Section
+                let allStats = UserDefaults.standard.getAllAIStatistics()
+                if !allStats.isEmpty {
+                    Section(
+                        header: Text("Usage Statistics"),
+                        footer: Text("View performance metrics for AI models you've used.")
+                    ) {
+                        NavigationLink {
+                            StatisticsView()
+                        } label: {
+                            HStack {
+                                Image(systemName: "chart.bar.fill")
+                                    .foregroundColor(.accentColor)
+                                Text("View AI Model Statistics")
+                                Spacer()
+                                Text("\(allStats.count)")
+                                    .foregroundColor(.secondary)
+                                    .font(.caption)
+                            }
                         }
                     }
                 }
@@ -527,6 +559,44 @@ struct AISettingsView: View {
         }
     }
 
+    // MARK: - Statistics Helpers
+
+    struct ProviderStatisticsGroup {
+        let provider: AIProvider
+        let providerDisplayName: String
+        let models: [UserDefaults.AIProviderStatistics]
+    }
+
+    private func groupStatisticsByProvider(_ stats: [UserDefaults.AIProviderStatistics]) -> [ProviderStatisticsGroup] {
+        // Group by provider
+        var grouped: [AIProvider: [UserDefaults.AIProviderStatistics]] = [:]
+
+        for stat in stats {
+            // Parse the modelKey to get the provider
+            if let model = AIModel(rawValue: stat.modelKey) {
+                let provider = model.provider
+                grouped[provider, default: []].append(stat)
+            }
+        }
+
+        // Convert to sorted array
+        return grouped.map { provider, models in
+            ProviderStatisticsGroup(
+                provider: provider,
+                providerDisplayName: provider.displayName,
+                models: models.sorted { $0.modelKey < $1.modelKey }
+            )
+        }
+        .sorted { $0.providerDisplayName < $1.providerDisplayName }
+    }
+
+    private func modelDisplayName(for modelKey: String) -> String {
+        guard let model = AIModel(rawValue: modelKey) else {
+            return modelKey
+        }
+        return model.displayName
+    }
+
     private func saveSettings() {
         // API key and query settings
         aiService.setAPIKey(claudeKey, for: .claude)
@@ -578,6 +648,228 @@ private struct OptionSelectionView: View {
         }
         .navigationTitle(title)
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
+    }
+}
+
+private struct StatisticsView: View {
+    @Environment(\.dismiss) private var dismiss
+
+    private var allStats: [UserDefaults.AIProviderStatistics] {
+        UserDefaults.standard.getAllAIStatistics()
+    }
+
+    private var groupedStats: [ProviderStatisticsGroup] {
+        groupStatisticsByProvider(allStats)
+    }
+
+    var body: some View {
+        List {
+            if allStats.isEmpty {
+                Section {
+                    VStack(spacing: 12) {
+                        Image(systemName: "chart.bar.xaxis")
+                            .font(.system(size: 48))
+                            .foregroundColor(.secondary)
+                        Text("No Statistics Yet")
+                            .font(.headline)
+                        Text("Statistics will appear here after you use AI models for food analysis.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .multilineTextAlignment(.center)
+                    }
+                    .frame(maxWidth: .infinity)
+                    .padding(.vertical, 32)
+                }
+            } else {
+                ForEach(groupedStats, id: \.provider) { group in
+                    Section(header: Text(group.providerDisplayName)) {
+                        ForEach(group.models, id: \.key) { model in
+                            VStack(alignment: .leading, spacing: 6) {
+                                // Model name header
+                                Text(modelDisplayName(for: model.modelKey))
+                                    .font(.headline)
+                                    .fontWeight(.bold)
+                                    .padding(.bottom, 2)
+
+                                // Image stats row
+                                if let imageStat = model.imageStat {
+                                    StatRow(
+                                        icon: "photo",
+                                        label: "Image",
+                                        stat: imageStat
+                                    )
+                                }
+
+                                // Text stats row
+                                if let textStat = model.textStat {
+                                    StatRow(
+                                        icon: "text.alignleft",
+                                        label: "Text",
+                                        stat: textStat
+                                    )
+                                }
+                            }
+                            .padding(.vertical, 4)
+                        }
+                    }
+                }
+
+                Section {
+                    Button(role: .destructive) {
+                        UserDefaults.standard.clearAIStatistics()
+                        dismiss()
+                    } label: {
+                        HStack {
+                            Spacer()
+                            Image(systemName: "trash")
+                            Text("Clear All Statistics")
+                            Spacer()
+                        }
+                    }
+                }
+            }
+        }
+        .navigationTitle("AI Model Statistics")
+        .navigationBarTitleDisplayMode(.inline)
+    }
+
+    // MARK: - Helper Types
+
+    struct ProviderStatisticsGroup {
+        let provider: AIProvider
+        let providerDisplayName: String
+        let models: [ModelStats]
+    }
+
+    struct ModelStats: Identifiable {
+        let id = UUID()
+        let modelKey: String
+        let imageStat: UserDefaults.AIProviderStatistics?
+        let textStat: UserDefaults.AIProviderStatistics?
+
+        var key: String { modelKey }
+    }
+
+    // MARK: - Helper Functions
+
+    private func groupStatisticsByProvider(_ stats: [UserDefaults.AIProviderStatistics]) -> [ProviderStatisticsGroup] {
+        // Group by provider and model
+        var grouped: [AIProvider: [String: (
+            image: UserDefaults.AIProviderStatistics?,
+            text: UserDefaults.AIProviderStatistics?
+        )]] = [:]
+
+        for stat in stats {
+            if let model = AIModel(rawValue: stat.modelKey) {
+                let provider = model.provider
+                let modelKey = stat.modelKey
+
+                if grouped[provider] == nil {
+                    grouped[provider] = [:]
+                }
+
+                var existing = grouped[provider]![modelKey] ?? (image: nil, text: nil)
+                if stat.requestType == .image {
+                    existing.image = stat
+                } else {
+                    existing.text = stat
+                }
+                grouped[provider]![modelKey] = existing
+            }
+        }
+
+        return grouped.map { provider, models in
+            let modelStats = models.map { modelKey, stats in
+                ModelStats(
+                    modelKey: modelKey,
+                    imageStat: stats.image,
+                    textStat: stats.text
+                )
+            }.sorted { $0.modelKey < $1.modelKey }
+
+            return ProviderStatisticsGroup(
+                provider: provider,
+                providerDisplayName: provider.displayName,
+                models: modelStats
+            )
+        }
+        .sorted { $0.providerDisplayName < $1.providerDisplayName }
+    }
+
+    private func modelDisplayName(for modelKey: String) -> String {
+        guard let model = AIModel(rawValue: modelKey) else {
+            return modelKey
+        }
+        return model.displayName
+    }
+}
+
+// MARK: - StatRow Component
+
+private struct StatRow: View {
+    let icon: String
+    let label: String
+    let stat: UserDefaults.AIProviderStatistics
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            // Left side: Type label (fixed width)
+            HStack(spacing: 4) {
+                Image(systemName: icon)
+                    .font(.caption)
+                    .frame(width: 14)
+                Text(label)
+                    .font(.caption)
+            }
+            .foregroundColor(.secondary)
+            .frame(width: 60, alignment: .leading)
+
+            // Success rate badge (fixed width)
+            HStack(spacing: 3) {
+                Image(
+                    systemName: stat.successRate >= 90 ? "checkmark.circle.fill" :
+                        stat.successRate >= 70 ? "checkmark.circle" : "exclamationmark.circle"
+                )
+                .font(.caption2)
+                .frame(width: 12)
+                Text(String(format: "%.0f%%", stat.successRate))
+                    .font(.caption2)
+                    .fontWeight(.semibold)
+                    .frame(width: 32, alignment: .leading)
+            }
+            .foregroundColor(
+                stat.successRate >= 90 ? .green :
+                    stat.successRate >= 70 ? .orange : .red
+            )
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(
+                (
+                    stat.successRate >= 90 ? Color.green :
+                        stat.successRate >= 70 ? Color.orange : Color.red
+                )
+                .opacity(0.08)
+            )
+            .cornerRadius(4)
+            .frame(width: 65, alignment: .leading)
+
+            Spacer()
+
+            // Right side: Statistics columns
+            HStack(spacing: 16) {
+                // Request count column
+                Text("\(stat.requestCount) requests")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(width: 90, alignment: .trailing)
+
+                // Average time column
+                Text(String(format: "%.1fs avg", stat.averageProcessingTime))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .frame(width: 70, alignment: .trailing)
+            }
+        }
     }
 }
 

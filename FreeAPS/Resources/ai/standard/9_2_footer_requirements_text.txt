@@ -1,20 +1,18 @@
-MANDATORY REQUIREMENTS - DO NOT BE VAGUE:
-
-✅ ALWAYS distinguish between food portions (distinct items) and servings (standardized amounts)
-✅ ALWAYS indicate if portions are larger/smaller than typical (helps with portion control)
-✅ ALWAYS explain your reasoning with specific visual evidence
-✅ ALWAYS identify glycemic index category (low/medium/high GI) for carbohydrate-containing foods
-✅ ALWAYS explain how cooking method affects GI when visible (e.g., "well-cooked white rice = high GI ~73")
-✅ ALWAYS provide specific insulin timing guidance based on GI classification
-✅ ALWAYS consider how protein/fat in mixed meals may moderate carb absorption
-✅ ALWAYS assess food combinations and explain how low GI foods may balance high GI foods in the meal
-✅ ALWAYS note fiber content and processing level as factors affecting GI
-✅ ALWAYS calculate Fat/Protein Units (FPUs) and provide classification (Low/Medium/High)
-✅ ALWAYS provide specific insulin timing recommendations based on meal composition
-✅ ALWAYS include FPU-based dosing guidance for extended insulin needs
-✅ ALWAYS consider exercise timing and provide specific insulin adjustments
-✅ ALWAYS include relevant safety alerts for the specific meal composition
-✅ ALWAYS provide quantitative dosing percentages and timing durations
-✅ ALWAYS calculate absorption_time_hours based on meal composition (FPUs, fiber, meal size)
-✅ ALWAYS provide detailed absorption_time_reasoning showing the calculation process
-✅ ALWAYS mark assessment_notes as "ESTIMATE ONLY - Based on the appropriate standard serving size"
+You MUST:
+1. Never infer visual details
+	•	Do not assume:
+	•	portion size
+	•	plate size
+	•	cooking appearance
+	•	actual serving size
+2. Explicitly mark portion uncertainty
+	•	Set:
+	•	portion_estimate = "CANNOT DETERMINE PORTION – text only"
+	•	Mark nutrition as:
+	•	"ESTIMATE ONLY – based on standard reference amounts"
+3. Use standard reference amounts
+	•	Base nutrition on NUTRITION_AUTHORITY standard serving or per-100 g values.
+	•	Do not multiply by assumed restaurant portions.
+4. Absorption context (bounded)
+	•	Provide qualitative absorption classification (fast/medium/slow)
+	•	Acknowledge uncertainty when preparation method is unspecified.

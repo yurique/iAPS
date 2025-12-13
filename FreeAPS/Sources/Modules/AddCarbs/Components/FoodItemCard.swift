@@ -8,9 +8,16 @@ struct FoodItemCard: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
-            // Kopfbereich mit Tap-Gesture für Auswahl
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
+                    if let portion = foodItem.portionEstimateSize {
+                        PortionSizeBadge(
+                            value: portion,
+                            unit: (foodItem.units ?? .grams).localizedAbbreviation,
+                            color: .yellow
+                        )
+                    }
+
                     Text(foodItem.name ?? "Product without name")
                         .font(.headline)
                         .foregroundColor(.primary)
@@ -33,42 +40,29 @@ struct FoodItemCard: View {
                     .buttonStyle(PlainButtonStyle())
                 }
 
-                if let portion = foodItem.portionEstimateSize {
-                    HStack(spacing: 8) {
-                        PortionSizeBadge(
-                            value: portion,
-                            unit: (foodItem.units ?? .grams).localizedAbbreviation,
-                            color: .yellow
-                        )
-
-                        if let carbsPer100 = foodItem.carbsPer100 {
-                            NutritionBadge(value: carbsPer100 / 100 * portion, unit: "g", label: "Carbs", color: .orange)
-                        }
-                        if let proteinPer100 = foodItem.proteinPer100, proteinPer100 > 0 {
-                            NutritionBadge(value: proteinPer100 / 100 * portion, unit: "g", label: "Protein", color: .green)
-                        }
-
-                        if let fatPer100 = foodItem.fatPer100, fatPer100 > 0 {
-                            NutritionBadge(value: fatPer100 / 100 * portion, unit: "g", label: "Fat", color: .blue)
-                        }
-                    }
-                }
-
                 VStack(alignment: .leading, spacing: 4) {
-                    if let portionEstimate = foodItem.portionEstimate {
-                        HStack {
-                            Text("Portion:")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
+                    if let portion = foodItem.portionEstimateSize {
+                        HStack(spacing: 8) {
+//                            PortionSizeBadge(
+//                                value: portion,
+//                                unit: (foodItem.units ?? .grams).localizedAbbreviation,
+//                                color: .yellow
+//                            )
 
-                            Text(portionEstimate)
-                                .font(.caption)
+                            if let portionEstimate = foodItem.portionEstimate {
+                                VStack(alignment: .leading) {
+                                    Text(portionEstimate)
+                                        .font(.caption)
 
-                            if let servingSize = foodItem.standardServingSize, let portion = foodItem.portionEstimateSize
-                            {
-                                Text("\(portion / servingSize, specifier: "%.1f") \(NSLocalizedString("servings", comment: ""))")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                    if let servingSize = foodItem.standardServingSize
+                                    {
+                                        Text(
+                                            "\(portion / servingSize, specifier: "%.1f") \(NSLocalizedString("servings", comment: ""))"
+                                        )
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                    }
+                                }
                             }
                         }
                     }
@@ -86,6 +80,21 @@ struct FoodItemCard: View {
                                 Text(standardServing)
                                     .font(.caption2)
                                     .foregroundStyle(.secondary)
+                            }
+                        }
+                    }
+
+                    if let portion = foodItem.portionEstimateSize {
+                        HStack(spacing: 8) {
+                            if let carbsPer100 = foodItem.carbsPer100 {
+                                NutritionBadge(value: carbsPer100 / 100 * portion, unit: "g", label: "Carbs", color: .orange)
+                            }
+                            if let proteinPer100 = foodItem.proteinPer100, proteinPer100 > 0 {
+                                NutritionBadge(value: proteinPer100 / 100 * portion, unit: "g", label: "Protein", color: .green)
+                            }
+
+                            if let fatPer100 = foodItem.fatPer100, fatPer100 > 0 {
+                                NutritionBadge(value: fatPer100 / 100 * portion, unit: "g", label: "Fat", color: .blue)
                             }
                         }
                     }

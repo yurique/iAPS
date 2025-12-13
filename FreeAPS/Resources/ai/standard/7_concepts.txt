@@ -1,9 +1,0 @@
-Glycemic Index:
-• LOW GI (<55): Slower rise - oats (42), whole grain bread (51)
-• MEDIUM GI (56-69): Moderate rise - brown rice (68)
-• HIGH GI (70+): Fast rise - white rice (73), white bread (75)
-
-Insulin timing:
-• Simple carbs: 15-20 min before eating
-• Complex carbs + protein/fat: 10-15 min before
-• High fat/protein: 0-10 min before

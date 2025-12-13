@@ -54,18 +54,30 @@ private enum PromptLoader {
 }
 
 private let standardAnalysis_0_Header: String = PromptLoader.loadTextResource(named: "ai/standard/0_header.txt")
+private let standardAnalysis_1_Preferences: String = PromptLoader.loadTextResource(named: "ai/standard/1_user_preferences.txt")
+
 private let standardAnalysis_3_Standards: String = PromptLoader.loadTextResource(named: "ai/standard/3_standards.txt")
+
 private let standardAnalysis_5_1_photo_instructions: String = PromptLoader
     .loadTextResource(named: "ai/standard/5_1_photo_instructions.txt")
+
 private let standardAnalysis_5_2_text_instructions: String = PromptLoader
     .loadTextResource(named: "ai/standard/5_2_text_instructions.txt")
-private let standardAnalysis_7_concepts: String = PromptLoader.loadTextResource(named: "ai/standard/7_concepts.txt")
+
+private let standardAnalysis_6_concepts: String = PromptLoader.loadTextResource(named: "ai/standard/6_concepts.txt")
+
 private let standardAnalysis_8_1_photo_response_format: String = PromptLoader
     .loadTextResource(named: "ai/standard/8_1_photo_response_format.txt")
+
 private let standardAnalysis_8_2_text_response_format: String = PromptLoader
     .loadTextResource(named: "ai/standard/8_2_text_response_format.txt")
+
+private let standardAnalysis_8_footer_common: String = PromptLoader
+    .loadTextResource(named: "ai/standard/8_footer_requirements_common.txt")
+
 private let standardAnalysis_9_1_footer_photo: String = PromptLoader
     .loadTextResource(named: "ai/standard/9_1_footer_requirements_photo.txt")
+
 private let standardAnalysis_9_2_footer_text: String = PromptLoader
     .loadTextResource(named: "ai/standard/9_2_footer_requirements_text.txt")
 
@@ -119,50 +131,40 @@ private func getStandardAnalysisPrompt(
         userPreferences + "\n\n" +
         standardAnalysis_3_Standards + "\n\n" +
         instructions + "\n\n" +
-        standardAnalysis_7_concepts + "\n\n" +
+        standardAnalysis_6_concepts + "\n\n" +
         responseFormat + "\n\n" +
+        standardAnalysis_8_footer_common + "\n\n" +
         footerRequirements
 }
 
 private func makePreferencesBlock(languageCode: String?, regionCode: String?) -> String {
     let locale = Locale.current
 
-    // Determine effective language: fallback to US English ("en-US") when missing
     let rawLang = languageCode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let languageTag: String = {
         let trimmed = rawLang
-        if trimmed.isEmpty { return "en-US" } // fallback to US English
+        if trimmed.isEmpty { return "en-US" }
         return trimmed
     }()
 
-    // Primary language code for a human-readable name (e.g., "en" from "en-US")
     let primaryLanguageCode = languageTag.split(separator: "-").first.map(String.init) ?? "en"
     let languageName = locale.localizedString(forLanguageCode: primaryLanguageCode) ?? primaryLanguageCode
 
-    // Determine effective region: fallback to user's system preferred region
     let systemRegion = Locale.current.identifier
     let rawRegion = regionCode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let effectiveRegion = rawRegion.isEmpty ? systemRegion : rawRegion
     let regionName = locale.localizedString(forRegionCode: effectiveRegion) ?? effectiveRegion
 
-    var lines: [String] = ["", "# USER PREFERENCES"]
+    let languageForAI = "\(languageName) (\(languageTag))"
 
-    // Always include language preference (using BCP-47 tag)
-    lines.append("- User language: \(languageName) (\(languageTag))")
-    lines
-        .append(
-            "- Output language for all *values* in JSON fields that represent human-readable text (e.g. names, descriptions, notes)."
-        )
-    lines.append("- Do NOT translate JSON field names / keys. They MUST stay exactly as in the schema.")
+    let regionForAI =
+        effectiveRegion.isNotEmpty ?
+        "\(regionName) (\(effectiveRegion))" : regionName
 
-    // Always include region preference (falling back to system region)
-    if !effectiveRegion.isEmpty {
-        lines.append("- User region: \(regionName) (\(effectiveRegion))")
-    } else {
-        lines.append("- User region: \(regionName)")
-    }
+    let nutritionAuthority = UserDefaults.standard.userPreferredNutritionAuthorityForAI
 
-    lines.append("- Always keep the response a single valid JSON object, with no explanation before or after it.")
-
-    return lines.joined(separator: "\n")
+    return standardAnalysis_1_Preferences
+        .replacingOccurrences(of: "(nutrition_authority)", with: nutritionAuthority.descriptionForAI)
+        .replacingOccurrences(of: "(language)", with: languageForAI)
+        .replacingOccurrences(of: "(region)", with: regionForAI)
 }

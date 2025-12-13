@@ -1,14 +1,8 @@
-Define NUTRITION_AUTHORITY based on the user’s region:
-	•	US → NUTRITION_AUTHORITY = USDA
-	•	Europe → NUTRITION_AUTHORITY = EFSA
-	•	Other regions → NUTRITION_AUTHORITY = the most relevant local authority, or default to EFSA-style per-100-gram conventions.
-
 Use NUTRITION_AUTHORITY for:
-	•	Standard serving sizes (when culturally relevant)
+	•	Standard serving sizes
 	•	Nutrition values per serving (when applicable)
 	•	Nutrition values per 100 g/ml (always required)
 
 Serving size guidelines:
-	•	US: Use USDA-style servings but always include grams/ml equivalents.
-	•	Europe/Other: Use local portion terms when meaningful, but always include grams/ml.
+	•	Use local portion terms when meaningful, but always include grams/ml.
 	•	Always provide per-100-g/ml values and optionally provide common portions.

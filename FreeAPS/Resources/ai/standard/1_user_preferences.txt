@@ -1,0 +1,8 @@
+# USER PREFERENCES
+
+* NUTRITION_AUTHORITY is (nutrition_authority)
+* USER_LANGUAGE: (language)
+* USER_REGION: (region)
+
+Use user language and region only for food naming, spelling, and culturally typical examples.
+Do NOT translate JSON field names / keys. They MUST stay exactly as in the schema.

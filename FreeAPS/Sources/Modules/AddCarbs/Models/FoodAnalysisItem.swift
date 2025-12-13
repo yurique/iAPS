@@ -30,6 +30,7 @@ struct AnalysedFoodItem {
 //    let fiber: Double?
 //    let protein: Double?
 //    let sugars: Double?
+    let glycemicIndex: Double?
     let caloriesPer100: Double?
     let carbsPer100: Double?
     let fatPer100: Double?
@@ -51,6 +52,7 @@ struct AnalysedFoodItem {
         units: MealUnits? = nil,
         preparationMethod: String? = nil,
         visualCues: String? = nil,
+        glycemicIndex: Double? = nil,
         caloriesPer100: Double? = nil,
         carbsPer100: Double? = nil,
         fatPer100: Double? = nil,
@@ -70,6 +72,7 @@ struct AnalysedFoodItem {
         self.units = units
         self.preparationMethod = preparationMethod
         self.visualCues = visualCues
+        self.glycemicIndex = glycemicIndex
         self.caloriesPer100 = caloriesPer100
         self.carbsPer100 = carbsPer100
         self.fatPer100 = fatPer100
@@ -96,6 +99,7 @@ extension AnalysedFoodItem: Decodable {
 //        let servingMultiplier = try container.decodeNumberIfPresent(forKey: .servingMultiplier) ?? 1.0
         let preparationMethod = try container.decodeTrimmedIfPresent(forKey: .preparationMethod)
         let visualCues = try container.decodeTrimmedIfPresent(forKey: .visualCues)
+        let glycemicIndex = try container.decodeNumberIfPresent(forKey: .glycemicIndex)
         let carbsPer100 = try container.decodeNumberIfPresent(forKey: .carbsPer100)
         let caloriesPer100 = try container.decodeNumberIfPresent(forKey: .caloriesPer100)
         let fatPer100 = try container.decodeNumberIfPresent(forKey: .fatPer100)
@@ -115,6 +119,7 @@ extension AnalysedFoodItem: Decodable {
 //            servingMultiplier: servingMultiplier,
             preparationMethod: preparationMethod,
             visualCues: visualCues,
+            glycemicIndex: glycemicIndex,
             caloriesPer100: caloriesPer100,
             carbsPer100: carbsPer100,
             fatPer100: fatPer100,
@@ -142,6 +147,7 @@ extension AnalysedFoodItem: Decodable {
 //        case fiber
 //        case protein
 //        case sugars
+        case glycemicIndex = "glycemic_index"
         case caloriesPer100 = "calories_per_100"
         case carbsPer100 = "carbs_per_100"
         case fatPer100 = "fat_per_100"
@@ -158,25 +164,26 @@ extension AnalysedFoodItem {
         [
             .name: "specific food name with preparation details",
             .units: "string enum; one of: 'grams' or 'milliliters'; as appropriate for this meal; do NOT translate!",
+            .portionEstimate: "portion desription with visual references",
+            .portionEstimateSize: "decimal, exact portion size, in grams or milliliters; do not include unit",
             .standardServing: "description of a standard serving, if available",
             .standardServingSize: "decimal, standard serving size based on NUTRITION_AUTHORITY standard, in grams or milliliters; do not include unit; do not include the name of the standard",
+            .glycemicIndex: "decimal, glycemic index if available",
             .caloriesPer100: "decimal, kcal of carbohydrates per 100 grams or milliliters",
             .carbsPer100: "decimal, grams of carbohydrates per 100 grams or milliliters",
             .fatPer100: "decimal, grams of fat per 100 grams or milliliters",
             .fiberPer100: "decimal, grams of fiber per 100 grams or milliliters",
             .proteinPer100: "decimal, grams of protein per 100 grams or milliliters",
-            .sugarsPer100: "decimal, grams of added sugars per 100 grams or milliliters"
+            .sugarsPer100: "decimal, grams of sugars per 100 grams or milliliters"
         ]
     }
 
     static var schemaVisual: [String: Any] {
         var fields = self.fields
-        fields[.portionEstimate] = "portion desription with visual references"
-        fields[.portionEstimateSize] = "decimal, exact portion size, in grams or milliliters; do not include unit;"
         fields[.visualCues] = "visual elements analyzed"
         fields[.preparationMethod] = "cooking details observed"
         fields[.assessmentNotes] =
-            "Explain how you calculated this specific portion size, what visual references you used for measurement, and how you determined the serving multiplier. Write in natural, conversational language."
+            "Explain how you calculated this specific portion size, what visual references you used for measurement."
 
         var dict: [String: Any] = [:]
         for (key, value) in fields {
@@ -187,8 +194,11 @@ extension AnalysedFoodItem {
 
     static var schemaText: [String: Any] {
         var fields = self.fields
-        fields[.portionEstimateSize] =
-            "decimal, assume the portion matches the standard serving size, in grams or milliliters; do not include unit;"
+//        fields[.portionEstimateSize] =
+//            "decimal, assume the portion matches the standard serving size, in grams or milliliters; do not include unit;"
+        fields[.preparationMethod] = "cooking details if mentioned"
+        fields[.assessmentNotes] =
+            "Explain how you calculated this specific portion size, what references you used."
 
         var dict: [String: Any] = [:]
         for (key, value) in fields {

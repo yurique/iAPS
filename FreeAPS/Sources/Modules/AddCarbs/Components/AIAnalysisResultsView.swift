@@ -69,73 +69,77 @@ struct AIAnalysisResultsView: View {
             }
             .padding(.horizontal)
 
-            VStack(alignment: .leading, spacing: 16) {
-                HStack {
-                    Text("📊 Total nutritional values of the meal")
-                        .font(.headline)
+            if analysisResult.foodItemsDetailed.count > 1 {
+                VStack(alignment: .leading, spacing: 16) {
+                    HStack {
+                        Text("📊 Total nutritional values of the meal")
+                            .font(.headline)
 
-                    Spacer()
+                        Spacer()
 
-                    Button(action: {
-                        let mealName = analysisResult.foodItemsDetailed.count == 1 ?
-                            analysisResult.foodItemsDetailed.first?.name ?? "Meal" :
-                            "Complete Meal"
+                        Button(action: {
+                            let mealName = analysisResult.foodItemsDetailed.count == 1 ?
+                                analysisResult.foodItemsDetailed.first?.name ?? "Meal" :
+                                "Complete Meal"
 
-                        let totalMeal = FoodItem(
-                            name: mealName,
-                            carbs: Decimal(totalCarbs),
-                            fat: Decimal(totalFat),
-                            protein: Decimal(totalProtein),
-                            source: "AI overall analysis • \(analysisResult.foodItemsDetailed.count) Food",
-                            imageURL: nil
-                        )
-                        onCompleteMealSelected(totalMeal)
-                    }) {
-                        HStack(spacing: 6) {
-                            Image(systemName: "plus.circle.fill")
-                                .foregroundColor(.green)
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text("Add all")
-                                    .font(.subheadline)
-                                    .fontWeight(.medium)
-                                Text("\(analysisResult.foodItemsDetailed.count) Food")
-                                    .font(.caption2)
-                                    .foregroundColor(.secondary)
+                            let totalMeal = FoodItem(
+                                name: mealName,
+                                carbs: Decimal(totalCarbs),
+                                fat: Decimal(totalFat),
+                                protein: Decimal(totalProtein),
+                                source: "AI overall analysis • \(analysisResult.foodItemsDetailed.count) Food",
+                                imageURL: nil
+                            )
+                            onCompleteMealSelected(totalMeal)
+                        }) {
+                            HStack(spacing: 6) {
+                                Image(systemName: "plus.circle.fill")
+                                    .foregroundColor(.green)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Add all")
+                                        .font(.subheadline)
+                                        .fontWeight(.medium)
+                                    Text("\(analysisResult.foodItemsDetailed.count) Food")
+                                        .font(.caption2)
+                                        .foregroundColor(.secondary)
+                                }
                             }
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(Color.green.opacity(0.1))
+                            .cornerRadius(8)
                         }
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 8)
-                        .background(Color.green.opacity(0.1))
-                        .cornerRadius(8)
-                    }
-                    .buttonStyle(PlainButtonStyle())
-                }
-
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 10) {
-                    NutritionSummaryBadge(
-                        value: totalCarbs,
-                        unit: "g",
-                        label: "Carbs",
-                        color: .orange
-                    )
-
-                    if totalProtein != 0 {
-                        NutritionSummaryBadge(value: totalProtein, unit: "g", label: "Protein", color: .green)
+                        .buttonStyle(PlainButtonStyle())
                     }
 
-                    if totalFat != 0 {
-                        NutritionSummaryBadge(value: totalFat, unit: "g", label: "Fat", color: .loopRed)
+                    LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 10) {
+                        NutritionSummaryBadge(
+                            value: totalCarbs,
+                            unit: "g",
+                            label: "Carbs",
+                            color: .orange
+                        )
+
+                        if totalProtein != 0 {
+                            NutritionSummaryBadge(value: totalProtein, unit: "g", label: "Protein", color: .green)
+                        }
+
+                        if totalFat != 0 {
+                            NutritionSummaryBadge(value: totalFat, unit: "g", label: "Fat", color: .loopRed)
+                        }
                     }
                 }
-            }
-            .padding()
-            .background(Color(.systemGray6))
-            .cornerRadius(12)
-            .padding(.horizontal)
-
-            Text("🍽️ Separate Foods")
-                .font(.headline)
+                .padding()
+                .background(Color(.systemGray6))
+                .cornerRadius(12)
                 .padding(.horizontal)
+            }
+
+            if analysisResult.foodItemsDetailed.count > 1 {
+                Text("🍽️ Separate Foods")
+                    .font(.headline)
+                    .padding(.horizontal)
+            }
 
             ForEach(analysisResult.foodItemsDetailed, id: \.name) { foodItem in
                 FoodItemCard(

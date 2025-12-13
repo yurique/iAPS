@@ -1,3 +1,7 @@
 Provide detailed nutrition information for: (query)
 
-If multiple foods match the query, provide information for the most common one.
+•	Identify each distinct food component.
+• If not explicitly specified, assume portion sizes to be equal to the standard serving size.
+• If a portion of a meal or serving is described (half, quarter, etc), still provide whole the standard serving size.
+•	Estimate portion size using the conventions described above (grams/ml; servings when culturally appropriate).
+•	For each food, estimate nutrition values based on the portion.
