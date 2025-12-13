@@ -11,7 +11,7 @@ struct FoodItemCard: View {
             // Kopfbereich mit Tap-Gesture für Auswahl
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    Text(foodItem.name)
+                    Text(foodItem.name ?? "Product without name")
                         .font(.headline)
                         .foregroundColor(.primary)
 
@@ -37,7 +37,7 @@ struct FoodItemCard: View {
                     HStack(spacing: 8) {
                         PortionSizeBadge(
                             value: portion,
-                            unit: foodItem.units.localizedAbbreviation,
+                            unit: (foodItem.units ?? .grams).localizedAbbreviation,
                             color: .yellow
                         )
 
@@ -78,7 +78,7 @@ struct FoodItemCard: View {
                             Text("Standard serving:")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text("\(standardServingSize, specifier: "%.0f") \(foodItem.units.localizedAbbreviation)")
+                            Text("\(standardServingSize, specifier: "%.0f") \((foodItem.units ?? .grams).localizedAbbreviation)")
                                 .font(.caption)
                         }
                         if let standardServing = foodItem.standardServing {

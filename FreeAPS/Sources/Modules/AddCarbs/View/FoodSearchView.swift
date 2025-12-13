@@ -62,7 +62,7 @@ struct FoodSearchView: View {
                 .padding(.top, 8)
 
                 ScrollView {
-                    if let result = state.aiAnalysisResult {
+                    if let result = state.searchResult {
                         AIAnalysisResultsView(
                             analysisResult: result,
                             onFoodItemSelected: { foodItem in
@@ -80,28 +80,6 @@ struct FoodSearchView: View {
                             onCompleteMealSelected: { totalMeal in
                                 onSelect(totalMeal, state.aiAnalysisRequest?.image)
                                 dismiss()
-                            }
-                        )
-                    } else {
-                        FoodSearchResultsView(
-                            searchResults: state.searchResults,
-                            aiSearchResults: state.aiSearchResults,
-                            isSearching: state.isLoading,
-                            errorMessage: state.errorMessage,
-                            onProductSelected: { selectedProduct in
-                                let foodItem = selectedProduct.toFoodItem()
-                                handleFoodItemSelection(foodItem, image: nil)
-                            },
-                            onAIProductSelected: { aiProduct in
-                                let foodItem = FoodItem(
-                                    name: aiProduct.name,
-                                    carbs: Decimal(aiProduct.carbs),
-                                    fat: Decimal(aiProduct.fat),
-                                    protein: Decimal(aiProduct.protein),
-                                    source: "AI Analyse",
-                                    imageURL: aiProduct.imageURL
-                                )
-                                handleFoodItemSelection(foodItem, image: nil)
                             }
                         )
                     }
@@ -140,15 +118,6 @@ struct FoodSearchView: View {
                             state.navigateToAIAnalysis = nil
                         }
                     },
-                    onFoodSearched: { analysisResult, analysisRequest in
-                        // TODO: implement this
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
-                            self.state.searchResults = analysisResult
-                            state.aiAnalysisRequest = analysisRequest
-                            navigateToAICamera = false
-                            state.navigateToAIAnalysis = nil
-                        }
-                    },
                     onCancel: {
                         navigateToAICamera = false
                         state.navigateToAIAnalysis = nil
@@ -166,40 +135,41 @@ struct FoodSearchView: View {
     }
 
     private func handleAIAnalysis(_ analysisResult: FoodAnalysisResult, image _: UIImage?) { // ✅ Parameter name korrigiert
-        state.aiAnalysisResult = analysisResult
+        state.searchResult = analysisResult
 
-        let aiFoodItems = analysisResult.foodItemsDetailed.map { foodItem in
-            var carbs: Double = 0
-            var proteins: Double = 0
-            var fat: Double = 0
-            var calories: Double = 0
-
-            if let portion = foodItem.portionEstimateSize {
-                if let carbsPer100 = foodItem.carbsPer100 {
-                    carbs = carbsPer100 / 100 * portion
-                }
-                if let proteinPer100 = foodItem.proteinPer100 {
-                    proteins = proteinPer100 / 100 * portion
-                }
-                if let fatPer100 = foodItem.fatPer100 {
-                    fat = fatPer100 / 100 * portion
-                }
-                if let caloriesPer100 = foodItem.caloriesPer100 {
-                    calories = caloriesPer100 / 100 * portion
-                }
-            }
-
-            return AIFoodItem(
-                name: foodItem.name,
-                brand: nil,
-                calories: calories,
-                carbs: carbs,
-                protein: proteins,
-                fat: fat,
-                imageURL: nil
-            )
-        }
-        state.aiSearchResults = aiFoodItems
+        // TODO: to ai food items
+//        let aiFoodItems = analysisResult.foodItemsDetailed.map { foodItem in
+//            var carbs: Double = 0
+//            var proteins: Double = 0
+//            var fat: Double = 0
+//            var calories: Double = 0
+//
+//            if let portion = foodItem.portionEstimateSize {
+//                if let carbsPer100 = foodItem.carbsPer100 {
+//                    carbs = carbsPer100 / 100 * portion
+//                }
+//                if let proteinPer100 = foodItem.proteinPer100 {
+//                    proteins = proteinPer100 / 100 * portion
+//                }
+//                if let fatPer100 = foodItem.fatPer100 {
+//                    fat = fatPer100 / 100 * portion
+//                }
+//                if let caloriesPer100 = foodItem.caloriesPer100 {
+//                    calories = caloriesPer100 / 100 * portion
+//                }
+//            }
+//
+//            return AIFoodItem(
+//                name: foodItem.name,
+//                brand: nil,
+//                calories: calories,
+//                carbs: carbs,
+//                protein: proteins,
+//                fat: fat,
+//                imageURL: nil
+//            )
+//        }
+//        state.aiSearchResults = aiFoodItems
     }
 
     private func handleFoodItemSelection(_ foodItem: FoodItem, image: UIImage?) {

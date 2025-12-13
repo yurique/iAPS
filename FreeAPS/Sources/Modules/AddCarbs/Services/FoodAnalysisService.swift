@@ -16,14 +16,14 @@ protocol TextAnalysisService: Sendable, AnalysisServiceBase {
     func analyzeText(
         prompt: String,
         telemetryCallback: ((String) -> Void)?
-    ) async throws -> [OpenFoodFactsProduct]
+    ) async throws -> FoodAnalysisResult
 }
 
 protocol BarcodeAnalysisService: Sendable, AnalysisServiceBase {
     func analyzeBarcode(
         barcode: String,
         telemetryCallback: ((String) -> Void)?
-    ) async throws -> OpenFoodFactsProduct
+    ) async throws -> FoodAnalysisResult
 }
 
 struct AIAnalysisService {
@@ -67,15 +67,14 @@ extension AIAnalysisService: TextAnalysisService {
     func analyzeText(
         prompt: String,
         telemetryCallback: ((String) -> Void)?
-    ) async throws -> [OpenFoodFactsProduct] {
+    ) async throws -> FoodAnalysisResult {
         let response = try await client.executeQuery(
             prompt: prompt,
             images: [],
             telemetryCallback: telemetryCallback
         )
 
-        let result = try decode(response, as: FoodAnalysisResult.self)
-        return toOpenFoodFactsProducts(result: result)
+        return try decode(response, as: FoodAnalysisResult.self)
     }
 }
 
@@ -135,61 +134,46 @@ extension AnalysisServiceBase {
 }
 
 extension TextAnalysisService {
-    func toOpenFoodFactsProducts(
-        result: FoodAnalysisResult
-    ) -> [OpenFoodFactsProduct] {
-        let syntheticID = "\(Date.now.hashValue)"
-        return result.foodItemsDetailed.map { item in
-            var carbs: Double = 0
-            var proteins: Double = 0
-            var fat: Double = 0
-            var calories: Double = 0
-            var sugars: Double = 0
-            var fiber: Double = 0
-
-            if let portion = item.portionEstimateSize {
-                if let carbsPer100 = item.carbsPer100 {
-                    carbs = carbsPer100 / 100 * portion
-                }
-                if let proteinPer100 = item.proteinPer100 {
-                    proteins = proteinPer100 / 100 * portion
-                }
-                if let fatPer100 = item.fatPer100 {
-                    fat = fatPer100 / 100 * portion
-                }
-                if let caloriesPer100 = item.caloriesPer100 {
-                    calories = caloriesPer100 / 100 * portion
-                }
-                if let sugarsPer100 = item.sugarsPer100 {
-                    sugars = sugarsPer100 / 100 * portion
-                }
-                if let fiberPer100 = item.fiberPer100 {
-                    fiber = fiberPer100 / 100 * portion
-                }
-            }
-
-            let nutriments = Nutriments(
-                carbohydrates: carbs,
-                proteins: proteins,
-                fat: fat,
-                calories: calories,
-                sugars: sugars,
-                fiber: fiber
-            )
-
-            return OpenFoodFactsProduct(
-                id: syntheticID,
-                productName: item.name,
-                brands: "AI Analysis",
-                categories: nil,
-                nutriments: nutriments,
-                servingSize: item.standardServing ?? "1 serving",
-                servingQuantity: 1.0, // TODO: what is this?
-                imageURL: nil,
-                imageFrontURL: nil,
-                code: nil,
-                dataSource: .aiAnalysis
+    func fromOpenFoodFactsProducts(
+        products: [OpenFoodFactsProduct],
+        confidence: AIConfidenceLevel?
+    ) -> FoodAnalysisResult {
+        let items: [AnalysedFoodItem] = products.map { item in
+            AnalysedFoodItem(
+                name: item.productName ?? "Product without name",
+                portionEstimate: item.servingSize,
+                portionEstimateSize: item.servingQuantity,
+                standardServing: item.servingSize,
+                standardServingSize: item.servingQuantity,
+                units: MealUnits.grams,
+                preparationMethod: nil,
+                visualCues: nil,
+                caloriesPer100: item.nutriments.calories,
+                carbsPer100: item.nutriments.carbohydrates,
+                fatPer100: item.nutriments.fat,
+                fiberPer100: item.nutriments.fiber,
+                proteinPer100: item.nutriments.proteins,
+                sugarsPer100: item.nutriments.sugars,
+                assessmentNotes: nil,
+                imageURL: item.imageURL,
+                imageFrontURL: item.imageFrontURL
             )
         }
+
+        return FoodAnalysisResult(
+            imageType: nil,
+            foodItemsDetailed: items,
+            overallDescription: nil,
+            confidence: confidence,
+            servingsStandard: nil,
+            portionAssessmentMethod: nil,
+            diabetesConsiderations: nil,
+            visualAssessmentDetails: nil,
+            notes: nil,
+            absorptionTimeHours: nil,
+            absorptionTimeReasoning: nil,
+            mealSizeImpact: nil,
+            safetyAlerts: nil
+        )
     }
 }

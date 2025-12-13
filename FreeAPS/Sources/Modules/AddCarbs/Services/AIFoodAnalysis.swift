@@ -171,18 +171,19 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
     func analyzeFoodQuery(
         _ query: String,
         telemetryCallback: ((String) -> Void)?
-    ) async throws -> [OpenFoodFactsProduct] {
+    ) async throws -> FoodAnalysisResult {
         telemetryCallback?("🤖 Connecting to \(UserDefaults.standard.textSearchProvider.description) …")
         switch UserDefaults.standard.textSearchProvider {
         case let .aiModel(model):
             let providerImpl = try getAIImplementation(for: model, telemetryCallback: telemetryCallback)
             let analysisPrompt = AIPrompts.getAnalysisPrompt(.query(query), responseSchema: FoodAnalysisResult.schemaText)
 
-            return try await providerImpl.analyzeText(
+            let result = try await providerImpl.analyzeText(
                 prompt: analysisPrompt,
                 telemetryCallback: telemetryCallback
             )
 
+            return result
         case .usdaFoodData:
             return try await USDAFoodDataService.shared.analyzeText(prompt: query, telemetryCallback: telemetryCallback)
         case .openFoodFacts:
@@ -193,23 +194,15 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
     func analyzeBarcode(
         _ barcode: String,
         telemetryCallback: ((String) -> Void)?
-    ) async throws -> OpenFoodFactsProduct? {
+    ) async throws -> FoodAnalysisResult {
         telemetryCallback?("🤖 Connecting to \(UserDefaults.standard.barcodeSearchProvider.description) …")
         switch UserDefaults.standard.barcodeSearchProvider {
         case .openFoodFacts:
-            do {
-                return try await OpenFoodFactsService.shared.analyzeBarcode(
-                    barcode: barcode,
-                    telemetryCallback: telemetryCallback
-                )
-            } catch {
-                if let openFoodError = error as? OpenFoodFactsError,
-                   case .productNotFound = openFoodError
-                {
-                    return nil
-                }
-                throw error
-            }
+            let result = try await OpenFoodFactsService.shared.analyzeBarcode(
+                barcode: barcode,
+                telemetryCallback: telemetryCallback
+            )
+            return result
         }
     }
 

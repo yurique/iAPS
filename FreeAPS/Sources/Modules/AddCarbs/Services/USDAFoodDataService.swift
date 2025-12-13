@@ -12,8 +12,9 @@ extension USDAFoodDataService: TextAnalysisService {
     func analyzeText(
         prompt: String,
         telemetryCallback _: ((String) -> Void)?
-    ) async throws -> [OpenFoodFactsProduct] {
-        try await searchProducts(query: prompt, pageSize: 15)
+    ) async throws -> FoodAnalysisResult {
+        let products = try await searchProducts(query: prompt, pageSize: 15)
+        return fromOpenFoodFactsProducts(products: products, confidence: nil)
     }
 }
 

@@ -54,16 +54,18 @@ struct AIAnalysisResultsView: View {
                         .foregroundColor(.secondary)
                 }
 
-                HStack {
-                    Text("Confidence level:")
-                    ConfidenceBadge(level: analysisResult.confidence)
-                    Spacer()
-//                    if let portions = analysisResult.totalFoodPortions {
-//                        Text("\(portions) Portions")
-//                            .font(.caption)
-//                    }
+                if let confidence = analysisResult.confidence {
+                    HStack {
+                        Text("Confidence level:")
+                        ConfidenceBadge(level: confidence)
+                        Spacer()
+                        //                    if let portions = analysisResult.totalFoodPortions {
+                        //                        Text("\(portions) Portions")
+                        //                            .font(.caption)
+                        //                    }
+                    }
+                    .font(.subheadline)
                 }
-                .font(.subheadline)
             }
             .padding(.horizontal)
 
@@ -156,7 +158,7 @@ struct AIAnalysisResultsView: View {
                         }
 
                         let selectedFood = FoodItem(
-                            name: foodItem.name,
+                            name: foodItem.name ?? "Product without name",
                             carbs: Decimal(carbs),
                             fat: Decimal(fat),
                             protein: Decimal(proteins),

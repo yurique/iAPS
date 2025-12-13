@@ -5,8 +5,9 @@ extension OpenFoodFactsService: TextAnalysisService {
     func analyzeText(
         prompt: String,
         telemetryCallback _: ((String) -> Void)?
-    ) async throws -> [OpenFoodFactsProduct] {
-        try await searchProducts(query: prompt, pageSize: 15)
+    ) async throws -> FoodAnalysisResult {
+        let products = try await searchProducts(query: prompt, pageSize: 15)
+        return fromOpenFoodFactsProducts(products: products, confidence: nil)
     }
 }
 
@@ -14,8 +15,9 @@ extension OpenFoodFactsService: BarcodeAnalysisService {
     func analyzeBarcode(
         barcode: String,
         telemetryCallback _: ((String) -> Void)?
-    ) async throws -> OpenFoodFactsProduct {
-        try await searchProduct(barcode: barcode)
+    ) async throws -> FoodAnalysisResult {
+        let item = try await searchProduct(barcode: barcode)
+        return fromOpenFoodFactsProducts(products: [item], confidence: .high)
     }
 }
 

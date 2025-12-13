@@ -5,7 +5,7 @@ struct FoodAnalysisResult {
     let imageType: ImageAnalysisType?
     let foodItemsDetailed: [AnalysedFoodItem]
     let overallDescription: String?
-    let confidence: AIConfidenceLevel
+    let confidence: AIConfidenceLevel?
 //    let totalFoodPortions: Int?
 //    let totalStandardServings: Double?
     let servingsStandard: String?
@@ -28,33 +28,33 @@ struct FoodAnalysisResult {
 //    let insulinTimingRecommendations: String?
 //    let fpuDosingGuidance: String?
 //    let exerciseConsiderations: String?
-    var absorptionTimeHours: Double?
-    var absorptionTimeReasoning: String?
+    let absorptionTimeHours: Double?
+    let absorptionTimeReasoning: String?
     let mealSizeImpact: String?
 //    let individualizationFactors: String?
     let safetyAlerts: String?
 
     // Legacy compatibility properties
     var foodItems: [String] {
-        foodItemsDetailed.map(\.name)
+        foodItemsDetailed.compactMap(\.name)
     }
 
 //    var detailedDescription: String? {
 //        overallDescription
 //    }
 
-    var portionSize: String {
-        if foodItemsDetailed.count == 1 {
-            return foodItemsDetailed.first?.portionEstimate ?? "1 serving"
-        } else {
-            // Create concise food summary for multiple items (clean food names)
-            let foodNames = foodItemsDetailed.map { item in
-                // Clean up food names by removing technical terms
-                cleanFoodName(item.name)
-            }
-            return foodNames.joined(separator: ", ")
-        }
-    }
+//    var portionSize: String {
+//        if foodItemsDetailed.count == 1 {
+//            return foodItemsDetailed.first?.portionEstimate ?? "1 serving"
+//        } else {
+//            // Create concise food summary for multiple items (clean food names)
+//            let foodNames = foodItemsDetailed.compactMap(\.name).map { name in
+//                // Clean up food names by removing technical terms
+//                cleanFoodName(name)
+//            }
+//            return foodNames.joined(separator: ", ")
+//        }
+//    }
 
     // Helper function to clean food names for display
     private func cleanFoodName(_ name: String) -> String {
@@ -79,17 +79,17 @@ struct FoodAnalysisResult {
         return cleaned.isEmpty ? name : cleaned
     }
 
-    var servingSizeDescription: String {
-        if foodItemsDetailed.count == 1 {
-            return foodItemsDetailed.first?.portionEstimate ?? "1 serving"
-        } else {
-            // Return the same clean food names for "Based on" text
-            let foodNames = foodItemsDetailed.map { item in
-                cleanFoodName(item.name)
-            }
-            return foodNames.joined(separator: ", ")
-        }
-    }
+//    var servingSizeDescription: String {
+//        if foodItemsDetailed.count == 1 {
+//            return foodItemsDetailed.first?.portionEstimate ?? "1 serving"
+//        } else {
+//            // Return the same clean food names for "Based on" text
+//            let foodNames = foodItemsDetailed.map { item in
+//                cleanFoodName(item.name)
+//            }
+//            return foodNames.joined(separator: ", ")
+//        }
+//    }
 
 //    var carbohydrates: Double {
 //        totalCarbohydrates
@@ -385,7 +385,6 @@ extension FoodAnalysisResult {
             .insulinTimingRecommendations: "Meal type and pre-meal timing (minutes before eating)",
             .absorptionTimeHours: "absorption hours between 2 and 6",
             .absorptionTimeReasoning: "Brief timing calculation explanation",
-            .visualAssessmentDetails: "Textures, colors, cooking evidence",
             .overallDescription: "What I see: plate, arrangement, textures, colors",
             .portionAssessmentMethod: "Explain in natural language how you estimated portion sizes using visual references like plate size, utensils, or other objects for scale. Describe your measurement process for each food item and explain how you converted visual portions to serving equivalents. Include your confidence level and what factors affected your accuracy."
         ]

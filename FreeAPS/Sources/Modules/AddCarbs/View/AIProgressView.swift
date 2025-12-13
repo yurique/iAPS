@@ -5,7 +5,6 @@ import UIKit
 struct AIProgressView: View {
     let analysisRequest: AnalysisRequest
     let onFoodAnalyzed: (FoodAnalysisResult, AnalysisRequest) -> Void
-    let onFoodSearched: ([OpenFoodFactsProduct], AnalysisRequest) -> Void
     let onCancel: () -> Void
 
     @State private var isAnalyzing: Bool = false
@@ -180,7 +179,7 @@ struct AIProgressView: View {
                         DispatchQueue.main.asyncAfter(deadline: .now() + 1.0) {
                             isAnalyzing = false
                             analysisStart = nil
-                            onFoodSearched(result, analysisRequest)
+                            onFoodAnalyzed(result, analysisRequest)
                         }
                     }
                 }

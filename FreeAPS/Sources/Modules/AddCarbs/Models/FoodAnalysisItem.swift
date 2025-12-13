@@ -14,12 +14,12 @@ enum MealUnits: String, Codable {
 
 /// Individual food item analysis with detailed portion assessment
 struct AnalysedFoodItem {
-    let name: String
+    let name: String?
     let portionEstimate: String?
     let portionEstimateSize: Double?
     let standardServing: String?
     let standardServingSize: Double?
-    let units: MealUnits
+    let units: MealUnits?
 //    let servingsStandard: String?
 //    let servingMultiplier: Double
     let preparationMethod: String?
@@ -38,6 +38,48 @@ struct AnalysedFoodItem {
     let sugarsPer100: Double?
 
     let assessmentNotes: String?
+
+    let imageURL: String?
+    let imageFrontURL: String?
+
+    init(
+        name: String? = nil,
+        portionEstimate: String? = nil,
+        portionEstimateSize: Double? = nil,
+        standardServing: String? = nil,
+        standardServingSize: Double? = nil,
+        units: MealUnits? = nil,
+        preparationMethod: String? = nil,
+        visualCues: String? = nil,
+        caloriesPer100: Double? = nil,
+        carbsPer100: Double? = nil,
+        fatPer100: Double? = nil,
+        fiberPer100: Double? = nil,
+        proteinPer100: Double? = nil,
+        sugarsPer100: Double? = nil,
+        assessmentNotes: String? = nil,
+        imageURL: String? = nil,
+        imageFrontURL: String? = nil
+
+    ) {
+        self.name = name
+        self.portionEstimate = portionEstimate
+        self.portionEstimateSize = portionEstimateSize
+        self.standardServing = standardServing
+        self.standardServingSize = standardServingSize
+        self.units = units
+        self.preparationMethod = preparationMethod
+        self.visualCues = visualCues
+        self.caloriesPer100 = caloriesPer100
+        self.carbsPer100 = carbsPer100
+        self.fatPer100 = fatPer100
+        self.fiberPer100 = fiberPer100
+        self.proteinPer100 = proteinPer100
+        self.sugarsPer100 = sugarsPer100
+        self.assessmentNotes = assessmentNotes
+        self.imageURL = imageURL
+        self.imageFrontURL = imageFrontURL
+    }
 }
 
 extension AnalysedFoodItem: Decodable {
@@ -118,17 +160,6 @@ extension AnalysedFoodItem {
             .units: "string enum; one of: 'grams' or 'milliliters'; as appropriate for this meal; do NOT translate!",
             .standardServing: "description of a standard serving, if available",
             .standardServingSize: "decimal, standard serving size based on NUTRITION_AUTHORITY standard, in grams or milliliters; do not include unit; do not include the name of the standard",
-            //        .servingsStandard: "brief name/description of NUTRITION_AUTHORITY",
-            //        .servingMultiplier: "number of servings in this portion",
-
-            //        .carbohydrates: "decimal, grams of carbohydrates for this portion",
-            //        .calories: "decimal, kcal for this portion",
-            //        .fat: "grams of fat for this portion",
-            //        .fiber: "grams of fiber for this portion",
-            //        .protein: "grams of protein for this portion",
-            //        .fat_per_serving: grams_per_standard_serving,
-            //        .fiber_per_serving: grams_per_standard_serving,
-            //            .protein_per_serving: grams_per_standard_serving,
             .caloriesPer100: "decimal, kcal of carbohydrates per 100 grams or milliliters",
             .carbsPer100: "decimal, grams of carbohydrates per 100 grams or milliliters",
             .fatPer100: "decimal, grams of fat per 100 grams or milliliters",

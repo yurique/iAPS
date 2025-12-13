@@ -64,15 +64,17 @@ private let standardAnalysis_8_1_photo_response_format: String = PromptLoader
     .loadTextResource(named: "ai/standard/8_1_photo_response_format.txt")
 private let standardAnalysis_8_2_text_response_format: String = PromptLoader
     .loadTextResource(named: "ai/standard/8_2_text_response_format.txt")
-private let standardAnalysisFooter: String = PromptLoader
-    .loadTextResource(named: "ai/standard/9_footer_requirements.txt")
+private let standardAnalysis_9_1_footer_photo: String = PromptLoader
+    .loadTextResource(named: "ai/standard/9_1_footer_requirements_photo.txt")
+private let standardAnalysis_9_2_footer_text: String = PromptLoader
+    .loadTextResource(named: "ai/standard/9_2_footer_requirements_text.txt")
 
 /// Standard analysis prompt for basic diabetes management (used when Advanced Dosing is OFF)
 private func getStandardAnalysisPrompt(
     _ request: AnalysisRequest,
     responseSchema: [String: Any],
 ) throws -> String {
-    let instructions: String = switch request {
+    let instructions = switch request {
     case .image: standardAnalysis_5_1_photo_instructions
     case let .query(textQuery): standardAnalysis_5_2_text_instructions.replacingOccurrences(of: "(query)", with: textQuery)
     }
@@ -108,13 +110,18 @@ private func getStandardAnalysisPrompt(
         }
     }()
 
+    let footerRequirements = switch request {
+    case .image: standardAnalysis_9_1_footer_photo
+    case .query: standardAnalysis_9_2_footer_text
+    }
+
     return standardAnalysis_0_Header + "\n\n" +
         userPreferences + "\n\n" +
         standardAnalysis_3_Standards + "\n\n" +
         instructions + "\n\n" +
         standardAnalysis_7_concepts + "\n\n" +
         responseFormat + "\n\n" +
-        standardAnalysisFooter
+        footerRequirements
 }
 
 private func makePreferencesBlock(languageCode: String?, regionCode: String?) -> String {

@@ -17,11 +17,9 @@ final class FoodSearchStateModel: ObservableObject {
     @Published var isBarcode = false
 
     @Published var navigateToAIAnalysis: AnalysisRoute? = nil
-    @Published var aiAnalysisResult: FoodAnalysisResult?
+    @Published var searchResult: FoodAnalysisResult?
     @Published var aiAnalysisRequest: AnalysisRequest?
 
-    @Published var searchResults: [OpenFoodFactsProduct] = []
-    @Published var aiSearchResults: [AIFoodItem] = []
     @Published var isLoading = false
     @Published var errorMessage: String?
 
@@ -54,8 +52,7 @@ final class FoodSearchStateModel: ObservableObject {
     func searchByText(query: String) {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmedQuery.isNotEmpty else {
-            searchResults = []
-            aiSearchResults = []
+            searchResult = nil
             return
         }
         let isBarcode = isBarcode(trimmedQuery)
@@ -67,17 +64,13 @@ final class FoodSearchStateModel: ObservableObject {
             do {
                 if isBarcode {
                     isLoading = true
-                    if let product = try await ConfigurableAIService.shared.analyzeBarcode(
+                    let result = try await ConfigurableAIService.shared.analyzeBarcode(
                         trimmedQuery,
                         telemetryCallback: nil
-                    ) {
-                        Task { @MainActor in
-                            self.searchResults = [product]
-                            print("✅ OpenFoodFacts found product: \(product.displayName)")
-                            self.isLoading = false
-
-                            print("🖼️ Barcode Product URLs: \(product.imageURL ?? "nil"), \(product.imageFrontURL ?? "nil")")
-                        }
+                    )
+                    Task { @MainActor in
+                        self.searchResult = result
+                        self.isLoading = false
                     }
 
                 } else {
@@ -88,15 +81,14 @@ final class FoodSearchStateModel: ObservableObject {
                         return
                     default:
                         isLoading = true
-                        let openFoodProducts = try await ConfigurableAIService.shared.analyzeFoodQuery(
+                        let result = try await ConfigurableAIService.shared.analyzeFoodQuery(
                             trimmedQuery,
                             telemetryCallback: nil
                         )
 
                         if !Task.isCancelled {
-                            self.searchResults = openFoodProducts
+                            self.searchResult = result
                             self.isLoading = false
-                            print("✅ Search completed: \(self.searchResults.count) results")
                         }
                     }
                 }
@@ -104,19 +96,11 @@ final class FoodSearchStateModel: ObservableObject {
                 if !Task.isCancelled {
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
-                    self.searchResults = []
+                    self.searchResult = nil
                     print("❌ Search failed: \(error.localizedDescription)")
                 }
             }
         }
-    }
-
-    func addAISearchResults(_ results: [AIFoodItem]) {
-        aiSearchResults = results
-    }
-
-    func clearAISearchResults() {
-        aiSearchResults = []
     }
 
     private func isBarcode(_ str: String) -> Bool {
