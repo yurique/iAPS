@@ -160,50 +160,51 @@ extension AnalysedFoodItem: Decodable {
 }
 
 extension AnalysedFoodItem {
-    private static var fields: [AnalysedFoodItem.CodingKeys: Any] {
+    private static var fields: [(AnalysedFoodItem.CodingKeys, Any)] {
         [
-            .name: "specific food name with preparation details",
-            .units: "string enum; one of: 'grams' or 'milliliters'; as appropriate for this meal; do NOT translate!",
-            .portionEstimate: "portion desription with visual references",
-            .portionEstimateSize: "decimal, exact portion size, in grams or milliliters; do not include unit",
-            .standardServing: "description of a standard serving, if available",
-            .standardServingSize: "decimal, standard serving size based on NUTRITION_AUTHORITY standard, in grams or milliliters; do not include unit; do not include the name of the standard",
-            .glycemicIndex: "decimal, glycemic index if available",
-            .caloriesPer100: "decimal, kcal of carbohydrates per 100 grams or milliliters",
-            .carbsPer100: "decimal, grams of carbohydrates per 100 grams or milliliters",
-            .fatPer100: "decimal, grams of fat per 100 grams or milliliters",
-            .fiberPer100: "decimal, grams of fiber per 100 grams or milliliters",
-            .proteinPer100: "decimal, grams of protein per 100 grams or milliliters",
-            .sugarsPer100: "decimal, grams of sugars per 100 grams or milliliters"
+            (.name, "specific food name with preparation details"),
+            (.units, "string enum; one of: 'grams' or 'milliliters'; as appropriate for this meal; do NOT translate;"),
+            (.caloriesPer100, "decimal, kilocalories per 100 grams or milliliters"),
+            (.carbsPer100, "decimal, grams of carbohydrates per 100 grams or milliliters"),
+            (.fatPer100, "decimal, grams of fat per 100 grams or milliliters"),
+            (.fiberPer100, "decimal, grams of fiber per 100 grams or milliliters"),
+            (.proteinPer100, "decimal, grams of protein per 100 grams or milliliters"),
+            (.sugarsPer100, "decimal, grams of sugars per 100 grams or milliliters"),
+            (.portionEstimate, "desription of the identified portion"),
+            (.portionEstimateSize, "decimal, exact size of the identified portion; in grams or milliliters; do not include unit"),
+            (.standardServing, "description of the identified standard serving, if available"),
+            (
+                .standardServingSize,
+                "decimal, the identified standard serving size in grams or milliliters, if available; do not include unit"
+            ),
+            (.glycemicIndex, "decimal, glycemic index if available")
         ]
     }
 
-    static var schemaVisual: [String: Any] {
-        var fields = self.fields
-        fields[.visualCues] = "visual elements analyzed"
-        fields[.preparationMethod] = "cooking details observed"
-        fields[.assessmentNotes] =
-            "Explain how you calculated this specific portion size, what visual references you used for measurement."
-
-        var dict: [String: Any] = [:]
-        for (key, value) in fields {
-            dict[key.rawValue] = value
+    static var schemaVisual: [(String, Any)] {
+        var fields = self.fields + [
+            (.visualCues, "visual elements analyzed"),
+            (.preparationMethod, "cooking details observed"),
+            (
+                .assessmentNotes,
+                "Explain how you calculated this specific portion size, what visual references you used for measurement."
+            )
+        ]
+        return fields.map { key, value in
+            (key.rawValue, value)
         }
-        return dict
     }
 
-    static var schemaText: [String: Any] {
-        var fields = self.fields
-//        fields[.portionEstimateSize] =
-//            "decimal, assume the portion matches the standard serving size, in grams or milliliters; do not include unit;"
-        fields[.preparationMethod] = "cooking details if mentioned"
-        fields[.assessmentNotes] =
-            "Explain how you calculated this specific portion size, what references you used."
-
-        var dict: [String: Any] = [:]
-        for (key, value) in fields {
-            dict[key.rawValue] = value
+    static var schemaText: [(String, Any)] {
+        let fields = self.fields + [
+            //        (.portionEstimateSize,
+            //            "decimal, assume the portion matches the standard serving size, in grams or milliliters; do not include unit;"),
+            (.preparationMethod, "cooking details if mentioned")
+//        (.assessmentNotes],
+//        "Explain how you calculated this specific portion size, what references you used.")
+        ]
+        return fields.map { key, value in
+            (key.rawValue, value)
         }
-        return dict
     }
 }

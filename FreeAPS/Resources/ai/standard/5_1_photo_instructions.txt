@@ -1,14 +1,32 @@
-Analyze the image for accurate carbohydrate estimation. Consider all present information sources:
-1. Actual food items (on a plate, bowl, tray, or container)
-	•	Identify each distinct food component.
-	•	Estimate portion size using the conventions described above (grams/ml; servings when culturally appropriate).
-	•	For each food, estimate nutrition values based on the portion.
-2. Menu text (if present)
-	•	Detect and identify the language.
-	•	Translate food names and relevant details.
-	•	Infer typical portion size or standard serving size, when this is customary for the region.
-	•	Use this information to refine nutrition estimates following the rules defined above.
-3. Recipe text (if present)
-	•	Interpret the listed ingredients and quantities.
-	•	Estimate typical serving size for the recipe, following the portion and serving rules above.
-	•	Derive carbohydrate and nutrition estimates per portion.
+Do NOT invent visual details.
+
+After inspecting the image, you MUST first classify the image into exactly one of the following types:
+  •	food_photo – a photo of prepared food intended for consumption (e.g., plated meal, bowl, snack, packaged food with visible contents).
+  •	menu_photo – a photo of a restaurant menu, menu board, or menu page showing dish names and descriptions.
+  •	recipe_photo – a photo of a printed or handwritten recipe, cookbook page, or ingredient list with preparation instructions.
+
+FOR FOOD PHOTOS (food_photo):
+	•	identify each distinct food component.
+  • if the image is ambiguous, choose the most conservative applicable type and explicitly state the uncertainty.
+	•	identify standard serving size.
+	•	for each food, estimate nutrition values per 100 grams/milliliters.
+	•	estimate portion size on the photo based on visual evidence.
+
+FOR MENU PHOTOS (menu_photo):
+  • treat descriptions as text only.
+  •	identify each distinct food component in the menu.
+	•	detect and identify the language.
+	•	identify standard serving size.
+  •	for each food, estimate nutrition values per 100 grams/milliliters.
+  • assume portion size is equal to the standard serving size.
+
+FOR RECIPE PHOTOS (recipe_photo):
+  • treat descriptions as text only.
+	•	interpret the listed ingredients and quantities.
+	•	if quantities are missing or unclear, state the limitation.
+	•	estimate typical serving size for the recipe.
+  • assume portion size is equal to the standard serving size.
+  •	for each food, estimate nutrition values per 100 grams/milliliters.
+  • do not claim to see any visual clues
+
+

@@ -16,7 +16,7 @@ enum AnalysisRequest {
 enum AIPrompts {
     static func getAnalysisPrompt(
         _ request: AnalysisRequest,
-        responseSchema: [String: Any]
+        responseSchema: [(String, Any)],
     ) -> String {
         do {
             let selectedPrompt = try getStandardAnalysisPrompt(
@@ -84,28 +84,16 @@ private let standardAnalysis_9_2_footer_text: String = PromptLoader
 /// Standard analysis prompt for basic diabetes management (used when Advanced Dosing is OFF)
 private func getStandardAnalysisPrompt(
     _ request: AnalysisRequest,
-    responseSchema: [String: Any],
+    responseSchema: [(String, Any)],
 ) throws -> String {
     let instructions = switch request {
     case .image: standardAnalysis_5_1_photo_instructions
     case let .query(textQuery): standardAnalysis_5_2_text_instructions.replacingOccurrences(of: "(query)", with: textQuery)
     }
 
-    let schemaData: Data
-    do {
-        schemaData = try JSONSerialization.data(
-            withJSONObject: responseSchema,
-            options: [.prettyPrinted, .withoutEscapingSlashes]
-        )
-    } catch {
-        throw AIFoodAnalysisError.requestCreationFailed
-    }
+    let schemaJson = PlainJSONFromPairs(responseSchema)
+    let schema = renderPlainJSON(schemaJson)
 
-    guard let schema = String(data: schemaData, encoding: .utf8) else {
-        throw AIFoodAnalysisError.requestCreationFailed
-    }
-
-    // TODO: response format should be the same
     let responseFormat: String =
         "RESPOND IN JSON FORMAT:\n" +
         schema
@@ -167,4 +155,73 @@ private func makePreferencesBlock(languageCode: String?, regionCode: String?) ->
         .replacingOccurrences(of: "(nutrition_authority)", with: nutritionAuthority.descriptionForAI)
         .replacingOccurrences(of: "(language)", with: languageForAI)
         .replacingOccurrences(of: "(region)", with: regionForAI)
+}
+
+// MARK: just to encode an [(string, any)] and preserve the order of fields in the schema, since swift doesn't seem to have anything for this ¯\_(ツ)_/¯
+
+private enum PlainJSON {
+    case object([(String, PlainJSON)])
+    case array([PlainJSON])
+    case string(String)
+}
+
+private func renderPlainJSON(_ node: PlainJSON, indent: String = "") -> String {
+    let nextIndent = indent + "  "
+    switch node {
+    case let .string(s):
+        return "\"" + s.replacingOccurrences(of: "\"", with: "\\\"") + "\""
+    case let .array(items):
+        if items.isEmpty { return "[]" }
+        var lines: [String] = ["["]
+        for (idx, item) in items.enumerated() {
+            let rendered = renderPlainJSON(item, indent: nextIndent)
+            let suffix = idx == items.count - 1 ? "" : ","
+            lines.append(nextIndent + rendered + suffix)
+        }
+        lines.append(indent + "]")
+        return lines.joined(separator: "\n")
+    case let .object(pairs):
+        if pairs.isEmpty { return "{}" }
+        var lines: [String] = ["{"]
+        for (idx, pair) in pairs.enumerated() {
+            let keyEscaped = pair.0.replacingOccurrences(of: "\"", with: "\\\"")
+            let valueRendered = renderPlainJSON(pair.1, indent: nextIndent)
+            let suffix = idx == pairs.count - 1 ? "" : ","
+            lines.append(nextIndent + "\"" + keyEscaped + "\": " + valueRendered + suffix)
+        }
+        lines.append(indent + "}")
+        return lines.joined(separator: "\n")
+    }
+}
+
+private struct DynamicCodingKey: CodingKey {
+    var stringValue: String
+    init?(stringValue: String) { self.stringValue = stringValue }
+    var intValue: Int? { nil }
+    init?(intValue _: Int) { nil }
+}
+
+private func PlainJSONFromPairs(_ pairs: [(String, Any)]) -> PlainJSON {
+    var out: [(String, PlainJSON)] = []
+    out.reserveCapacity(pairs.count)
+    for (k, v) in pairs {
+        if let j = PlainJSONValue(from: v) {
+            out.append((k, j))
+        }
+    }
+    return .object(out)
+}
+
+private func PlainJSONValue(from value: Any) -> PlainJSON? {
+    switch value {
+    case let s as String:
+        return .string(s)
+    case let pairs as [(String, Any)]:
+        return PlainJSONFromPairs(pairs)
+    case let arr as [Any]:
+        let mapped = arr.compactMap { PlainJSONValue(from: $0) }
+        return .array(mapped)
+    default:
+        return nil
+    }
 }

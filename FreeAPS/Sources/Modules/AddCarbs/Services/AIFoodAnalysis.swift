@@ -188,7 +188,8 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
                 model: aiModel,
                 requestType: .image,
                 processingTime: processingTime,
-                success: true
+                success: true,
+                foodItemCount: result.foodItemsDetailed.count
             )
 
 //            telemetryCallback?("💾 Caching analysis result …")
@@ -243,7 +244,8 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
                     model: model,
                     requestType: .text,
                     processingTime: processingTime,
-                    success: true
+                    success: true,
+                    foodItemCount: result.foodItemsDetailed.count
                 )
 
                 return result

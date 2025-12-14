@@ -8,15 +8,15 @@ struct FoodAnalysisResult {
     let confidence: AIConfidenceLevel?
 //    let totalFoodPortions: Int?
 //    let totalStandardServings: Double?
-    let servingsStandard: String?
+//    let servingsStandard: String?
 //    let totalCarbohydrates: Double
 //    let totalProtein: Double?
 //    let totalFat: Double?
 //    let totalFiber: Double?
 //    let totalCalories: Double?
-    let portionAssessmentMethod: String?
+//    let portionAssessmentMethod: String?
     let diabetesConsiderations: String?
-    let visualAssessmentDetails: String?
+//    let visualAssessmentDetails: String?
     let notes: String?
 
     // Store original baseline servings for proper scaling calculations
@@ -28,11 +28,11 @@ struct FoodAnalysisResult {
 //    let insulinTimingRecommendations: String?
 //    let fpuDosingGuidance: String?
 //    let exerciseConsiderations: String?
-    let absorptionTimeHours: Double?
-    let absorptionTimeReasoning: String?
-    let mealSizeImpact: String?
+//    let absorptionTimeHours: Double?
+//    let absorptionTimeReasoning: String?
+//    let mealSizeImpact: String?
 //    let individualizationFactors: String?
-    let safetyAlerts: String?
+//    let safetyAlerts: String?
 
     // Legacy compatibility properties
     var foodItems: [String] {
@@ -134,7 +134,7 @@ extension FoodAnalysisResult: Decodable {
         let confidence: AIConfidenceLevel = try container.decode(AIConfidenceLevel.self, forKey: .confidence)
 //        let totalFoodPortions: Int? = try container.decodeIfPresent(Int.self, forKey: .totalFoodPortions)
 //        let totalStandardServings: Double? = try container.decodeNumberIfPresent(forKey: .totalStandardServings)
-        let servingsStandard: String? = try container.decodeTrimmedIfPresent(forKey: .servingsStandard)
+//        let servingsStandard: String? = try container.decodeTrimmedIfPresent(forKey: .servingsStandard)
 
 //        let totalCarbohydrates: Double = try container.decodeNumberIfPresent(forKey: .totalCarbohydrates) ??
 //            foodItemsDetailed.map(\.carbohydrates).reduce(0, +)
@@ -151,11 +151,10 @@ extension FoodAnalysisResult: Decodable {
 //        let totalCalories: Double? = try container.decodeNumberIfPresent(forKey: .totalCalories) ??
 //            foodItemsDetailed.compactMap(\.calories).reduce(0, +)
 
-        // TODO: extractString(from: nutritionData, keys: ["portion_assessment_method", "analysis_notes"])
-        let portionAssessmentMethod: String? = try container.decodeTrimmedIfPresent(forKey: .portionAssessmentMethod)
+//        let portionAssessmentMethod: String? = try container.decodeTrimmedIfPresent(forKey: .portionAssessmentMethod)
 
         let diabetesConsiderations: String? = try container.decodeTrimmedIfPresent(forKey: .diabetesConsiderations)
-        let visualAssessmentDetails: String? = try container.decodeTrimmedIfPresent(forKey: .visualAssessmentDetails)
+//        let visualAssessmentDetails: String? = try container.decodeTrimmedIfPresent(forKey: .visualAssessmentDetails)
         let notes: String? = try container.decodeTrimmedIfPresent(forKey: .notes)
 
 //        let fatProteinUnits: String? = try container.decodeTrimmedIfPresent(forKey: .fatProteinUnits)
@@ -163,11 +162,11 @@ extension FoodAnalysisResult: Decodable {
 //        let insulinTimingRecommendations: String? = try container.decodeTrimmedIfPresent(forKey: .insulinTimingRecommendations)
 //        let fpuDosingGuidance: String? = try container.decodeTrimmedIfPresent(forKey: .fpuDosingGuidance)
 //        let exerciseConsiderations: String? = try container.decodeTrimmedIfPresent(forKey: .exerciseConsiderations)
-        let absorptionTimeHours: Double? = try container.decodeNumberIfPresent(forKey: .absorptionTimeHours)
-        let absorptionTimeReasoning: String? = try container.decodeTrimmedIfPresent(forKey: .absorptionTimeReasoning)
-        let mealSizeImpact: String? = try container.decodeTrimmedIfPresent(forKey: .mealSizeImpact)
+//        let absorptionTimeHours: Double? = try container.decodeNumberIfPresent(forKey: .absorptionTimeHours)
+//        let absorptionTimeReasoning: String? = try container.decodeTrimmedIfPresent(forKey: .absorptionTimeReasoning)
+//        let mealSizeImpact: String? = try container.decodeTrimmedIfPresent(forKey: .mealSizeImpact)
 //        let individualizationFactors: String? = try container.decodeTrimmedIfPresent(forKey: .individualizationFactors)
-        let safetyAlerts: String? = try container.decodeTrimmedIfPresent(forKey: .safetyAlerts)
+//        let safetyAlerts: String? = try container.decodeTrimmedIfPresent(forKey: .safetyAlerts)
 
         // Calculate original servings for proper scaling
 //        let originalServings = foodItemsDetailed.map(\.servingMultiplier).reduce(0, +)
@@ -179,15 +178,15 @@ extension FoodAnalysisResult: Decodable {
             confidence: confidence,
 //            totalFoodPortions: totalFoodPortions,
 //            totalStandardServings: totalStandardServings,
-            servingsStandard: servingsStandard,
+//            servingsStandard: servingsStandard,
 //            totalCarbohydrates: totalCarbohydrates,
 //            totalProtein: totalProtein,
 //            totalFat: totalFat,
 //            totalFiber: totalFiber,
 //            totalCalories: totalCalories,
-            portionAssessmentMethod: portionAssessmentMethod,
+//            portionAssessmentMethod: portionAssessmentMethod,
             diabetesConsiderations: diabetesConsiderations,
-            visualAssessmentDetails: visualAssessmentDetails,
+//            visualAssessmentDetails: visualAssessmentDetails,
             notes: notes,
 //            originalServings: originalServings,
 //            fatProteinUnits: fatProteinUnits,
@@ -195,11 +194,11 @@ extension FoodAnalysisResult: Decodable {
 //            insulinTimingRecommendations: insulinTimingRecommendations,
 //            fpuDosingGuidance: fpuDosingGuidance,
 //            exerciseConsiderations: exerciseConsiderations,
-            absorptionTimeHours: absorptionTimeHours,
-            absorptionTimeReasoning: absorptionTimeReasoning,
-            mealSizeImpact: mealSizeImpact,
+//            absorptionTimeHours: absorptionTimeHours,
+//            absorptionTimeReasoning: absorptionTimeReasoning,
+//            mealSizeImpact: mealSizeImpact,
 //            individualizationFactors: individualizationFactors,
-            safetyAlerts: safetyAlerts
+//            safetyAlerts: safetyAlerts
         )
     }
 
@@ -211,28 +210,28 @@ extension FoodAnalysisResult: Decodable {
         case confidence
 //        case totalFoodPortions = "total_food_portions"
 //        case totalStandardServings = "total_standard_servings"
-        case servingsStandard = "serving_standard"
+//        case servingsStandard = "serving_standard"
 //        case totalCarbohydrates = "total_carbohydrates"
 //        case totalProtein = "total_protein"
 //        case totalFat = "total_fat"
 //        case totalFiber = "total_fiber"
 //        case totalCalories = "total_calories"
-        case portionAssessmentMethod = "portion_assessment_method"
+//        case portionAssessmentMethod = "portion_assessment_method"
         case diabetesConsiderations = "diabetes_considerations"
-        case visualAssessmentDetails = "visual_assessment_details"
+//        case visualAssessmentDetails = "visual_assessment_details"
         case notes // not present in schema; keep for backward-compat if needed
 
         // Advanced dosing / extras in schema
 //        case fatProteinUnits = "fat_protein_units"
 //        case netCarbsAdjustment = "net_carbs_adjustment"
-        case insulinTimingRecommendations = "insulin_timing_recommendations"
+//        case insulinTimingRecommendations = "insulin_timing_recommendations"
 //        case fpuDosingGuidance = "fpu_dosing_guidance"
 //        case exerciseConsiderations = "exercise_considerations"
-        case absorptionTimeHours = "absorption_time_hours"
-        case absorptionTimeReasoning = "absorption_time_reasoning"
-        case mealSizeImpact = "meal_size_impact"
+//        case absorptionTimeHours = "absorption_time_hours"
+//        case absorptionTimeReasoning = "absorption_time_reasoning"
+//        case mealSizeImpact = "meal_size_impact"
 //        case individualizationFactors = "individualization_factors"
-        case safetyAlerts = "safety_alerts"
+//        case safetyAlerts = "safety_alerts"
     }
 }
 
@@ -357,7 +356,7 @@ extension KeyedDecodingContainer {
     /// Optionally clamps negatives to 0.
     func decodeNumberIfPresent(forKey key: Key, ensuringNonNegative: Bool = true) throws -> Double? {
         // If the key is not present at all, return nil early
-        if (try? contains(key)) == false { return nil }
+        if contains(key) == false { return nil }
 
         if let double = try? decode(Double.self, forKey: key) {
             return ensuringNonNegative ? max(0, double) : double
@@ -378,44 +377,39 @@ extension KeyedDecodingContainer {
 }
 
 extension FoodAnalysisResult {
-    private static var fields: [FoodAnalysisResult.CodingKeys: Any] {
+    private static var fields: [(FoodAnalysisResult.CodingKeys, Any)] {
         [
-            .servingsStandard: "brief name/description of NUTRITION_AUTHORITY",
-            .confidence: "decimal 0 to 1",
-            .diabetesConsiderations: "Carb sources, GI impact (low/medium/high), timing considerations",
+            //            .servingsStandard: "brief name/description of NUTRITION_AUTHORITY",
+            (.confidence, "decimal 0 to 1"),
+            (.diabetesConsiderations, "Carb sources, GI impact (low/medium/high), timing considerations")
 //            .insulinTimingRecommendations: "Meal type and pre-meal timing (minutes before eating)",
 //            .absorptionTimeHours: "absorption hours between 2 and 6",
 //            .absorptionTimeReasoning: "Brief timing calculation explanation",
-            .portionAssessmentMethod: "Explain in natural language how you estimated portion sizes using visual references like plate size, utensils, or other objects for scale. Describe your measurement process for each food item and explain how you converted visual portions to serving equivalents. Include your confidence level and what factors affected your accuracy."
+//            .portionAssessmentMethod: "Explain in natural language how you estimated portion sizes using visual references like plate size, utensils, or other objects for scale. Describe your measurement process for each food item and explain how you converted visual portions to serving equivalents. Include your confidence level and what factors affected your accuracy."
         ]
     }
 
-    static var schemaVisual: [String: Any] {
-        var fields = self.fields
+    static var schemaVisual: [(String, Any)] {
+        let fields = [
+            (.imageType, "string enum: food_photo or menu_item or recipe_photo"),
+            (.foodItemsDetailed, AnalysedFoodItem.schemaVisual),
+            //      (.visualAssessmentDetails, "Textures, colors, cooking evidence")
+            (.overallDescription, "Describe what you see on the photo.")
+        ] + self.fields
 
-        fields[.imageType] = "string enum: food_photo or menu_item or recipe_photo"
-        fields[.foodItemsDetailed] = [AnalysedFoodItem.schemaVisual]
-        fields[.visualAssessmentDetails] = "Textures, colors, cooking evidence"
-        fields[.overallDescription] = "What I see: plate, arrangement, textures, colors"
-        fields[.portionAssessmentMethod] =
-            "Explain in natural language how you estimated portion sizes using visual references like plate size, utensils, or other objects for scale. Describe your measurement process for each food item and explain how you converted visual portions to serving equivalents. Include your confidence level and what factors affected your accuracy."
-
-        var dict: [String: Any] = [:]
-        for (key, value) in fields {
-            dict[key.rawValue] = value
+        return fields.map { key, value in
+            (key.rawValue, value)
         }
-        return dict
     }
 
-    static var schemaText: [String: Any] {
-        var fields = self.fields
+    static var schemaText: [(String, Any)] {
+        let fields = [
+            (.foodItemsDetailed, [AnalysedFoodItem.schemaText]),
+            (.overallDescription, "Describe what you perceived from the user input.")
+        ] + self.fields
 
-        fields[.foodItemsDetailed] = [AnalysedFoodItem.schemaText]
-
-        var dict: [String: Any] = [:]
-        for (key, value) in fields {
-            dict[key.rawValue] = value
+        return fields.map { key, value in
+            (key.rawValue, value)
         }
-        return dict
     }
 }

@@ -3,15 +3,6 @@ import LoopKit
 
 extension UserDefaults {
     enum AIKey: String {
-        case legacyPumpManagerState = "com.loopkit.Loop.PumpManagerState"
-        case legacyCGMManagerState = "com.loopkit.Loop.CGMManagerState"
-        case legacyServicesState = "com.loopkit.Loop.ServicesState"
-        case loopNotRunningNotifications = "com.loopkit.Loop.loopNotRunningNotifications"
-        case inFlightAutomaticDose = "com.loopkit.Loop.inFlightAutomaticDose"
-        case favoriteFoods = "com.loopkit.Loop.favoriteFoods"
-        case aiProvider = "com.loopkit.Loop.aiProvider"
-        case standardQueryOverride = "com.loopkit.Loop.standardQueryOverride"
-        case advancedQueryOverride = "com.loopkit.Loop.advancedQueryOverride"
         case claudeAPIKey = "com.loopkit.Loop.claudeAPIKey"
         case openAIAPIKey = "com.loopkit.Loop.openAIAPIKey"
         case googleGeminiAPIKey = "com.loopkit.Loop.googleGeminiAPIKey"
@@ -21,81 +12,7 @@ extension UserDefaults {
         case preferredLanguage = "com.loopkit.Loop.AIPreferredLanguage"
         case preferredRegion = "com.loopkit.Loop.AIPreferredRegion"
         case nutritionAuthority = "com.loopkit.Loop.AINutritionAuthority"
-        case aiProviderStatistics = "com.loopkit.Loop.aiProviderStatistics"
-    }
-
-    enum OpenAIVersion: String, CaseIterable, Identifiable {
-        case gpt4o = "GPT-4o"
-        case gpt5_0 = "GPT-5"
-        case gpt5_1 = "GPT-5.1"
-
-        var id: String { rawValue }
-    }
-
-    func clearLegacyPumpManagerRawValue() {
-        set(nil, forKey: AIKey.legacyPumpManagerState.rawValue)
-    }
-
-    func clearLegacyCGMManagerRawValue() {
-        set(nil, forKey: AIKey.legacyCGMManagerState.rawValue)
-    }
-
-    var legacyServicesState: [Service.RawStateValue] {
-        array(forKey: AIKey.legacyServicesState.rawValue) as? [[String: Any]] ?? []
-    }
-
-    func clearLegacyServicesState() {
-        set(nil, forKey: AIKey.legacyServicesState.rawValue)
-    }
-
-    var inFlightAutomaticDose: AutomaticDoseRecommendation? {
-        get {
-            let decoder = JSONDecoder()
-            guard let data = object(forKey: AIKey.inFlightAutomaticDose.rawValue) as? Data else {
-                return nil
-            }
-            return try? decoder.decode(AutomaticDoseRecommendation.self, from: data)
-        }
-        set {
-            do {
-                if let newValue = newValue {
-                    let encoder = JSONEncoder()
-                    let data = try encoder.encode(newValue)
-                    set(data, forKey: AIKey.inFlightAutomaticDose.rawValue)
-                } else {
-                    set(nil, forKey: AIKey.inFlightAutomaticDose.rawValue)
-                }
-            } catch {
-                assertionFailure("Unable to encode AutomaticDoseRecommendation")
-            }
-        }
-    }
-
-    var aiProvider: String {
-        get {
-            string(forKey: AIKey.aiProvider.rawValue) ?? "Basic Analysis (Free)"
-        }
-        set {
-            set(newValue, forKey: AIKey.aiProvider.rawValue)
-        }
-    }
-
-    var standardQueryOverride: String? {
-        get {
-            string(forKey: AIKey.standardQueryOverride.rawValue)
-        }
-        set {
-            set(newValue, forKey: AIKey.standardQueryOverride.rawValue)
-        }
-    }
-
-    var advancedQueryOverride: String? {
-        get {
-            string(forKey: AIKey.advancedQueryOverride.rawValue)
-        }
-        set {
-            set(newValue, forKey: AIKey.advancedQueryOverride.rawValue)
-        }
+        case aiProviderStatistics = "com.loopkit.Loop.AIStatistics"
     }
 
     var claudeAPIKey: String {
@@ -220,6 +137,16 @@ extension UserDefaults {
         var totalSuccessProcessingTime: TimeInterval
         var totalFailureProcessingTime: TimeInterval
 
+        // Complexity-based tracking (food item counts for successful requests)
+        var zeroFoodCount: Int
+        var zeroFoodTotalProcessingTime: TimeInterval
+        var oneFoodCount: Int
+        var oneFoodTotalProcessingTime: TimeInterval
+        var twoFoodCount: Int
+        var twoFoodTotalProcessingTime: TimeInterval
+        var multipleFoodCount: Int
+        var multipleFoodTotalProcessingTime: TimeInterval
+
         /// Average processing time per request (all requests)
         var averageProcessingTime: TimeInterval {
             guard requestCount > 0 else { return 0 }
@@ -250,6 +177,32 @@ extension UserDefaults {
             return (Double(failureCount) / Double(requestCount)) * 100
         }
 
+        // MARK: - Complexity-specific computed properties
+
+        /// Average processing time for requests that found zero food items
+        var averageZeroFoodProcessingTime: TimeInterval {
+            guard zeroFoodCount > 0 else { return 0 }
+            return zeroFoodTotalProcessingTime / Double(zeroFoodCount)
+        }
+
+        /// Average processing time for requests that found one food item
+        var averageOneFoodProcessingTime: TimeInterval {
+            guard oneFoodCount > 0 else { return 0 }
+            return oneFoodTotalProcessingTime / Double(oneFoodCount)
+        }
+
+        /// Average processing time for requests that found two food items
+        var averageTwoFoodProcessingTime: TimeInterval {
+            guard twoFoodCount > 0 else { return 0 }
+            return twoFoodTotalProcessingTime / Double(twoFoodCount)
+        }
+
+        /// Average processing time for requests that found multiple (3+) food items
+        var averageMultipleFoodProcessingTime: TimeInterval {
+            guard multipleFoodCount > 0 else { return 0 }
+            return multipleFoodTotalProcessingTime / Double(multipleFoodCount)
+        }
+
         init(
             modelKey: String,
             requestType: AIRequestType,
@@ -258,7 +211,15 @@ extension UserDefaults {
             failureCount: Int = 0,
             totalProcessingTime: TimeInterval = 0,
             totalSuccessProcessingTime: TimeInterval = 0,
-            totalFailureProcessingTime: TimeInterval = 0
+            totalFailureProcessingTime: TimeInterval = 0,
+            zeroFoodCount: Int = 0,
+            zeroFoodTotalProcessingTime: TimeInterval = 0,
+            oneFoodCount: Int = 0,
+            oneFoodTotalProcessingTime: TimeInterval = 0,
+            twoFoodCount: Int = 0,
+            twoFoodTotalProcessingTime: TimeInterval = 0,
+            multipleFoodCount: Int = 0,
+            multipleFoodTotalProcessingTime: TimeInterval = 0
         ) {
             self.modelKey = modelKey
             self.requestType = requestType
@@ -268,6 +229,14 @@ extension UserDefaults {
             self.totalProcessingTime = totalProcessingTime
             self.totalSuccessProcessingTime = totalSuccessProcessingTime
             self.totalFailureProcessingTime = totalFailureProcessingTime
+            self.zeroFoodCount = zeroFoodCount
+            self.zeroFoodTotalProcessingTime = zeroFoodTotalProcessingTime
+            self.oneFoodCount = oneFoodCount
+            self.oneFoodTotalProcessingTime = oneFoodTotalProcessingTime
+            self.twoFoodCount = twoFoodCount
+            self.twoFoodTotalProcessingTime = twoFoodTotalProcessingTime
+            self.multipleFoodCount = multipleFoodCount
+            self.multipleFoodTotalProcessingTime = multipleFoodTotalProcessingTime
         }
     }
 
@@ -277,7 +246,14 @@ extension UserDefaults {
     ///   - requestType: Whether this is an image or text request
     ///   - processingTime: The time it took to process the request in seconds
     ///   - success: Whether the request was successful
-    func recordAIRequest(model: AIModel, requestType: AIRequestType, processingTime: TimeInterval, success: Bool) {
+    ///   - foodItemCount: The number of food items found (optional, only for successful requests)
+    func recordAIRequest(
+        model: AIModel,
+        requestType: AIRequestType,
+        processingTime: TimeInterval,
+        success: Bool,
+        foodItemCount: Int? = nil
+    ) {
         var statistics = loadAIStatistics()
         let key = "\(model.rawValue):\(requestType.rawValue)"
 
@@ -287,13 +263,31 @@ extension UserDefaults {
             if success {
                 existing.successCount += 1
                 existing.totalSuccessProcessingTime += processingTime
+
+                // Update complexity-specific tracking for successful requests
+                if let count = foodItemCount {
+                    switch count {
+                    case 0:
+                        existing.zeroFoodCount += 1
+                        existing.zeroFoodTotalProcessingTime += processingTime
+                    case 1:
+                        existing.oneFoodCount += 1
+                        existing.oneFoodTotalProcessingTime += processingTime
+                    case 2:
+                        existing.twoFoodCount += 1
+                        existing.twoFoodTotalProcessingTime += processingTime
+                    default: // 3 or more
+                        existing.multipleFoodCount += 1
+                        existing.multipleFoodTotalProcessingTime += processingTime
+                    }
+                }
             } else {
                 existing.failureCount += 1
                 existing.totalFailureProcessingTime += processingTime
             }
             statistics[key] = existing
         } else {
-            let newStats = AIProviderStatistics(
+            var newStats = AIProviderStatistics(
                 modelKey: model.rawValue,
                 requestType: requestType,
                 requestCount: 1,
@@ -303,6 +297,25 @@ extension UserDefaults {
                 totalSuccessProcessingTime: success ? processingTime : 0,
                 totalFailureProcessingTime: success ? 0 : processingTime
             )
+
+            // Update complexity-specific tracking for successful requests
+            if success, let count = foodItemCount {
+                switch count {
+                case 0:
+                    newStats.zeroFoodCount = 1
+                    newStats.zeroFoodTotalProcessingTime = processingTime
+                case 1:
+                    newStats.oneFoodCount = 1
+                    newStats.oneFoodTotalProcessingTime = processingTime
+                case 2:
+                    newStats.twoFoodCount = 1
+                    newStats.twoFoodTotalProcessingTime = processingTime
+                default: // 3 or more
+                    newStats.multipleFoodCount = 1
+                    newStats.multipleFoodTotalProcessingTime = processingTime
+                }
+            }
+
             statistics[key] = newStats
         }
 

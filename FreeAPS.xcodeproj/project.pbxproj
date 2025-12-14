@@ -477,6 +477,7 @@
 		F2A4B7C62E6C9180000E0E85 /* BloodGlucoseManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A4B7C52E6C9180000E0E85 /* BloodGlucoseManager.swift */; };
 		F2A4B7CB2E6CDF8F000E0E85 /* AppServices.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A4B7CA2E6CDF8F000E0E85 /* AppServices.swift */; };
 		F2A4B7CF2E6F92B0000E0E85 /* AppCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2A4B7CE2E6F92B0000E0E85 /* AppCoordinator.swift */; };
+		F2B06FCB2EEF49EC000EADA9 /* AIUsageStatistics.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2B06FCA2EEF49EC000EADA9 /* AIUsageStatistics.swift */; };
 		F2C73D602EB6601900B700AB /* MainChartConfigRootView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C73D5F2EB6601900B700AB /* MainChartConfigRootView.swift */; };
 		F2C73D622EB6602D00B700AB /* MainChartConfigDataFlow.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C73D612EB6602D00B700AB /* MainChartConfigDataFlow.swift */; };
 		F2C73D642EB6603900B700AB /* MainChartConfigProvider.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C73D632EB6603900B700AB /* MainChartConfigProvider.swift */; };
@@ -1152,6 +1153,7 @@
 		F2A4B7C52E6C9180000E0E85 /* BloodGlucoseManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BloodGlucoseManager.swift; sourceTree = "<group>"; };
 		F2A4B7CA2E6CDF8F000E0E85 /* AppServices.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppServices.swift; sourceTree = "<group>"; };
 		F2A4B7CE2E6F92B0000E0E85 /* AppCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppCoordinator.swift; sourceTree = "<group>"; };
+		F2B06FCA2EEF49EC000EADA9 /* AIUsageStatistics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIUsageStatistics.swift; sourceTree = "<group>"; };
 		F2C73D5F2EB6601900B700AB /* MainChartConfigRootView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainChartConfigRootView.swift; sourceTree = "<group>"; };
 		F2C73D612EB6602D00B700AB /* MainChartConfigDataFlow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainChartConfigDataFlow.swift; sourceTree = "<group>"; };
 		F2C73D632EB6603900B700AB /* MainChartConfigProvider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainChartConfigProvider.swift; sourceTree = "<group>"; };
@@ -1516,6 +1518,7 @@
 				F2FA68892EE90FD500476D7B /* ImageAnalysisCache.swift */,
 				F2FA688B2EE915A300476D7B /* ImageCompression.swift */,
 				F2FA688D2EE9180800476D7B /* NetworkQualityMonitor.swift */,
+				F2B06FCA2EEF49EC000EADA9 /* AIUsageStatistics.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -3435,6 +3438,7 @@
 				F2159A522BA60F7A00A0B716 /* FontWeight.swift in Sources */,
 				CE2FAD3A297D93F0001A872C /* BloodGlucoseExtensions.swift in Sources */,
 				38E4453A274E411700EC9A94 /* Disk+[UIImage].swift in Sources */,
+				F2B06FCB2EEF49EC000EADA9 /* AIUsageStatistics.swift in Sources */,
 				F24EB2962EE5B8F300C981A2 /* AIFoodAnalysisError.swift in Sources */,
 				F2941FA72E78806800A9DD5D /* AppGroupCGMSettingsView.swift in Sources */,
 				72F1BD388F42FCA6C52E4500 /* ConfigEditorProvider.swift in Sources */,

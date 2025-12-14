@@ -165,15 +165,15 @@ extension TextAnalysisService {
             foodItemsDetailed: items,
             overallDescription: nil,
             confidence: confidence,
-            servingsStandard: nil,
-            portionAssessmentMethod: nil,
+//            servingsStandard: nil,
+//            portionAssessmentMethod: nil,
             diabetesConsiderations: nil,
-            visualAssessmentDetails: nil,
+//            visualAssessmentDetails: nil,
             notes: nil,
-            absorptionTimeHours: nil,
-            absorptionTimeReasoning: nil,
-            mealSizeImpact: nil,
-            safetyAlerts: nil
+//            absorptionTimeHours: nil,
+//            absorptionTimeReasoning: nil,
+//            mealSizeImpact: nil,
+//            safetyAlerts: nil
         )
     }
 }

@@ -344,11 +344,15 @@ struct AnalyzingPill: View {
     @State private var rotation: Double = 0
     @State private var shimmerPhase: CGFloat = -140
     @State private var progress: CGFloat = 0.0
-    @State private var isOvertime: Bool = false
+    @State private var progressAnimationID = UUID()
 
-    // Computed property to determine if finished
-    private var isFinished: Bool {
-        endDate != nil
+    // Combined state to track all relevant changes
+    @State private var progressState = ProgressState()
+
+    private struct ProgressState: Equatable {
+        var eta: TimeInterval? = nil
+        var isFinished: Bool = false
+        var isOvertime: Bool = false
     }
 
     // Helper function to format elapsed time
@@ -403,8 +407,8 @@ struct AnalyzingPill: View {
                 let elapsed = endDate.timeIntervalSince(startDate)
                 let formattedElapsedTime = formatElapsedTime(elapsed)
                 return "\(NSLocalizedString("Finished in", comment: "AI analysis finished in...")) \(formattedElapsedTime)"
-            } else if isOvertime {
-                return NSLocalizedString("Taking longer than usual…", comment: "AI analysis taking longer than expected")
+            } else if progressState.isOvertime {
+                return NSLocalizedString("AI is still thinking…", comment: "AI analysis taking longer than expected")
             } else {
                 return title
             }
@@ -414,24 +418,26 @@ struct AnalyzingPill: View {
             Text(displayText)
                 .font(.footnote)
                 .foregroundStyle(.primary)
-                .opacity(isFinished ? 0.9 : 0.5)
-                .overlay(
-                    Text(displayText)
-                        .font(.footnote)
-                        .foregroundStyle(.primary)
-                        .mask(
-                            LinearGradient(
-                                gradient: Gradient(stops: [
-                                    .init(color: .black.opacity(0.0), location: 0.0),
-                                    .init(color: .white, location: 0.5),
-                                    .init(color: .black.opacity(0.0), location: 1.0)
-                                ]),
-                                startPoint: .leading,
-                                endPoint: .trailing
+                .opacity(progressState.isFinished ? 0.9 : 0.7)
+                .overlay {
+                    if !progressState.isFinished {
+                        Text(displayText)
+                            .font(.footnote)
+                            .foregroundStyle(.primary)
+                            .mask(
+                                LinearGradient(
+                                    gradient: Gradient(stops: [
+                                        .init(color: .black.opacity(0.0), location: 0.0),
+                                        .init(color: .white, location: 0.5),
+                                        .init(color: .black.opacity(0.0), location: 1.0)
+                                    ]),
+                                    startPoint: .leading,
+                                    endPoint: .trailing
+                                )
+                                .offset(x: shimmerPhase)
                             )
-                            .offset(x: shimmerPhase)
-                        )
-                )
+                    }
+                }
             Spacer(minLength: 8)
             if let startDate = startDate {
                 if endDate == nil {
@@ -439,15 +445,30 @@ struct AnalyzingPill: View {
                         let elapsed = context.date.timeIntervalSince(startDate)
 
                         // Check if we've exceeded the ETA
-                        if let eta = eta, elapsed > eta, !isOvertime {
+                        if let eta = eta, elapsed > eta, !progressState.isOvertime {
                             DispatchQueue.main.async {
-                                isOvertime = true
+                                progressState = ProgressState(
+                                    eta: progressState.eta,
+                                    isFinished: progressState.isFinished,
+                                    isOvertime: true
+                                )
                             }
                         }
 
-                        return Text(formatElapsedTime(elapsed))
+                        let displayTime: String = {
+                            if progressState.isOvertime {
+                                return formatElapsedTime(elapsed)
+                            } else if let eta = eta {
+                                return "\(formatElapsedTime(elapsed)) / \(formatElapsedTime(eta))"
+                            } else {
+                                return formatElapsedTime(elapsed)
+                            }
+                        }()
+
+                        return Text(displayTime)
                             .font(.footnote.monospacedDigit())
-                            .foregroundStyle(.secondary)
+                            .foregroundStyle(.primary)
+                            .opacity(0.9)
                             .padding(.trailing, 6)
                     }
                 }
@@ -475,14 +496,14 @@ struct AnalyzingPill: View {
             // Progress bar underneath the inner glow
             .background(
                 GeometryReader { geometry in
-                    let progressColor = isFinished ? Color.green : Color.cyan
-                    let progressOpacity = isFinished ? 0.9 : 0.9
+                    let progressColor = progressState.isFinished ? Color.green : Color.cyan
                     let progressWidth = geometry.size.width * progress
 
-                    return Capsule()
-                        .fill(progressColor.opacity(progressOpacity))
+                    Capsule()
+                        .fill(progressColor.opacity(0.9))
                         .frame(width: progressWidth)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        .id(progressAnimationID)
                 }
                 .mask(Capsule())
             )
@@ -558,7 +579,7 @@ struct AnalyzingPill: View {
             // Traveling spotlight using trim with wrap-around handling (timeline-driven)
             .overlay(
                 Group {
-                    if !isFinished {
+                    if !progressState.isFinished {
                         TimelineView(.animation) { context in
                             let duration: TimeInterval = 5 // seconds per full revolution
                             let t = context.date.timeIntervalSinceReferenceDate
@@ -636,43 +657,34 @@ struct AnalyzingPill: View {
                     withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) {
                         shimmerPhase = 140
                     }
-
-                    // Animate progress based on eta
-                    if let eta = eta, !isFinished {
-                        withAnimation(.easeOut(duration: eta)) {
-                            progress = 1.0
-                        }
-                    }
                 }
             }
             .onChange(of: startDate) { _, newStartDate in
                 // Reset progress when a new analysis starts
                 if newStartDate != nil {
                     progress = 0.0
-                    isOvertime = false
+                    progressState = ProgressState(eta: eta, isFinished: false, isOvertime: false)
                 }
             }
             .onChange(of: eta) { _, newEta in
-                // Trigger progress animation when ETA is received from telemetry
-                if let newEta = newEta, !isFinished, progress < 0.95 {
-                    withAnimation(.easeOut(duration: newEta)) {
-                        progress = 1.0
-                    }
-                }
+                progressState = ProgressState(eta: newEta, isFinished: endDate != nil, isOvertime: progressState.isOvertime)
             }
-            .onChange(of: isOvertime) { _, overtime in
-                if overtime {
-                    // Keep progress at 100% when overtime
+            .onChange(of: endDate) { _, _ in
+                progressState = ProgressState(eta: eta, isFinished: endDate != nil, isOvertime: progressState.isOvertime)
+            }
+            .onChange(of: progressState) { _, state in
+                if state.isFinished {
+                    // Finished: reset animation ID to cancel any in-flight animation, then immediately set to 100%
+                    progressAnimationID = UUID()
                     progress = 1.0
-                }
-            }
-            .onChange(of: endDate) { _, newEndDate in
-                if newEndDate != nil {
-                    isOvertime = false
-                    DispatchQueue.main.async {
-                        withAnimation(.easeInOut(duration: 0.15)) {
-                            progress = 1.0
-                        }
+                } else if state.isOvertime {
+                    // Overtime: reset animation ID and immediately set to 100%
+                    progressAnimationID = UUID()
+                    progress = 1.0
+                } else if let eta = state.eta {
+                    // Normal: animate to 100% over ETA duration
+                    withAnimation(.easeOut(duration: eta)) {
+                        progress = 1.0
                     }
                 }
             }

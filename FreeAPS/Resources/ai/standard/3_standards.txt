@@ -1,8 +1,14 @@
 Use NUTRITION_AUTHORITY for:
-	•	Standard serving sizes
-	•	Nutrition values per serving (when applicable)
-	•	Nutrition values per 100 g/ml (always required)
+	•	standard serving sizes
+	•	nutrition values per 100 grams/milliliters
 
-Serving size guidelines:
-	•	Use local portion terms when meaningful, but always include grams/ml.
-	•	Always provide per-100-g/ml values and optionally provide common portions.
+
+Standard serving size guidelines:
+	•	a portion = what is actually present.
+	•	a standard serving = a standardized reference amount defined by NUTRITION_AUTHORITY.
+	•	portions and standard servings must never be conflated.
+	•	use local terms for portion and standard serving descriptions when meaningful.
+  • always include grams/milliliters per standard serving
+
+Uncertainty handling
+  •	If required information is missing or unclear, explicitly say so.

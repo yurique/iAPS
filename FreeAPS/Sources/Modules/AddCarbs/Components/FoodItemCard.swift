@@ -14,8 +14,16 @@ struct FoodItemCard: View {
                         PortionSizeBadge(
                             value: portion,
                             unit: (foodItem.units ?? .grams).localizedAbbreviation,
-                            color: .yellow
+                            color: .yellow,
+                            icon: "scalemass.fill"
                         )
+                        if let servingSize = foodItem.standardServingSize {
+                            NumberOfServingsBadge(
+                                value: portion / servingSize,
+                                color: .orange,
+                                icon: "multiply" // or "xmark"
+                            )
+                        }
                     }
 
                     Text(foodItem.name ?? "Product without name")
@@ -48,22 +56,6 @@ struct FoodItemCard: View {
 //                                unit: (foodItem.units ?? .grams).localizedAbbreviation,
 //                                color: .yellow
 //                            )
-
-                            if let portionEstimate = foodItem.portionEstimate {
-                                VStack(alignment: .leading) {
-                                    Text(portionEstimate)
-                                        .font(.caption)
-
-                                    if let servingSize = foodItem.standardServingSize
-                                    {
-                                        Text(
-                                            "\(portion / servingSize, specifier: "%.1f") \(NSLocalizedString("servings", comment: ""))"
-                                        )
-                                        .font(.caption)
-                                        .foregroundStyle(.secondary)
-                                    }
-                                }
-                            }
                         }
                     }
 
@@ -264,6 +256,36 @@ struct FoodItemCard: View {
                 }
                 VStack(spacing: 2) {
                     Text("\(value, specifier: "%.0f") \(NSLocalizedString(unit, comment: ""))")
+                        .font(.system(size: 15, weight: .bold))
+                }
+            }
+            .foregroundColor(color)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
+            .background(color.opacity(0.15))
+            .cornerRadius(8)
+        }
+    }
+
+    private struct NumberOfServingsBadge: View {
+        let value: Double
+        let color: Color
+        let icon: String
+
+        init(value: Double, color: Color, icon: String? = nil) {
+            self.value = value
+            self.color = color
+            self.icon = icon ?? ""
+        }
+
+        var body: some View {
+            HStack(spacing: 4) {
+                if !icon.isEmpty {
+                    Image(systemName: icon)
+                        .font(.system(size: 10))
+                }
+                VStack(spacing: 2) {
+                    Text("\(value, specifier: "%.1f")")
                         .font(.system(size: 15, weight: .bold))
                 }
             }

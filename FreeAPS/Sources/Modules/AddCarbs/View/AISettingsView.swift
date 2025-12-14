@@ -684,32 +684,68 @@ private struct StatisticsView: View {
                 ForEach(groupedStats, id: \.provider) { group in
                     Section(header: Text(group.providerDisplayName)) {
                         ForEach(group.models, id: \.key) { model in
-                            VStack(alignment: .leading, spacing: 6) {
-                                // Model name header
-                                Text(modelDisplayName(for: model.modelKey))
-                                    .font(.headline)
-                                    .fontWeight(.bold)
-                                    .padding(.bottom, 2)
+                            VStack(alignment: .leading, spacing: 8) {
+                                // Model name header with column labels
+                                HStack(alignment: .center, spacing: 8) {
+                                    Text(modelDisplayName(for: model.modelKey))
+                                        .font(.headline)
+                                        .fontWeight(.bold)
 
-                                // Image stats row
+                                    Spacer()
+
+                                    // Column headers
+                                    HStack(spacing: 12) {
+                                        Text("Requests")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                            .frame(width: 70, alignment: .trailing)
+
+                                        Text("Avg Time")
+                                            .font(.caption2)
+                                            .foregroundColor(.secondary)
+                                            .frame(width: 60, alignment: .trailing)
+                                    }
+                                }
+                                .padding(.bottom, 4)
+
+                                // Image stats section
                                 if let imageStat = model.imageStat {
-                                    StatRow(
-                                        icon: "photo",
-                                        label: "Image",
-                                        stat: imageStat
-                                    )
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        StatTypeHeader(icon: "photo", label: "Image")
+
+                                        StatRow(
+                                            label: "Total",
+                                            stat: imageStat,
+                                            showSuccessBadge: true
+                                        )
+                                        .padding(.leading, 30)
+
+                                        // Complexity breakdown for image stats
+                                        ComplexityBreakdownView(stat: imageStat)
+                                            .padding(.leading, 30)
+                                    }
                                 }
 
-                                // Text stats row
+                                // Text stats section
                                 if let textStat = model.textStat {
-                                    StatRow(
-                                        icon: "text.alignleft",
-                                        label: "Text",
-                                        stat: textStat
-                                    )
+                                    VStack(alignment: .leading, spacing: 4) {
+                                        StatTypeHeader(icon: "text.alignleft", label: "Text")
+
+                                        StatRow(
+                                            label: "Total",
+                                            stat: textStat,
+                                            showSuccessBadge: true
+                                        )
+                                        .padding(.leading, 30)
+
+                                        // Complexity breakdown for text stats
+                                        ComplexityBreakdownView(stat: textStat)
+                                            .padding(.leading, 30)
+                                    }
+                                    .padding(.top, 8)
                                 }
                             }
-                            .padding(.vertical, 4)
+                            .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
                         }
                     }
                 }
@@ -804,70 +840,173 @@ private struct StatisticsView: View {
     }
 }
 
+// MARK: - StatTypeHeader Component
+
+private struct StatTypeHeader: View {
+    let icon: String
+    let label: String
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: icon)
+                .font(.subheadline)
+                .foregroundColor(.accentColor)
+            Text(label)
+                .font(.subheadline)
+                .fontWeight(.semibold)
+        }
+        .padding(.top, 4)
+    }
+}
+
 // MARK: - StatRow Component
 
 private struct StatRow: View {
-    let icon: String
     let label: String
     let stat: UserDefaults.AIProviderStatistics
+    let showSuccessBadge: Bool
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
-            // Left side: Type label (fixed width)
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.caption)
-                    .frame(width: 14)
-                Text(label)
-                    .font(.caption)
-            }
-            .foregroundColor(.secondary)
-            .frame(width: 60, alignment: .leading)
+            // Left side: Row label
+            Text(label)
+                .font(.caption)
+                .foregroundColor(.secondary)
+                .frame(width: 60, alignment: .leading)
 
-            // Success rate badge (fixed width)
-            HStack(spacing: 3) {
-                Image(
-                    systemName: stat.successRate >= 90 ? "checkmark.circle.fill" :
-                        stat.successRate >= 70 ? "checkmark.circle" : "exclamationmark.circle"
-                )
-                .font(.caption2)
-                .frame(width: 12)
-                Text(String(format: "%.0f%%", stat.successRate))
+            // Success rate badge (only for total row)
+            if showSuccessBadge {
+                HStack(spacing: 3) {
+                    Image(
+                        systemName: stat.successRate >= 90 ? "checkmark.circle.fill" :
+                            stat.successRate >= 70 ? "checkmark.circle" : "exclamationmark.circle"
+                    )
                     .font(.caption2)
-                    .fontWeight(.semibold)
-                    .frame(width: 32, alignment: .leading)
-            }
-            .foregroundColor(
-                stat.successRate >= 90 ? .green :
-                    stat.successRate >= 70 ? .orange : .red
-            )
-            .padding(.horizontal, 6)
-            .padding(.vertical, 2)
-            .background(
-                (
-                    stat.successRate >= 90 ? Color.green :
-                        stat.successRate >= 70 ? Color.orange : Color.red
+                    .frame(width: 12)
+                    Text(String(format: "%.0f%%", stat.successRate))
+                        .font(.caption2)
+                        .fontWeight(.semibold)
+                        .frame(width: 32, alignment: .leading)
+                }
+                .foregroundColor(
+                    stat.successRate >= 90 ? .green :
+                        stat.successRate >= 70 ? .orange : .red
                 )
-                .opacity(0.08)
-            )
-            .cornerRadius(4)
-            .frame(width: 65, alignment: .leading)
+                .padding(.horizontal, 6)
+                .padding(.vertical, 2)
+                .background(
+                    (
+                        stat.successRate >= 90 ? Color.green :
+                            stat.successRate >= 70 ? Color.orange : Color.red
+                    )
+                    .opacity(0.08)
+                )
+                .cornerRadius(4)
+                .frame(width: 65, alignment: .leading)
+            } else {
+                Color.clear
+                    .frame(width: 65)
+            }
 
             Spacer()
 
             // Right side: Statistics columns
-            HStack(spacing: 16) {
+            HStack(spacing: 12) {
                 // Request count column
-                Text("\(stat.requestCount) requests")
+                Text("\(stat.requestCount)")
                     .font(.caption)
-                    .foregroundColor(.secondary)
-                    .frame(width: 90, alignment: .trailing)
+                    .foregroundColor(.primary)
+                    .frame(width: 70, alignment: .trailing)
 
                 // Average time column
-                Text(String(format: "%.1fs avg", stat.averageProcessingTime))
+                Text(String(format: "%.1fs", stat.averageProcessingTime))
                     .font(.caption)
+                    .foregroundColor(.primary)
+                    .frame(width: 60, alignment: .trailing)
+            }
+        }
+    }
+}
+
+// MARK: - ComplexityBreakdownView Component
+
+private struct ComplexityBreakdownView: View {
+    let stat: UserDefaults.AIProviderStatistics
+
+    var body: some View {
+        VStack(spacing: 4) {
+            // Show breakdown only if we have any complexity data
+            if stat.zeroFoodCount > 0 || stat.oneFoodCount > 0 || stat.twoFoodCount > 0 || stat.multipleFoodCount > 0 {
+                if stat.zeroFoodCount > 0 {
+                    ComplexityRow(
+                        label: "0 items",
+                        count: stat.zeroFoodCount,
+                        averageTime: stat.averageZeroFoodProcessingTime
+                    )
+                }
+
+                if stat.oneFoodCount > 0 {
+                    ComplexityRow(
+                        label: "1 item",
+                        count: stat.oneFoodCount,
+                        averageTime: stat.averageOneFoodProcessingTime
+                    )
+                }
+
+                if stat.twoFoodCount > 0 {
+                    ComplexityRow(
+                        label: "2 items",
+                        count: stat.twoFoodCount,
+                        averageTime: stat.averageTwoFoodProcessingTime
+                    )
+                }
+
+                if stat.multipleFoodCount > 0 {
+                    ComplexityRow(
+                        label: "3+ items",
+                        count: stat.multipleFoodCount,
+                        averageTime: stat.averageMultipleFoodProcessingTime
+                    )
+                }
+            }
+        }
+    }
+}
+
+// MARK: - ComplexityRow Component
+
+private struct ComplexityRow: View {
+    let label: String
+    let count: Int
+    let averageTime: TimeInterval
+
+    var body: some View {
+        HStack(alignment: .center, spacing: 12) {
+            // Left side: Complexity label
+            Text(label)
+                .font(.caption2)
+                .foregroundStyle(.tertiary)
+                .frame(width: 60, alignment: .leading)
+
+            // Empty space where success badge would be
+            Color.clear
+                .frame(width: 65)
+
+            Spacer()
+
+            // Right side: Statistics columns
+            HStack(spacing: 12) {
+                // Request count column
+                Text("\(count)")
+                    .font(.caption2)
                     .foregroundColor(.secondary)
                     .frame(width: 70, alignment: .trailing)
+
+                // Average time column
+                Text(String(format: "%.1fs", averageTime))
+                    .font(.caption2)
+                    .foregroundColor(.secondary)
+                    .frame(width: 60, alignment: .trailing)
             }
         }
     }
