@@ -2,44 +2,8 @@ import SwiftUI
 
 struct AIAnalysisResultsView: View {
     let analysisResult: FoodAnalysisResult
-    let onFoodItemSelected: (FoodItem) -> Void
-    let onCompleteMealSelected: (FoodItem) -> Void
-
-    private var totalCarbs: Double {
-        var totalCarbs: Double = 0
-        for item in analysisResult.foodItemsDetailed {
-            if let portion = item.portionEstimateSize {
-                if let carbsPer100 = item.carbsPer100 {
-                    totalCarbs += carbsPer100 / 100 * portion
-                }
-            }
-        }
-        return totalCarbs
-    }
-
-    private var totalFat: Double {
-        var totalFat: Double = 0
-        for item in analysisResult.foodItemsDetailed {
-            if let portion = item.portionEstimateSize {
-                if let fatPer100 = item.fatPer100 {
-                    totalFat += fatPer100 / 100 * portion
-                }
-            }
-        }
-        return totalFat
-    }
-
-    private var totalProtein: Double {
-        var totalProtein: Double = 0
-        for item in analysisResult.foodItemsDetailed {
-            if let portion = item.portionEstimateSize {
-                if let proteinPer100 = item.proteinPer100 {
-                    totalProtein += proteinPer100 / 100 * portion
-                }
-            }
-        }
-        return totalProtein
-    }
+    let onFoodItemSelected: (AIFoodItem) -> Void
+    let onCompleteMealSelected: (AIFoodItem) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -82,13 +46,16 @@ struct AIAnalysisResultsView: View {
                                 analysisResult.foodItemsDetailed.first?.name ?? "Meal" :
                                 "Complete Meal"
 
-                            let totalMeal = FoodItem(
+                            let totalMeal = AIFoodItem(
                                 name: mealName,
-                                carbs: Decimal(totalCarbs),
-                                fat: Decimal(totalFat),
-                                protein: Decimal(totalProtein),
-                                source: "AI overall analysis • \(analysisResult.foodItemsDetailed.count) Food",
-                                imageURL: nil
+                                brand: nil,
+                                calories: analysisResult.totalCalories,
+                                carbs: analysisResult.totalCarbs,
+                                protein: analysisResult.totalProtein,
+                                fat: analysisResult.totalFat,
+                                imageURL: analysisResult.foodItemsDetailed.count == 1 ? analysisResult.foodItemsDetailed.first?
+                                    .imageURL : nil,
+                                source: analysisResult.source
                             )
                             onCompleteMealSelected(totalMeal)
                         }) {
@@ -114,18 +81,18 @@ struct AIAnalysisResultsView: View {
 
                     LazyVGrid(columns: Array(repeating: GridItem(.flexible()), count: 3), spacing: 10) {
                         NutritionSummaryBadge(
-                            value: totalCarbs,
+                            value: analysisResult.totalCarbs,
                             unit: "g",
                             label: "Carbs",
                             color: .orange
                         )
 
-                        if totalProtein != 0 {
-                            NutritionSummaryBadge(value: totalProtein, unit: "g", label: "Protein", color: .green)
+                        if analysisResult.totalProtein != 0 {
+                            NutritionSummaryBadge(value: analysisResult.totalProtein, unit: "g", label: "Protein", color: .green)
                         }
 
-                        if totalFat != 0 {
-                            NutritionSummaryBadge(value: totalFat, unit: "g", label: "Fat", color: .loopRed)
+                        if analysisResult.totalFat != 0 {
+                            NutritionSummaryBadge(value: analysisResult.totalFat, unit: "g", label: "Fat", color: .loopRed)
                         }
                     }
                 }
@@ -145,29 +112,15 @@ struct AIAnalysisResultsView: View {
                 FoodItemCard(
                     foodItem: foodItem,
                     onSelect: {
-                        var carbs: Double = 0
-                        var proteins: Double = 0
-                        var fat: Double = 0
-
-                        if let portion = foodItem.portionEstimateSize {
-                            if let carbsPer100 = foodItem.carbsPer100 {
-                                carbs = carbsPer100 / 100 * portion
-                            }
-                            if let proteinPer100 = foodItem.proteinPer100 {
-                                proteins = proteinPer100 / 100 * portion
-                            }
-                            if let fatPer100 = foodItem.fatPer100 {
-                                fat = fatPer100 / 100 * portion
-                            }
-                        }
-
-                        let selectedFood = FoodItem(
+                        let selectedFood = AIFoodItem(
                             name: foodItem.name ?? "Product without name",
-                            carbs: Decimal(carbs),
-                            fat: Decimal(fat),
-                            protein: Decimal(proteins),
-                            source: "AI Analysis",
-                            imageURL: nil
+                            brand: foodItem.brand,
+                            calories: foodItem.caloriesInThisPortion ?? 0,
+                            carbs: foodItem.carbsInThisPortion ?? 0,
+                            protein: foodItem.proteinInThisPortion ?? 0,
+                            fat: foodItem.fatInThisPortion ?? 0,
+                            imageURL: foodItem.imageURL,
+                            source: foodItem.source
                         )
                         onFoodItemSelected(selectedFood)
                     }

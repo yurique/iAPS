@@ -46,7 +46,9 @@ protocol AIModelBase {
 
     var timeoutsConfig: ModelTimeoutsConfig { get }
 
-    var defaultETA: TimeInterval { get }
+    var defaultImageETA: TimeInterval { get }
+
+    var defaultTextETA: TimeInterval { get }
 
     var provider: AIProvider { get }
 }
@@ -102,7 +104,7 @@ enum OpenAIModel: String, AIModelBase, Encodable {
         }
     }
 
-    var defaultETA: TimeInterval {
+    var defaultImageETA: TimeInterval {
         switch self {
         case .gpt_4o: 35
         case .gpt_4o_mini: 25
@@ -110,6 +112,17 @@ enum OpenAIModel: String, AIModelBase, Encodable {
         case .gpt_5_mini: 30
         case .gpt_5_1: 45
         case .gpt_5_2: 50
+        }
+    }
+
+    var defaultTextETA: TimeInterval {
+        switch self {
+        case .gpt_4o: 10
+        case .gpt_4o_mini: 10
+        case .gpt_5: 15
+        case .gpt_5_mini: 10
+        case .gpt_5_1: 15
+        case .gpt_5_2: 15
         }
     }
 
@@ -161,11 +174,19 @@ enum GeminiModel: String, AIModelBase, Encodable {
         }
     }
 
-    var defaultETA: TimeInterval {
+    var defaultImageETA: TimeInterval {
         switch self {
         case .gemini_2_5_pro: 40
         case .gemini_2_5_flash: 30
         case .gemini_3_pro_preview: 45
+        }
+    }
+
+    var defaultTextETA: TimeInterval {
+        switch self {
+        case .gemini_2_5_pro: 15
+        case .gemini_2_5_flash: 10
+        case .gemini_3_pro_preview: 15
         }
     }
 
@@ -205,10 +226,17 @@ enum ClaudeModel: String, AIModelBase, Encodable {
         }
     }
 
-    var defaultETA: TimeInterval {
+    var defaultImageETA: TimeInterval {
         switch self {
         case .sonnet_4_5: 55
         case .haiku_4_5: 40
+        }
+    }
+
+    var defaultTextETA: TimeInterval {
+        switch self {
+        case .sonnet_4_5: 15
+        case .haiku_4_5: 10
         }
     }
 
@@ -252,11 +280,27 @@ enum AIModel {
         }
     }
 
-    var defaultETA: TimeInterval {
+    var description: String {
         switch self {
-        case let .openAI(model): model.defaultETA
-        case let .gemini(model): model.defaultETA
-        case let .claude(model): model.defaultETA
+        case let .openAI(model): "\(model.provider.displayName) \(model.displayName)"
+        case let .gemini(model): "\(model.provider.displayName) \(model.displayName)"
+        case let .claude(model): "\(model.provider.displayName) \(model.displayName)"
+        }
+    }
+
+    var defaultImageETA: TimeInterval {
+        switch self {
+        case let .openAI(model): model.defaultImageETA
+        case let .gemini(model): model.defaultImageETA
+        case let .claude(model): model.defaultImageETA
+        }
+    }
+
+    var defaultTextETA: TimeInterval {
+        switch self {
+        case let .openAI(model): model.defaultTextETA
+        case let .gemini(model): model.defaultTextETA
+        case let .claude(model): model.defaultTextETA
         }
     }
 }

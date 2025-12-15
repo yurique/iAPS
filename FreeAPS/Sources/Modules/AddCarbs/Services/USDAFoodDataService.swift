@@ -14,7 +14,7 @@ extension USDAFoodDataService: TextAnalysisService {
         telemetryCallback _: ((String) -> Void)?
     ) async throws -> FoodAnalysisResult {
         let products = try await searchProducts(query: prompt, pageSize: 15)
-        return fromOpenFoodFactsProducts(products: products, confidence: nil)
+        return fromOpenFoodFactsProducts(products: products, confidence: nil, source: .search)
     }
 }
 
@@ -152,12 +152,12 @@ final class USDAFoodDataService {
         }
 
         // Extract nutrition data from USDA food nutrients with comprehensive mapping
-        var carbs: Double = 0
-        var protein: Double = 0
-        var fat: Double = 0
-        var fiber: Double = 0
-        var sugars: Double = 0
-        var energy: Double = 0
+        var carbs: Decimal = 0
+        var protein: Decimal = 0
+        var fat: Decimal = 0
+        var fiber: Decimal = 0
+        var sugars: Decimal = 0
+        var energy: Decimal = 0
 
         // Track what nutrients we found for debugging
         var foundNutrients: [String] = []
@@ -192,17 +192,17 @@ final class USDAFoodDataService {
                 }
 
                 // Handle both Double and String values from USDA API
-                var value: Double = 0
+                var value: Decimal = 0
                 if let doubleValue = nutrient["value"] as? Double {
-                    value = doubleValue
+                    value = Decimal(doubleValue)
                 } else if let stringValue = nutrient["value"] as? String,
-                          let parsedValue = Double(stringValue)
+                          let parsedValue = Decimal(from: stringValue)
                 {
                     value = parsedValue
                 } else if let doubleValue = nutrient["amount"] as? Double {
-                    value = doubleValue
+                    value = Decimal(doubleValue)
                 } else if let stringValue = nutrient["amount"] as? String,
-                          let parsedValue = Double(stringValue)
+                          let parsedValue = Decimal(from: stringValue)
                 {
                     value = parsedValue
                 } else {

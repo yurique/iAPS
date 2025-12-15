@@ -64,7 +64,7 @@ private let standardAnalysis_5_1_photo_instructions: String = PromptLoader
 private let standardAnalysis_5_2_text_instructions: String = PromptLoader
     .loadTextResource(named: "ai/standard/5_2_text_instructions.txt")
 
-private let standardAnalysis_6_concepts: String = PromptLoader.loadTextResource(named: "ai/standard/6_concepts.txt")
+private let standardAnalysis_6_pre_response: String = PromptLoader.loadTextResource(named: "ai/standard/6_pre_response.txt")
 
 private let standardAnalysis_8_1_photo_response_format: String = PromptLoader
     .loadTextResource(named: "ai/standard/8_1_photo_response_format.txt")
@@ -119,7 +119,7 @@ private func getStandardAnalysisPrompt(
         userPreferences + "\n\n" +
         standardAnalysis_3_Standards + "\n\n" +
         instructions + "\n\n" +
-        standardAnalysis_6_concepts + "\n\n" +
+        standardAnalysis_6_pre_response + "\n\n" +
         responseFormat + "\n\n" +
         standardAnalysis_8_footer_common + "\n\n" +
         footerRequirements

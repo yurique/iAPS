@@ -136,27 +136,27 @@ extension AnalysisServiceBase {
 extension TextAnalysisService {
     func fromOpenFoodFactsProducts(
         products: [OpenFoodFactsProduct],
-        confidence: AIConfidenceLevel?
+        confidence: AIConfidenceLevel?,
+        source _: FoodItemSource
     ) -> FoodAnalysisResult {
         let items: [AnalysedFoodItem] = products.map { item in
             AnalysedFoodItem(
                 name: item.productName ?? "Product without name",
+                brand: item.brands,
                 portionEstimate: item.servingSize,
                 portionEstimateSize: item.servingQuantity,
                 standardServing: item.servingSize,
                 standardServingSize: item.servingQuantity,
                 units: MealUnits.grams,
-                preparationMethod: nil,
-                visualCues: nil,
                 caloriesPer100: item.nutriments.calories,
                 carbsPer100: item.nutriments.carbohydrates,
                 fatPer100: item.nutriments.fat,
                 fiberPer100: item.nutriments.fiber,
                 proteinPer100: item.nutriments.proteins,
                 sugarsPer100: item.nutriments.sugars,
-                assessmentNotes: nil,
                 imageURL: item.imageURL,
-                imageFrontURL: item.imageFrontURL
+                imageFrontURL: item.imageFrontURL,
+                source: .search
             )
         }
 

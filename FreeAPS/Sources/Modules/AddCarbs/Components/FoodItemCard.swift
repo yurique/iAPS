@@ -64,8 +64,10 @@ struct FoodItemCard: View {
                             Text("Standard serving:")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
-                            Text("\(standardServingSize, specifier: "%.0f") \((foodItem.units ?? .grams).localizedAbbreviation)")
-                                .font(.caption)
+                            Text(
+                                "\(Double(standardServingSize), specifier: "%.0f") \((foodItem.units ?? .grams).localizedAbbreviation)"
+                            )
+                            .font(.caption)
                         }
                         if let standardServing = foodItem.standardServing {
                             HStack {
@@ -76,18 +78,16 @@ struct FoodItemCard: View {
                         }
                     }
 
-                    if let portion = foodItem.portionEstimateSize {
-                        HStack(spacing: 8) {
-                            if let carbsPer100 = foodItem.carbsPer100 {
-                                NutritionBadge(value: carbsPer100 / 100 * portion, unit: "g", label: "Carbs", color: .orange)
-                            }
-                            if let proteinPer100 = foodItem.proteinPer100, proteinPer100 > 0 {
-                                NutritionBadge(value: proteinPer100 / 100 * portion, unit: "g", label: "Protein", color: .green)
-                            }
+                    HStack(spacing: 8) {
+                        if let carbs = foodItem.carbsInThisPortion {
+                            NutritionBadge(value: carbs, unit: "g", label: "Carbs", color: .orange)
+                        }
+                        if let protein = foodItem.proteinInThisPortion, protein > 0 {
+                            NutritionBadge(value: protein, unit: "g", label: "Protein", color: .green)
+                        }
 
-                            if let fatPer100 = foodItem.fatPer100, fatPer100 > 0 {
-                                NutritionBadge(value: fatPer100 / 100 * portion, unit: "g", label: "Fat", color: .blue)
-                            }
+                        if let fat = foodItem.fatInThisPortion, fat > 0 {
+                            NutritionBadge(value: fat, unit: "g", label: "Fat", color: .blue)
                         }
                     }
                 }
@@ -200,13 +200,13 @@ struct FoodItemCard: View {
     }
 
     private struct NutritionBadge: View {
-        let value: Double
+        let value: Decimal
         let unit: String
         let label: String
         let color: Color
         let icon: String
 
-        init(value: Double, unit: String, label: String, color: Color, icon: String? = nil) {
+        init(value: Decimal, unit: String, label: String, color: Color, icon: String? = nil) {
             self.value = value
             self.unit = unit
             self.label = label
@@ -221,7 +221,7 @@ struct FoodItemCard: View {
                         .font(.system(size: 10))
                 }
                 VStack(spacing: 2) {
-                    Text("\(value, specifier: "%.1f") \(NSLocalizedString(unit, comment: ""))")
+                    Text("\(Double(value), specifier: "%.1f") \(NSLocalizedString(unit, comment: ""))")
                         .font(.system(size: 12, weight: .bold))
                     Text(NSLocalizedString(label, comment: ""))
                         .font(.system(size: 10, weight: .medium))
@@ -236,12 +236,12 @@ struct FoodItemCard: View {
     }
 
     private struct PortionSizeBadge: View {
-        let value: Double
+        let value: Decimal
         let unit: String
         let color: Color
         let icon: String
 
-        init(value: Double, unit: String, color: Color, icon: String? = nil) {
+        init(value: Decimal, unit: String, color: Color, icon: String? = nil) {
             self.value = value
             self.unit = unit
             self.color = color
@@ -255,7 +255,7 @@ struct FoodItemCard: View {
                         .font(.system(size: 10))
                 }
                 VStack(spacing: 2) {
-                    Text("\(value, specifier: "%.0f") \(NSLocalizedString(unit, comment: ""))")
+                    Text("\(Double(value), specifier: "%.0f") \(NSLocalizedString(unit, comment: ""))")
                         .font(.system(size: 15, weight: .bold))
                 }
             }
@@ -268,11 +268,11 @@ struct FoodItemCard: View {
     }
 
     private struct NumberOfServingsBadge: View {
-        let value: Double
+        let value: Decimal
         let color: Color
         let icon: String
 
-        init(value: Double, color: Color, icon: String? = nil) {
+        init(value: Decimal, color: Color, icon: String? = nil) {
             self.value = value
             self.color = color
             self.icon = icon ?? ""
@@ -285,7 +285,7 @@ struct FoodItemCard: View {
                         .font(.system(size: 10))
                 }
                 VStack(spacing: 2) {
-                    Text("\(value, specifier: "%.1f")")
+                    Text("\(Double(value), specifier: "%.1f")")
                         .font(.system(size: 15, weight: .bold))
                 }
             }

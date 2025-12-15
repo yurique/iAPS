@@ -1,4 +1,5 @@
 import Foundation
+import SlideButton
 import SwiftUI
 
 /// Simple secure field that uses proper SwiftUI components
@@ -396,7 +397,7 @@ struct AISettingsView: View {
                 }
 
                 // Statistics Section
-                let allStats = UserDefaults.standard.getAllAIStatistics()
+                let allStats = AIUsageStatistics.getAllStatistics()
                 if !allStats.isEmpty {
                     Section(
                         header: Text("Usage Statistics"),
@@ -408,7 +409,7 @@ struct AISettingsView: View {
                             HStack {
                                 Image(systemName: "chart.bar.fill")
                                     .foregroundColor(.accentColor)
-                                Text("View AI Model Statistics")
+                                Text("AI Usage Statistics")
                                 Spacer()
                                 Text("\(allStats.count)")
                                     .foregroundColor(.secondary)
@@ -564,12 +565,12 @@ struct AISettingsView: View {
     struct ProviderStatisticsGroup {
         let provider: AIProvider
         let providerDisplayName: String
-        let models: [UserDefaults.AIProviderStatistics]
+        let models: [AIUsageStatistics.Statistics]
     }
 
-    private func groupStatisticsByProvider(_ stats: [UserDefaults.AIProviderStatistics]) -> [ProviderStatisticsGroup] {
+    private func groupStatisticsByProvider(_ stats: [AIUsageStatistics.Statistics]) -> [ProviderStatisticsGroup] {
         // Group by provider
-        var grouped: [AIProvider: [UserDefaults.AIProviderStatistics]] = [:]
+        var grouped: [AIProvider: [AIUsageStatistics.Statistics]] = [:]
 
         for stat in stats {
             // Parse the modelKey to get the provider
@@ -654,8 +655,8 @@ private struct OptionSelectionView: View {
 private struct StatisticsView: View {
     @Environment(\.dismiss) private var dismiss
 
-    private var allStats: [UserDefaults.AIProviderStatistics] {
-        UserDefaults.standard.getAllAIStatistics()
+    private var allStats: [AIUsageStatistics.Statistics] {
+        AIUsageStatistics.getAllStatistics()
     }
 
     private var groupedStats: [ProviderStatisticsGroup] {
@@ -745,26 +746,32 @@ private struct StatisticsView: View {
                                     .padding(.top, 8)
                                 }
                             }
-                            .listRowInsets(EdgeInsets(top: 12, leading: 16, bottom: 12, trailing: 16))
+                            .listRowInsets(EdgeInsets(top: 16, leading: 16, bottom: 16, trailing: 16))
+                            .listRowSeparator(.hidden)
                         }
                     }
                 }
 
                 Section {
-                    Button(role: .destructive) {
-                        UserDefaults.standard.clearAIStatistics()
-                        dismiss()
-                    } label: {
-                        HStack {
-                            Spacer()
-                            Image(systemName: "trash")
-                            Text("Clear All Statistics")
-                            Spacer()
+                    VStack(spacing: 16) {
+                        SlideButton(styling: .init(indicatorSize: 50, indicatorColor: Color.red), action: {
+                            AIUsageStatistics.clearAll()
+                            dismiss()
+                        }) {
+                            HStack {
+                                Image(systemName: "trash")
+                                Text("Slide to Clear All Statistics")
+                            }
+                            .foregroundColor(.white)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
                         }
                     }
+                    .padding(.vertical, 8)
                 }
             }
         }
+        .listSectionSpacing(.compact)
         .navigationTitle("AI Model Statistics")
         .navigationBarTitleDisplayMode(.inline)
     }
@@ -780,19 +787,19 @@ private struct StatisticsView: View {
     struct ModelStats: Identifiable {
         let id = UUID()
         let modelKey: String
-        let imageStat: UserDefaults.AIProviderStatistics?
-        let textStat: UserDefaults.AIProviderStatistics?
+        let imageStat: AIUsageStatistics.Statistics?
+        let textStat: AIUsageStatistics.Statistics?
 
         var key: String { modelKey }
     }
 
     // MARK: - Helper Functions
 
-    private func groupStatisticsByProvider(_ stats: [UserDefaults.AIProviderStatistics]) -> [ProviderStatisticsGroup] {
+    private func groupStatisticsByProvider(_ stats: [AIUsageStatistics.Statistics]) -> [ProviderStatisticsGroup] {
         // Group by provider and model
         var grouped: [AIProvider: [String: (
-            image: UserDefaults.AIProviderStatistics?,
-            text: UserDefaults.AIProviderStatistics?
+            image: AIUsageStatistics.Statistics?,
+            text: AIUsageStatistics.Statistics?
         )]] = [:]
 
         for stat in stats {
@@ -863,15 +870,15 @@ private struct StatTypeHeader: View {
 
 private struct StatRow: View {
     let label: String
-    let stat: UserDefaults.AIProviderStatistics
+    let stat: AIUsageStatistics.Statistics
     let showSuccessBadge: Bool
 
     var body: some View {
         HStack(alignment: .center, spacing: 12) {
             // Left side: Row label
             Text(label)
-                .font(.caption)
-                .foregroundColor(.secondary)
+                .font(.subheadline)
+                .foregroundColor(.primary)
                 .frame(width: 60, alignment: .leading)
 
             // Success rate badge (only for total row)
@@ -914,13 +921,13 @@ private struct StatRow: View {
             HStack(spacing: 12) {
                 // Request count column
                 Text("\(stat.requestCount)")
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundColor(.primary)
                     .frame(width: 70, alignment: .trailing)
 
                 // Average time column
                 Text(String(format: "%.1fs", stat.averageProcessingTime))
-                    .font(.caption)
+                    .font(.subheadline)
                     .foregroundColor(.primary)
                     .frame(width: 60, alignment: .trailing)
             }
@@ -931,7 +938,7 @@ private struct StatRow: View {
 // MARK: - ComplexityBreakdownView Component
 
 private struct ComplexityBreakdownView: View {
-    let stat: UserDefaults.AIProviderStatistics
+    let stat: AIUsageStatistics.Statistics
 
     var body: some View {
         VStack(spacing: 4) {
@@ -984,8 +991,8 @@ private struct ComplexityRow: View {
         HStack(alignment: .center, spacing: 12) {
             // Left side: Complexity label
             Text(label)
-                .font(.caption2)
-                .foregroundStyle(.tertiary)
+                .font(.subheadline)
+                .foregroundColor(.primary)
                 .frame(width: 60, alignment: .leading)
 
             // Empty space where success badge would be
@@ -998,14 +1005,14 @@ private struct ComplexityRow: View {
             HStack(spacing: 12) {
                 // Request count column
                 Text("\(count)")
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
                     .frame(width: 70, alignment: .trailing)
 
                 // Average time column
                 Text(String(format: "%.1fs", averageTime))
-                    .font(.caption2)
-                    .foregroundColor(.secondary)
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
                     .frame(width: 60, alignment: .trailing)
             }
         }

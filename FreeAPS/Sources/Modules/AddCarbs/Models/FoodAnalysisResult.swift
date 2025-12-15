@@ -18,6 +18,7 @@ struct FoodAnalysisResult {
     let diabetesConsiderations: String?
 //    let visualAssessmentDetails: String?
     let notes: String?
+    var source: FoodItemSource?
 
     // Store original baseline servings for proper scaling calculations
 //    let originalServings: Double
@@ -118,6 +119,22 @@ struct FoodAnalysisResult {
 //    var analysisNotes: String? {
 //        portionAssessmentMethod
 //    }
+
+    var totalCalories: Decimal {
+        foodItemsDetailed.compactMap(\.caloriesInThisPortion).reduce(0, +)
+    }
+
+    var totalCarbs: Decimal {
+        foodItemsDetailed.compactMap(\.carbsInThisPortion).reduce(0, +)
+    }
+
+    var totalFat: Decimal {
+        foodItemsDetailed.compactMap(\.fatInThisPortion).reduce(0, +)
+    }
+
+    var totalProtein: Decimal {
+        foodItemsDetailed.compactMap(\.proteinInThisPortion).reduce(0, +)
+    }
 }
 
 extension FoodAnalysisResult: Decodable {
@@ -199,6 +216,7 @@ extension FoodAnalysisResult: Decodable {
 //            mealSizeImpact: mealSizeImpact,
 //            individualizationFactors: individualizationFactors,
 //            safetyAlerts: safetyAlerts
+            source: .ai
         )
     }
 
@@ -320,20 +338,20 @@ extension KeyedDecodingContainer {
         return trimmed.isEmpty ? nil : trimmed
     }
 
-    func decodeNumber(forKey key: Key, ensuringNonNegative: Bool = true) throws -> Double {
+    func decodeNumber(forKey key: Key, ensuringNonNegative: Bool = true) throws -> Decimal {
         // Try Double directly
-        if let double = try? decode(Double.self, forKey: key) {
+        if let double = try? decode(Decimal.self, forKey: key) {
             return ensuringNonNegative ? max(0, double) : double
         }
         // Try Int and convert
         if let intVal = try? decode(Int.self, forKey: key) {
-            let converted = Double(intVal)
+            let converted = Decimal(intVal)
             return ensuringNonNegative ? max(0, converted) : converted
         }
         // Try String and convert
         if let stringVal = try? decode(String.self, forKey: key) {
             let trimmed = stringVal.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let parsed = Double(trimmed) {
+            if let parsed = Decimal(from: trimmed) {
                 return ensuringNonNegative ? max(0, parsed) : parsed
             }
             throw DecodingError.dataCorruptedError(
@@ -354,20 +372,20 @@ extension KeyedDecodingContainer {
 
     /// Decode a numeric value if present. Accepts Double, Int, or String representations.
     /// Optionally clamps negatives to 0.
-    func decodeNumberIfPresent(forKey key: Key, ensuringNonNegative: Bool = true) throws -> Double? {
+    func decodeNumberIfPresent(forKey key: Key, ensuringNonNegative: Bool = true) throws -> Decimal? {
         // If the key is not present at all, return nil early
         if contains(key) == false { return nil }
 
-        if let double = try? decode(Double.self, forKey: key) {
+        if let double = try? decode(Decimal.self, forKey: key) {
             return ensuringNonNegative ? max(0, double) : double
         }
         if let intVal = try? decode(Int.self, forKey: key) {
-            let converted = Double(intVal)
+            let converted = Decimal(intVal)
             return ensuringNonNegative ? max(0, converted) : converted
         }
         if let stringVal = try? decode(String.self, forKey: key) {
             let trimmed = stringVal.trimmingCharacters(in: .whitespacesAndNewlines)
-            if let parsed = Double(trimmed) {
+            if let parsed = Decimal(from: trimmed) {
                 return ensuringNonNegative ? max(0, parsed) : parsed
             }
             return nil

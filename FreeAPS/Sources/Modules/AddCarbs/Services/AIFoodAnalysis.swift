@@ -155,14 +155,15 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
         }
 
         // Use average processing time from statistics, or fall back to default ETA
-        if let stats = UserDefaults.standard.getAIStatistics(model: aiModel, requestType: .image),
+        if let stats = AIUsageStatistics.getStatistics(model: aiModel, requestType: .image),
            stats.averageSuccessProcessingTime > 0
         {
             let eta = String(format: "%.1f", stats.averageSuccessProcessingTime)
             telemetryCallback?("ETA: \(eta)")
         } else {
-            telemetryCallback?("ETA: \(String(format: "%.0f", aiModel.defaultETA))")
+            telemetryCallback?("ETA: \(String(format: "%.0f", aiModel.defaultImageETA))")
         }
+        telemetryCallback?("MODEL: \(aiModel.description)")
 
         telemetryCallback?("🖼️ Optimizing your image …")
         let base64Image = try ImageCompression.getImageBase64(
@@ -184,7 +185,7 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
 
             // Record successful request statistics
             let processingTime = Date().timeIntervalSince(startTime)
-            UserDefaults.standard.recordAIRequest(
+            AIUsageStatistics.recordRequest(
                 model: aiModel,
                 requestType: .image,
                 processingTime: processingTime,
@@ -199,7 +200,7 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
         } catch {
             // Record failed request statistics
             let processingTime = Date().timeIntervalSince(startTime)
-            UserDefaults.standard.recordAIRequest(
+            AIUsageStatistics.recordRequest(
                 model: aiModel,
                 requestType: .image,
                 processingTime: processingTime,
@@ -220,14 +221,16 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
             let analysisPrompt = AIPrompts.getAnalysisPrompt(.query(query), responseSchema: FoodAnalysisResult.schemaText)
 
             // Use average processing time from statistics, or fall back to default ETA
-            if let stats = UserDefaults.standard.getAIStatistics(model: model, requestType: .text),
+            if let stats = AIUsageStatistics.getStatistics(model: model, requestType: .text),
                stats.averageSuccessProcessingTime > 0
             {
                 let eta = String(format: "%.1f", stats.averageSuccessProcessingTime)
                 telemetryCallback?("ETA: \(eta)")
             } else {
-                telemetryCallback?("ETA: \(String(format: "%.1f", model.defaultETA))")
+                telemetryCallback?("ETA: \(String(format: "%.1f", model.defaultTextETA))")
             }
+
+            telemetryCallback?("MODEL: \(model.description)")
 
             // Track processing time
             let startTime = Date()
@@ -240,7 +243,7 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
 
                 // Record successful request statistics
                 let processingTime = Date().timeIntervalSince(startTime)
-                UserDefaults.standard.recordAIRequest(
+                AIUsageStatistics.recordRequest(
                     model: model,
                     requestType: .text,
                     processingTime: processingTime,
@@ -252,7 +255,7 @@ class ConfigurableAIService: ObservableObject, @unchecked Sendable {
             } catch {
                 // Record failed request statistics
                 let processingTime = Date().timeIntervalSince(startTime)
-                UserDefaults.standard.recordAIRequest(
+                AIUsageStatistics.recordRequest(
                     model: model,
                     requestType: .text,
                     processingTime: processingTime,

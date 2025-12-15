@@ -1,14 +1,14 @@
 import SwiftUI
 
 struct NutritionSummaryBadge: View {
-    let value: Double
+    let value: Decimal
     let unit: String
     let label: String
     let color: Color
 
     var body: some View {
         VStack(spacing: 4) {
-            Text("\(value, specifier: "%.0f") \(NSLocalizedString(unit, comment: ""))")
+            Text("\(Double(value), specifier: "%.0f") \(NSLocalizedString(unit, comment: ""))")
                 .font(.system(size: 16, weight: .bold))
                 .foregroundColor(color)
             Text(NSLocalizedString(label, comment: ""))

@@ -6,4 +6,4 @@
 
 • use user language and region only for food naming, spelling, and culturally typical examples.
 • do NOT translate JSON field names / keys. They MUST stay exactly as in the schema.
-•	dO NOT change standards based on USER_LANGUAGE or USER_REGION.
+• dO NOT change standards based on USER_LANGUAGE or USER_REGION.

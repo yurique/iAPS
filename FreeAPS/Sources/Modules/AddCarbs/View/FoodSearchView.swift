@@ -3,7 +3,7 @@ import SwiftUI
 
 struct FoodSearchView: View {
     @ObservedObject var state: FoodSearchStateModel
-    var onSelect: (FoodItem, UIImage?) -> Void
+    var onSelect: (AIFoodItem, UIImage?) -> Void
     @Environment(\.dismiss) var dismiss
 
     // Navigation States
@@ -66,20 +66,10 @@ struct FoodSearchView: View {
                         AIAnalysisResultsView(
                             analysisResult: result,
                             onFoodItemSelected: { foodItem in
-                                let selectedFood = foodItem
-//                                FoodItem(
-//                                    name: foodItem.name,
-//                                    carbs: foodItem.carbs,
-//                                    fat: foodItem.fat,
-//                                    protein: foodItem.protein,
-//                                    source: "AI Analysis",
-//                                    imageURL: nil
-//                                )
-                                handleFoodItemSelection(selectedFood, image: state.aiAnalysisRequest?.image)
+                                handleFoodItemSelection(foodItem, image: state.aiAnalysisRequest?.image)
                             },
                             onCompleteMealSelected: { totalMeal in
-                                onSelect(totalMeal, state.aiAnalysisRequest?.image)
-                                dismiss()
+                                handleFoodItemSelection(totalMeal, image: state.aiAnalysisRequest?.image)
                             }
                         )
                     }
@@ -172,7 +162,7 @@ struct FoodSearchView: View {
 //        state.aiSearchResults = aiFoodItems
     }
 
-    private func handleFoodItemSelection(_ foodItem: FoodItem, image: UIImage?) {
+    private func handleFoodItemSelection(_ foodItem: AIFoodItem, image: UIImage?) {
         onSelect(foodItem, image)
         dismiss()
     }

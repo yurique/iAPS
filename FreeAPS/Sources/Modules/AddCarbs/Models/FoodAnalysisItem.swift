@@ -12,13 +12,20 @@ enum MealUnits: String, Codable {
     }
 }
 
+enum FoodItemSource {
+    case ai
+    case search
+    case manual
+}
+
 /// Individual food item analysis with detailed portion assessment
 struct AnalysedFoodItem {
     let name: String?
+    let brand: String?
     let portionEstimate: String?
-    let portionEstimateSize: Double?
+    let portionEstimateSize: Decimal?
     let standardServing: String?
-    let standardServingSize: Double?
+    let standardServingSize: Decimal?
     let units: MealUnits?
 //    let servingsStandard: String?
 //    let servingMultiplier: Double
@@ -30,41 +37,45 @@ struct AnalysedFoodItem {
 //    let fiber: Double?
 //    let protein: Double?
 //    let sugars: Double?
-    let glycemicIndex: Double?
-    let caloriesPer100: Double?
-    let carbsPer100: Double?
-    let fatPer100: Double?
-    let fiberPer100: Double?
-    let proteinPer100: Double?
-    let sugarsPer100: Double?
+    let glycemicIndex: Decimal?
+    let caloriesPer100: Decimal?
+    let carbsPer100: Decimal?
+    let fatPer100: Decimal?
+    let fiberPer100: Decimal?
+    let proteinPer100: Decimal?
+    let sugarsPer100: Decimal?
 
     let assessmentNotes: String?
 
     let imageURL: String?
     let imageFrontURL: String?
 
+    var source: FoodItemSource?
+
     init(
         name: String? = nil,
+        brand: String? = nil,
         portionEstimate: String? = nil,
-        portionEstimateSize: Double? = nil,
+        portionEstimateSize: Decimal? = nil,
         standardServing: String? = nil,
-        standardServingSize: Double? = nil,
+        standardServingSize: Decimal? = nil,
         units: MealUnits? = nil,
         preparationMethod: String? = nil,
         visualCues: String? = nil,
-        glycemicIndex: Double? = nil,
-        caloriesPer100: Double? = nil,
-        carbsPer100: Double? = nil,
-        fatPer100: Double? = nil,
-        fiberPer100: Double? = nil,
-        proteinPer100: Double? = nil,
-        sugarsPer100: Double? = nil,
+        glycemicIndex: Decimal? = nil,
+        caloriesPer100: Decimal? = nil,
+        carbsPer100: Decimal? = nil,
+        fatPer100: Decimal? = nil,
+        fiberPer100: Decimal? = nil,
+        proteinPer100: Decimal? = nil,
+        sugarsPer100: Decimal? = nil,
         assessmentNotes: String? = nil,
         imageURL: String? = nil,
-        imageFrontURL: String? = nil
-
+        imageFrontURL: String? = nil,
+        source: FoodItemSource
     ) {
         self.name = name
+        self.brand = brand
         self.portionEstimate = portionEstimate
         self.portionEstimateSize = portionEstimateSize
         self.standardServing = standardServing
@@ -82,6 +93,27 @@ struct AnalysedFoodItem {
         self.assessmentNotes = assessmentNotes
         self.imageURL = imageURL
         self.imageFrontURL = imageFrontURL
+        self.source = source
+    }
+
+    var caloriesInThisPortion: Decimal? {
+        guard let portion = portionEstimateSize, let caloriesPer100 = self.caloriesPer100 else { return nil }
+        return caloriesPer100 / 100 * portion
+    }
+
+    var carbsInThisPortion: Decimal? {
+        guard let portion = portionEstimateSize, let carbsPer100 = self.carbsPer100 else { return nil }
+        return carbsPer100 / 100 * portion
+    }
+
+    var fatInThisPortion: Decimal? {
+        guard let portion = portionEstimateSize, let fatPer100 = self.fatPer100 else { return nil }
+        return fatPer100 / 100 * portion
+    }
+
+    var proteinInThisPortion: Decimal? {
+        guard let portion = portionEstimateSize, let proteinPer100 = self.proteinPer100 else { return nil }
+        return proteinPer100 / 100 * portion
     }
 }
 
@@ -89,11 +121,12 @@ extension AnalysedFoodItem: Decodable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        let name = try container.decode(String.self, forKey: .name)
-        let portionEstimate = try container.decodeTrimmedIfPresent(forKey: .portionEstimate)
-        let portionEstimateSize = try container.decodeNumberIfPresent(forKey: .portionEstimateSize)
+        let name = try container.decodeTrimmedNonEmpty(forKey: .name)
+        let brand = try container.decodeTrimmedIfPresent(forKey: .brand)
         let standardServing = try container.decodeTrimmedIfPresent(forKey: .standardServing)
         let standardServingSize = try container.decodeNumberIfPresent(forKey: .standardServingSize)
+        let portionEstimate = try container.decodeTrimmedIfPresent(forKey: .portionEstimate)
+        let portionEstimateSize = try container.decodeNumberIfPresent(forKey: .portionEstimateSize) ?? standardServingSize
         let units = try container.decodeIfPresent(MealUnits.self, forKey: .units) ?? .grams
 //        let servingsStandard = try container.decodeTrimmedIfPresent(forKey: .servingsStandard)
 //        let servingMultiplier = try container.decodeNumberIfPresent(forKey: .servingMultiplier) ?? 1.0
@@ -110,6 +143,7 @@ extension AnalysedFoodItem: Decodable {
 
         self = AnalysedFoodItem(
             name: name,
+            brand: brand,
             portionEstimate: portionEstimate,
             portionEstimateSize: portionEstimateSize,
             standardServing: standardServing,
@@ -126,12 +160,14 @@ extension AnalysedFoodItem: Decodable {
             fiberPer100: fiberPer100,
             proteinPer100: proteinPer100,
             sugarsPer100: sugarsPer100,
-            assessmentNotes: assessmentNotes
+            assessmentNotes: assessmentNotes,
+            source: .ai
         )
     }
 
     private enum CodingKeys: String, CodingKey {
         case name
+        case brand
         case portionEstimate = "portion_estimate"
         case portionEstimateSize = "portion_estimate_size"
         case standardServing = "standard_serving"
@@ -172,7 +208,10 @@ extension AnalysedFoodItem {
             (.sugarsPer100, "decimal, grams of sugars per 100 grams or milliliters"),
             (.portionEstimate, "desription of the identified portion"),
             (.portionEstimateSize, "decimal, exact size of the identified portion; in grams or milliliters; do not include unit"),
-            (.standardServing, "description of the identified standard serving, if available"),
+            (
+                .standardServing,
+                "description of the identified standard serving, if available, is natural description is available - do NOT add size in grams/milliliters, since you've already specified it above"
+            ),
             (
                 .standardServingSize,
                 "decimal, the identified standard serving size in grams or milliliters, if available; do not include unit"
@@ -199,9 +238,11 @@ extension AnalysedFoodItem {
         let fields = self.fields + [
             //        (.portionEstimateSize,
             //            "decimal, assume the portion matches the standard serving size, in grams or milliliters; do not include unit;"),
-            (.preparationMethod, "cooking details if mentioned")
-//        (.assessmentNotes],
-//        "Explain how you calculated this specific portion size, what references you used.")
+//            (.preparationMethod, "cooking details if mentioned")
+            (
+                .assessmentNotes,
+                "Explain how you calculated this specific portion size, what references you used."
+            )
         ]
         return fields.map { key, value in
             (key.rawValue, value)

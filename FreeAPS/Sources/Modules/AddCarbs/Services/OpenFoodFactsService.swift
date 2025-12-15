@@ -7,7 +7,7 @@ extension OpenFoodFactsService: TextAnalysisService {
         telemetryCallback _: ((String) -> Void)?
     ) async throws -> FoodAnalysisResult {
         let products = try await searchProducts(query: prompt, pageSize: 15)
-        return fromOpenFoodFactsProducts(products: products, confidence: nil)
+        return fromOpenFoodFactsProducts(products: products, confidence: nil, source: .search)
     }
 }
 
@@ -17,7 +17,7 @@ extension OpenFoodFactsService: BarcodeAnalysisService {
         telemetryCallback _: ((String) -> Void)?
     ) async throws -> FoodAnalysisResult {
         let item = try await searchProduct(barcode: barcode)
-        return fromOpenFoodFactsProducts(products: [item], confidence: .high)
+        return fromOpenFoodFactsProducts(products: [item], confidence: .high, source: .search)
     }
 }
 
@@ -309,98 +309,3 @@ final class OpenFoodFactsService {
         return predicate.evaluate(with: barcode)
     }
 }
-
-// MARK: - Testing Support
-
-#if DEBUG
-    extension OpenFoodFactsService {
-        /// Create a mock service for testing that returns sample data
-        static func mock() -> OpenFoodFactsService {
-            let configuration = URLSessionConfiguration.ephemeral
-            configuration.protocolClasses = [MockURLProtocol.self]
-            let session = URLSession(configuration: configuration)
-            return OpenFoodFactsService(session: session)
-        }
-
-        /// Configure mock responses for testing
-        static func configureMockResponses() {
-            MockURLProtocol.mockResponses = [
-                "search": MockURLProtocol.createSearchResponse(),
-                "product": MockURLProtocol.createProductResponse()
-            ]
-        }
-    }
-
-    /// Mock URL protocol for testing
-    class MockURLProtocol: URLProtocol {
-        nonisolated(unsafe) static var mockResponses: [String: (Data, HTTPURLResponse)] = [:]
-
-        override class func canInit(with _: URLRequest) -> Bool {
-            true
-        }
-
-        override class func canonicalRequest(for request: URLRequest) -> URLRequest {
-            request
-        }
-
-        override func startLoading() {
-            guard let url = request.url else { return }
-
-            let key = url.path.contains("search") ? "search" : "product"
-
-            if let (data, response) = MockURLProtocol.mockResponses[key] {
-                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-                client?.urlProtocol(self, didLoad: data)
-            } else {
-                let response = HTTPURLResponse(url: url, statusCode: 404, httpVersion: nil, headerFields: nil)!
-                client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
-            }
-
-            client?.urlProtocolDidFinishLoading(self)
-        }
-
-        override func stopLoading() {}
-
-        static func createSearchResponse() -> (Data, HTTPURLResponse) {
-            let response = OpenFoodFactsSearchResponse(
-                products: [
-                    OpenFoodFactsProduct.sample(name: "Test Bread", carbs: 45.0),
-                    OpenFoodFactsProduct.sample(name: "Test Pasta", carbs: 75.0)
-                ],
-                count: 2,
-                page: 1,
-                pageCount: 1,
-                pageSize: 20
-            )
-
-            let data = try! JSONEncoder().encode(response)
-            let httpResponse = HTTPURLResponse(
-                url: URL(string: "https://world.openfoodfacts.org/cgi/search.pl")!,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: ["Content-Type": "application/json"]
-            )!
-
-            return (data, httpResponse)
-        }
-
-        static func createProductResponse() -> (Data, HTTPURLResponse) {
-            let response = OpenFoodFactsProductResponse(
-                code: "1234567890123",
-                product: OpenFoodFactsProduct.sample(name: "Test Product", carbs: 30.0),
-                status: 1,
-                statusVerbose: "product found"
-            )
-
-            let data = try! JSONEncoder().encode(response)
-            let httpResponse = HTTPURLResponse(
-                url: URL(string: "https://world.openfoodfacts.org/api/v2/product/1234567890123.json")!,
-                statusCode: 200,
-                httpVersion: nil,
-                headerFields: ["Content-Type": "application/json"]
-            )!
-
-            return (data, httpResponse)
-        }
-    }
-#endif

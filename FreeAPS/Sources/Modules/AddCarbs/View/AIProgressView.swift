@@ -18,11 +18,11 @@ struct AIProgressView: View {
     @State private var analysisStart: Date? = nil
     @State private var analysisEnd: Date? = nil
     @State private var analysisEta: TimeInterval?
+    @State private var analysisModel: String?
     @State private var latestTelemetry: String?
 
     var body: some View {
         VStack {
-            // Background layer - full screen image or text query display
             switch analysisRequest {
             case .image:
                 EmptyView()
@@ -64,6 +64,31 @@ struct AIProgressView: View {
             }
             .padding(.horizontal)
             .padding(.bottom, 60)
+        }
+        .overlay(alignment: .topTrailing) {
+            // AI Model Badge overlay - top right (doesn't affect layout)
+            if let model = analysisModel {
+                HStack(spacing: 6) {
+                    Image(systemName: "sparkles")
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
+                    Text(model)
+                        .font(.caption)
+                        .fontWeight(.medium)
+                        .fontDesign(.rounded)
+                        .foregroundStyle(.primary)
+                        .opacity(0.8)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 6)
+                .background(.thinMaterial, in: Capsule())
+                .overlay(
+                    Capsule()
+                        .strokeBorder(Color.secondary.opacity(0.2), lineWidth: 0.5)
+                )
+                .padding()
+                .transition(.scale.combined(with: .opacity))
+            }
         }
         .background {
             // Background layer - full screen image or text query display
@@ -157,6 +182,7 @@ struct AIProgressView: View {
         analysisStart = Date()
         analysisEnd = nil
         analysisEta = nil
+        analysisModel = nil
         latestTelemetry = nil
 
         searchTask?.cancel()
@@ -171,6 +197,8 @@ struct AIProgressView: View {
                                 if let etaValue = Double(etaString.trimmingCharacters(in: .whitespaces)) {
                                     analysisEta = etaValue * 1.2
                                 }
+                            } else if telemetryMessage.hasPrefix("MODEL: ") {
+                                analysisModel = String(telemetryMessage.dropFirst("MODEL: ".count))
                             } else {
                                 latestTelemetry = telemetryMessage
                                 addTelemetryLog(telemetryMessage)
@@ -189,10 +217,12 @@ struct AIProgressView: View {
                     let result = try await aiService.analyzeFoodQuery(query) { telemetryMessage in
                         Task { @MainActor in
                             if telemetryMessage.hasPrefix("ETA: ") {
-                                let etaString = telemetryMessage.dropFirst(5)
+                                let etaString = telemetryMessage.dropFirst("ETA: ".count)
                                 if let etaValue = Double(etaString.trimmingCharacters(in: .whitespaces)) {
                                     analysisEta = etaValue * 1.2
                                 }
+                            } else if telemetryMessage.hasPrefix("MODEL: ") {
+                                analysisModel = String(telemetryMessage.dropFirst("MODEL: ".count))
                             } else {
                                 latestTelemetry = telemetryMessage
                                 addTelemetryLog(telemetryMessage)
