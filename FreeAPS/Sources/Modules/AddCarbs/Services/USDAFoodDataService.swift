@@ -14,7 +14,9 @@ extension USDAFoodDataService: TextAnalysisService {
         telemetryCallback _: ((String) -> Void)?
     ) async throws -> FoodAnalysisResult {
         let products = try await searchProducts(query: prompt, pageSize: 15)
-        return fromOpenFoodFactsProducts(products: products, confidence: nil, source: .search)
+        var result = fromOpenFoodFactsProducts(products: products, confidence: nil, source: .search)
+        result.textQuery = prompt
+        return result
     }
 }
 

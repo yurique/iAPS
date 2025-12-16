@@ -188,6 +188,7 @@ extension AddCarbs {
                         handleSelectedFood(selectedFood, image: image)
                     }
                 )
+                .presentationDragIndicator(.visible)
             }
             .alert(isPresented: $saveAlert) { alert(food: selectedFoodItem) }
         }

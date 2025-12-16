@@ -59,26 +59,26 @@ struct FoodSearchView: View {
                     }
                 }
                 .padding(.horizontal)
-                .padding(.top, 8)
+                .padding(.top, 12)
 
-                ScrollView {
-                    if let result = state.searchResult {
-                        AIAnalysisResultsView(
-                            analysisResult: result,
-                            onFoodItemSelected: { foodItem in
-                                handleFoodItemSelection(foodItem, image: state.aiAnalysisRequest?.image)
-                            },
-                            onCompleteMealSelected: { totalMeal in
-                                handleFoodItemSelection(totalMeal, image: state.aiAnalysisRequest?.image)
-                            }
-                        )
-                    }
+                if state.searchResults.isNotEmpty {
+                    AIAnalysisResultsView(
+                        analysisResults: state.searchResults,
+                        onFoodItemSelected: { foodItem in
+                            handleFoodItemSelection(foodItem, image: state.aiAnalysisRequest?.image)
+                        },
+                        onCompleteMealSelected: { totalMeal in
+                            handleFoodItemSelection(totalMeal, image: state.aiAnalysisRequest?.image)
+                        }
+                    )
+                    .padding(.top, 4)
+                } else {
+                    Spacer()
                 }
-                .padding(.top, 8)
             }
 
-            .navigationTitle("Food Search")
-            .navigationBarItems(trailing: Button("Done") { dismiss() })
+//            .navigationTitle("Food Search")
+//            .navigationBarItems(trailing: Button("Done") { dismiss() })
             .navigationDestination(isPresented: $navigateToBarcode) {
                 BarcodeScannerView(
                     onBarcodeScanned: { barcode in
@@ -125,7 +125,7 @@ struct FoodSearchView: View {
     }
 
     private func handleAIAnalysis(_ analysisResult: FoodAnalysisResult, image _: UIImage?) { // ✅ Parameter name korrigiert
-        state.searchResult = analysisResult
+        state.searchResults = state.searchResults + [analysisResult]
 
         // TODO: to ai food items
 //        let aiFoodItems = analysisResult.foodItemsDetailed.map { foodItem in

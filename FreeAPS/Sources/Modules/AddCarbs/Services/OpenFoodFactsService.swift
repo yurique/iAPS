@@ -7,7 +7,9 @@ extension OpenFoodFactsService: TextAnalysisService {
         telemetryCallback _: ((String) -> Void)?
     ) async throws -> FoodAnalysisResult {
         let products = try await searchProducts(query: prompt, pageSize: 15)
-        return fromOpenFoodFactsProducts(products: products, confidence: nil, source: .search)
+        var result = fromOpenFoodFactsProducts(products: products, confidence: nil, source: .search)
+        result.textQuery = prompt
+        return result
     }
 }
 
@@ -17,7 +19,9 @@ extension OpenFoodFactsService: BarcodeAnalysisService {
         telemetryCallback _: ((String) -> Void)?
     ) async throws -> FoodAnalysisResult {
         let item = try await searchProduct(barcode: barcode)
-        return fromOpenFoodFactsProducts(products: [item], confidence: .high, source: .search)
+        var result = fromOpenFoodFactsProducts(products: [item], confidence: .high, source: .barcode)
+        result.barcode = barcode
+        return result
     }
 }
 

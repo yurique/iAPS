@@ -14,13 +14,17 @@ enum MealUnits: String, Codable {
 
 enum FoodItemSource {
     case ai
+    case aiText
     case search
+    case barcode
     case manual
 }
 
 /// Individual food item analysis with detailed portion assessment
 struct AnalysedFoodItem {
-    let name: String?
+    let id = UUID()
+    let name: String
+    let confidence: AIConfidenceLevel?
     let brand: String?
     let portionEstimate: String?
     let portionEstimateSize: Decimal?
@@ -53,7 +57,8 @@ struct AnalysedFoodItem {
     var source: FoodItemSource?
 
     init(
-        name: String? = nil,
+        name: String,
+        confidence: AIConfidenceLevel? = nil,
         brand: String? = nil,
         portionEstimate: String? = nil,
         portionEstimateSize: Decimal? = nil,
@@ -75,6 +80,7 @@ struct AnalysedFoodItem {
         source: FoodItemSource
     ) {
         self.name = name
+        self.confidence = confidence
         self.brand = brand
         self.portionEstimate = portionEstimate
         self.portionEstimateSize = portionEstimateSize
@@ -95,7 +101,9 @@ struct AnalysedFoodItem {
         self.imageFrontURL = imageFrontURL
         self.source = source
     }
+}
 
+extension AnalysedFoodItem {
     var caloriesInThisPortion: Decimal? {
         guard let portion = portionEstimateSize, let caloriesPer100 = self.caloriesPer100 else { return nil }
         return caloriesPer100 / 100 * portion
@@ -115,13 +123,34 @@ struct AnalysedFoodItem {
         guard let portion = portionEstimateSize, let proteinPer100 = self.proteinPer100 else { return nil }
         return proteinPer100 / 100 * portion
     }
+
+    func caloriesInPortion(portion: Decimal) -> Decimal? {
+        guard let caloriesPer100 = self.caloriesPer100 else { return nil }
+        return caloriesPer100 / 100 * portion
+    }
+
+    func carbsInPortion(portion: Decimal) -> Decimal? {
+        guard let carbsPer100 = self.carbsPer100 else { return nil }
+        return carbsPer100 / 100 * portion
+    }
+
+    func fatInPortion(portion: Decimal) -> Decimal? {
+        guard let fatPer100 = self.fatPer100 else { return nil }
+        return fatPer100 / 100 * portion
+    }
+
+    func proteinInPortion(portion: Decimal) -> Decimal? {
+        guard let proteinPer100 = self.proteinPer100 else { return nil }
+        return proteinPer100 / 100 * portion
+    }
 }
 
 extension AnalysedFoodItem: Decodable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
 
-        let name = try container.decodeTrimmedNonEmpty(forKey: .name)
+        let name = try container.decodeTrimmedIfPresent(forKey: .name) ?? "Food item"
+        let confidence: AIConfidenceLevel = try container.decode(AIConfidenceLevel.self, forKey: .confidence)
         let brand = try container.decodeTrimmedIfPresent(forKey: .brand)
         let standardServing = try container.decodeTrimmedIfPresent(forKey: .standardServing)
         let standardServingSize = try container.decodeNumberIfPresent(forKey: .standardServingSize)
@@ -141,32 +170,34 @@ extension AnalysedFoodItem: Decodable {
         let sugarsPer100 = try container.decodeNumberIfPresent(forKey: .sugarsPer100)
         let assessmentNotes = try container.decodeTrimmedIfPresent(forKey: .assessmentNotes)
 
-        self = AnalysedFoodItem(
-            name: name,
-            brand: brand,
-            portionEstimate: portionEstimate,
-            portionEstimateSize: portionEstimateSize,
-            standardServing: standardServing,
-            standardServingSize: standardServingSize,
-            units: units,
+        self.name = name
+        self.confidence = confidence
+        self.brand = brand
+        self.portionEstimate = portionEstimate
+        self.portionEstimateSize = portionEstimateSize
+        self.standardServing = standardServing
+        self.standardServingSize = standardServingSize
+        self.units = units
 //            servingsStandard: servingsStandard,
 //            servingMultiplier: servingMultiplier,
-            preparationMethod: preparationMethod,
-            visualCues: visualCues,
-            glycemicIndex: glycemicIndex,
-            caloriesPer100: caloriesPer100,
-            carbsPer100: carbsPer100,
-            fatPer100: fatPer100,
-            fiberPer100: fiberPer100,
-            proteinPer100: proteinPer100,
-            sugarsPer100: sugarsPer100,
-            assessmentNotes: assessmentNotes,
-            source: .ai
-        )
+        self.preparationMethod = preparationMethod
+        self.visualCues = visualCues
+        self.glycemicIndex = glycemicIndex
+        self.caloriesPer100 = caloriesPer100
+        self.carbsPer100 = carbsPer100
+        self.fatPer100 = fatPer100
+        self.fiberPer100 = fiberPer100
+        self.proteinPer100 = proteinPer100
+        self.sugarsPer100 = sugarsPer100
+        self.assessmentNotes = assessmentNotes
+        source = .ai
+        imageURL = nil
+        imageFrontURL = nil
     }
 
     private enum CodingKeys: String, CodingKey {
         case name
+        case confidence
         case brand
         case portionEstimate = "portion_estimate"
         case portionEstimateSize = "portion_estimate_size"
@@ -198,7 +229,8 @@ extension AnalysedFoodItem: Decodable {
 extension AnalysedFoodItem {
     private static var fields: [(AnalysedFoodItem.CodingKeys, Any)] {
         [
-            (.name, "specific food name with preparation details"),
+            (.name, "string, required; specific food name"),
+            (.confidence, "decimal 0 to 1; required; confidence for this item"),
             (.units, "string enum; one of: 'grams' or 'milliliters'; as appropriate for this meal; do NOT translate;"),
             (.caloriesPer100, "decimal, kilocalories per 100 grams or milliliters"),
             (.carbsPer100, "decimal, grams of carbohydrates per 100 grams or milliliters"),
@@ -221,7 +253,7 @@ extension AnalysedFoodItem {
     }
 
     static var schemaVisual: [(String, Any)] {
-        var fields = self.fields + [
+        let fields = self.fields + [
             (.visualCues, "visual elements analyzed"),
             (.preparationMethod, "cooking details observed"),
             (

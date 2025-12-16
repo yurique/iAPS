@@ -92,13 +92,11 @@
 		19C3C7362E97AE520000BE4D /* FoodItemCard.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C71A2E97AE520000BE4D /* FoodItemCard.swift */; };
 		19C3C7372E97AE520000BE4D /* AIConfidenceLevel+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C71E2E97AE520000BE4D /* AIConfidenceLevel+Extensions.swift */; };
 		19C3C7382E97AE520000BE4D /* MultiplierEditorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C71B2E97AE520000BE4D /* MultiplierEditorView.swift */; };
-		19C3C7392E97AE520000BE4D /* ConfidenceBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C7192E97AE520000BE4D /* ConfidenceBadge.swift */; };
 		19C3C73A2E97AE520000BE4D /* OpenFoodFactsProducts+Extensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C7202E97AE520000BE4D /* OpenFoodFactsProducts+Extensions.swift */; };
 		19C3C73B2E97AE520000BE4D /* OpenFoodFactsService.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C72B2E97AE520000BE4D /* OpenFoodFactsService.swift */; };
 		19C3C73C2E97AE520000BE4D /* NutritionSummaryBadge.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C71C2E97AE520000BE4D /* NutritionSummaryBadge.swift */; };
 		19C3C73D2E97AE520000BE4D /* OpenFoodFactsSearchResponse.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C7242E97AE520000BE4D /* OpenFoodFactsSearchResponse.swift */; };
 		19C3C7442E97AE7B0000BE4D /* AICameraView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C73E2E97AE7B0000BE4D /* AICameraView.swift */; };
-		19C3C7452E97AE7B0000BE4D /* FoodSearchResultsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C7412E97AE7B0000BE4D /* FoodSearchResultsView.swift */; };
 		19C3C7462E97AE7B0000BE4D /* AISettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C73F2E97AE7B0000BE4D /* AISettingsView.swift */; };
 		19C3C7472E97AE7B0000BE4D /* BarcodeScannerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C7402E97AE7B0000BE4D /* BarcodeScannerView.swift */; };
 		19C3C7482E97AE7B0000BE4D /* SelectedFoodView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 19C3C7432E97AE7B0000BE4D /* SelectedFoodView.swift */; };
@@ -457,6 +455,7 @@
 		F24EB2942EE5B8B100C981A2 /* FoodAnalysisResult.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24EB2932EE5B8B100C981A2 /* FoodAnalysisResult.swift */; };
 		F24EB2962EE5B8F300C981A2 /* AIFoodAnalysisError.swift in Sources */ = {isa = PBXBuildFile; fileRef = F24EB2952EE5B8F300C981A2 /* AIFoodAnalysisError.swift */; };
 		F270F68D2BAE374C00F6D8DD /* FontTracking.swift in Sources */ = {isa = PBXBuildFile; fileRef = F270F68C2BAE374C00F6D8DD /* FontTracking.swift */; };
+		F272855E2EF07D4100782A53 /* AIFoodItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = F272855D2EF07D4100782A53 /* AIFoodItem.swift */; };
 		F273F9602DE73ABE00BF0FFC /* IOBTick0.swift in Sources */ = {isa = PBXBuildFile; fileRef = F273F95F2DE73ABE00BF0FFC /* IOBTick0.swift */; };
 		F281B4A22ECF9087007185A9 /* LabelPlacement.swift in Sources */ = {isa = PBXBuildFile; fileRef = F281B4A12ECF9087007185A9 /* LabelPlacement.swift */; };
 		F2941FA12E787F6500A9DD5D /* AppGroupCGM.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2941FA02E787F6500A9DD5D /* AppGroupCGM.swift */; };
@@ -738,7 +737,6 @@
 		19C166682756EFBD00ED12E3 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		19C166692756EFBD00ED12E3 /* sk */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = sk; path = sk.lproj/Localizable.strings; sourceTree = "<group>"; };
 		19C3C7182E97AE520000BE4D /* AIAnalysisResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIAnalysisResultsView.swift; sourceTree = "<group>"; };
-		19C3C7192E97AE520000BE4D /* ConfidenceBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ConfidenceBadge.swift; sourceTree = "<group>"; };
 		19C3C71A2E97AE520000BE4D /* FoodItemCard.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodItemCard.swift; sourceTree = "<group>"; };
 		19C3C71B2E97AE520000BE4D /* MultiplierEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MultiplierEditorView.swift; sourceTree = "<group>"; };
 		19C3C71C2E97AE520000BE4D /* NutritionSummaryBadge.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = NutritionSummaryBadge.swift; sourceTree = "<group>"; };
@@ -754,7 +752,6 @@
 		19C3C73E2E97AE7B0000BE4D /* AICameraView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AICameraView.swift; sourceTree = "<group>"; };
 		19C3C73F2E97AE7B0000BE4D /* AISettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AISettingsView.swift; sourceTree = "<group>"; };
 		19C3C7402E97AE7B0000BE4D /* BarcodeScannerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScannerView.swift; sourceTree = "<group>"; };
-		19C3C7412E97AE7B0000BE4D /* FoodSearchResultsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodSearchResultsView.swift; sourceTree = "<group>"; };
 		19C3C7422E97AE7B0000BE4D /* FoodSearchView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodSearchView.swift; sourceTree = "<group>"; };
 		19C3C7432E97AE7B0000BE4D /* SelectedFoodView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SelectedFoodView.swift; sourceTree = "<group>"; };
 		19C3C74A2E97B2F10000BE4D /* BarcodeScanResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BarcodeScanResult.swift; sourceTree = "<group>"; };
@@ -1132,6 +1129,7 @@
 		F24EB2932EE5B8B100C981A2 /* FoodAnalysisResult.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodAnalysisResult.swift; sourceTree = "<group>"; };
 		F24EB2952EE5B8F300C981A2 /* AIFoodAnalysisError.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIFoodAnalysisError.swift; sourceTree = "<group>"; };
 		F270F68C2BAE374C00F6D8DD /* FontTracking.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FontTracking.swift; sourceTree = "<group>"; };
+		F272855D2EF07D4100782A53 /* AIFoodItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AIFoodItem.swift; sourceTree = "<group>"; };
 		F273F95F2DE73ABE00BF0FFC /* IOBTick0.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IOBTick0.swift; sourceTree = "<group>"; };
 		F281B4A12ECF9087007185A9 /* LabelPlacement.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LabelPlacement.swift; sourceTree = "<group>"; };
 		F2941FA02E787F6500A9DD5D /* AppGroupCGM.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppGroupCGM.swift; sourceTree = "<group>"; };
@@ -1466,7 +1464,6 @@
 			isa = PBXGroup;
 			children = (
 				19C3C7182E97AE520000BE4D /* AIAnalysisResultsView.swift */,
-				19C3C7192E97AE520000BE4D /* ConfidenceBadge.swift */,
 				19C3C71A2E97AE520000BE4D /* FoodItemCard.swift */,
 				19C3C71B2E97AE520000BE4D /* MultiplierEditorView.swift */,
 				19C3C71C2E97AE520000BE4D /* NutritionSummaryBadge.swift */,
@@ -1494,6 +1491,7 @@
 				F24EB2902EE5B6A100C981A2 /* FoodAnalysisItem.swift */,
 				F24EB2932EE5B8B100C981A2 /* FoodAnalysisResult.swift */,
 				F24EB2952EE5B8F300C981A2 /* AIFoodAnalysisError.swift */,
+				F272855D2EF07D4100782A53 /* AIFoodItem.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -2452,7 +2450,6 @@
 				F2FA68932EEC87D200476D7B /* AIProgressView.swift */,
 				19C3C73F2E97AE7B0000BE4D /* AISettingsView.swift */,
 				19C3C7402E97AE7B0000BE4D /* BarcodeScannerView.swift */,
-				19C3C7412E97AE7B0000BE4D /* FoodSearchResultsView.swift */,
 				19C3C7422E97AE7B0000BE4D /* FoodSearchView.swift */,
 				19C3C7432E97AE7B0000BE4D /* SelectedFoodView.swift */,
 				F2D360FF2EE21D83004CC6B1 /* ModelQueryEditor.swift */,
@@ -3501,7 +3498,6 @@
 				F90692AA274B7AAE0037068D /* HealthKitManager.swift in Sources */,
 				F2FEE7042D2DB1A000A91BB2 /* BGTextField.swift in Sources */,
 				19C3C7442E97AE7B0000BE4D /* AICameraView.swift in Sources */,
-				19C3C7452E97AE7B0000BE4D /* FoodSearchResultsView.swift in Sources */,
 				19C3C7462E97AE7B0000BE4D /* AISettingsView.swift in Sources */,
 				19C3C7472E97AE7B0000BE4D /* BarcodeScannerView.swift in Sources */,
 				19C3C7482E97AE7B0000BE4D /* SelectedFoodView.swift in Sources */,
@@ -3592,7 +3588,6 @@
 				19C3C7362E97AE520000BE4D /* FoodItemCard.swift in Sources */,
 				19C3C7372E97AE520000BE4D /* AIConfidenceLevel+Extensions.swift in Sources */,
 				19C3C7382E97AE520000BE4D /* MultiplierEditorView.swift in Sources */,
-				19C3C7392E97AE520000BE4D /* ConfidenceBadge.swift in Sources */,
 				19C3C73A2E97AE520000BE4D /* OpenFoodFactsProducts+Extensions.swift in Sources */,
 				19C3C73B2E97AE520000BE4D /* OpenFoodFactsService.swift in Sources */,
 				19C3C73C2E97AE520000BE4D /* NutritionSummaryBadge.swift in Sources */,
@@ -3617,6 +3612,7 @@
 				BF1667ADE69E4B5B111CECAE /* ManualTempBasalProvider.swift in Sources */,
 				F90692D6274B9A450037068D /* HealthKitStateModel.swift in Sources */,
 				C967DACD3B1E638F8B43BE06 /* ManualTempBasalStateModel.swift in Sources */,
+				F272855E2EF07D4100782A53 /* AIFoodItem.swift in Sources */,
 				38E4453B274E411700EC9A94 /* Disk+VolumeInformation.swift in Sources */,
 				7BCFACB97C821041BA43A114 /* ManualTempBasalRootView.swift in Sources */,
 				19D2047D2ECF267A001110FC /* MealsSummaryView.swift in Sources */,

@@ -137,11 +137,12 @@ extension TextAnalysisService {
     func fromOpenFoodFactsProducts(
         products: [OpenFoodFactsProduct],
         confidence: AIConfidenceLevel?,
-        source _: FoodItemSource
+        source: FoodItemSource
     ) -> FoodAnalysisResult {
         let items: [AnalysedFoodItem] = products.map { item in
             AnalysedFoodItem(
                 name: item.productName ?? "Product without name",
+                confidence: confidence,
                 brand: item.brands,
                 portionEstimate: item.servingSize,
                 portionEstimateSize: item.servingQuantity,
@@ -156,15 +157,15 @@ extension TextAnalysisService {
                 sugarsPer100: item.nutriments.sugars,
                 imageURL: item.imageURL,
                 imageFrontURL: item.imageFrontURL,
-                source: .search
+                source: source
             )
         }
 
         return FoodAnalysisResult(
             imageType: nil,
             foodItemsDetailed: items,
+            briefDescription: nil,
             overallDescription: nil,
-            confidence: confidence,
 //            servingsStandard: nil,
 //            portionAssessmentMethod: nil,
             diabetesConsiderations: nil,
@@ -174,6 +175,7 @@ extension TextAnalysisService {
 //            absorptionTimeReasoning: nil,
 //            mealSizeImpact: nil,
 //            safetyAlerts: nil
+            source: source
         )
     }
 }

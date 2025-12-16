@@ -1,11 +1,12 @@
 import Foundation
 
 /// Result from AI food analysis with detailed breakdown
-struct FoodAnalysisResult {
+struct FoodAnalysisResult: Identifiable {
+    let id = UUID()
     let imageType: ImageAnalysisType?
     let foodItemsDetailed: [AnalysedFoodItem]
+    let briefDescription: String?
     let overallDescription: String?
-    let confidence: AIConfidenceLevel?
 //    let totalFoodPortions: Int?
 //    let totalStandardServings: Double?
 //    let servingsStandard: String?
@@ -18,7 +19,9 @@ struct FoodAnalysisResult {
     let diabetesConsiderations: String?
 //    let visualAssessmentDetails: String?
     let notes: String?
-    var source: FoodItemSource?
+    let source: FoodItemSource?
+    var barcode: String? = nil
+    var textQuery: String? = nil
 
     // Store original baseline servings for proper scaling calculations
 //    let originalServings: Double
@@ -145,10 +148,9 @@ extension FoodAnalysisResult: Decodable {
 
         let foodItemsDetailed: [AnalysedFoodItem] = try container.decode([AnalysedFoodItem].self, forKey: .foodItemsDetailed)
 
-        // TODO: extractString(from: nutritionData, keys: ["overall_description", "detailed_description"])
+        let briefDescription: String? = try container.decodeTrimmedIfPresent(forKey: .briefDescription)
         let overallDescription: String? = try container.decodeTrimmedIfPresent(forKey: .overallDescription)
 
-        let confidence: AIConfidenceLevel = try container.decode(AIConfidenceLevel.self, forKey: .confidence)
 //        let totalFoodPortions: Int? = try container.decodeIfPresent(Int.self, forKey: .totalFoodPortions)
 //        let totalStandardServings: Double? = try container.decodeNumberIfPresent(forKey: .totalStandardServings)
 //        let servingsStandard: String? = try container.decodeTrimmedIfPresent(forKey: .servingsStandard)
@@ -188,11 +190,10 @@ extension FoodAnalysisResult: Decodable {
         // Calculate original servings for proper scaling
 //        let originalServings = foodItemsDetailed.map(\.servingMultiplier).reduce(0, +)
 
-        self = FoodAnalysisResult(
-            imageType: imageType,
-            foodItemsDetailed: foodItemsDetailed,
-            overallDescription: overallDescription,
-            confidence: confidence,
+        self.imageType = imageType
+        self.foodItemsDetailed = foodItemsDetailed
+        self.briefDescription = briefDescription
+        self.overallDescription = overallDescription
 //            totalFoodPortions: totalFoodPortions,
 //            totalStandardServings: totalStandardServings,
 //            servingsStandard: servingsStandard,
@@ -202,9 +203,9 @@ extension FoodAnalysisResult: Decodable {
 //            totalFiber: totalFiber,
 //            totalCalories: totalCalories,
 //            portionAssessmentMethod: portionAssessmentMethod,
-            diabetesConsiderations: diabetesConsiderations,
+        self.diabetesConsiderations = diabetesConsiderations
 //            visualAssessmentDetails: visualAssessmentDetails,
-            notes: notes,
+        self.notes = notes
 //            originalServings: originalServings,
 //            fatProteinUnits: fatProteinUnits,
 //            netCarbsAdjustment: netCarbsAdjustment,
@@ -216,16 +217,15 @@ extension FoodAnalysisResult: Decodable {
 //            mealSizeImpact: mealSizeImpact,
 //            individualizationFactors: individualizationFactors,
 //            safetyAlerts: safetyAlerts
-            source: .ai
-        )
+        source = imageType == .textSearch ? .aiText : .ai
     }
 
     // In FoodAnalysisResult
     private enum CodingKeys: String, CodingKey {
         case imageType = "image_type"
         case foodItemsDetailed = "food_items"
+        case briefDescription = "brief_description"
         case overallDescription = "overall_description"
-        case confidence
 //        case totalFoodPortions = "total_food_portions"
 //        case totalStandardServings = "total_standard_servings"
 //        case servingsStandard = "serving_standard"
@@ -314,6 +314,7 @@ enum ImageAnalysisType: String, JSON, Identifiable, CaseIterable {
     case foodPhoto = "food_photo"
     case menuItem = "menu_item"
     case recipePhoto = "recipe_photo"
+    case textSearch = "text_search"
 
     var id: ImageAnalysisType { self }
 }
@@ -398,7 +399,7 @@ extension FoodAnalysisResult {
     private static var fields: [(FoodAnalysisResult.CodingKeys, Any)] {
         [
             //            .servingsStandard: "brief name/description of NUTRITION_AUTHORITY",
-            (.confidence, "decimal 0 to 1"),
+            (.briefDescription, "generate a SHORT UI TITLE describing the analyzed food"),
             (.diabetesConsiderations, "Carb sources, GI impact (low/medium/high), timing considerations")
 //            .insulinTimingRecommendations: "Meal type and pre-meal timing (minutes before eating)",
 //            .absorptionTimeHours: "absorption hours between 2 and 6",
@@ -422,6 +423,7 @@ extension FoodAnalysisResult {
 
     static var schemaText: [(String, Any)] {
         let fields = [
+            (.imageType, "string, always set to: text_search"),
             (.foodItemsDetailed, [AnalysedFoodItem.schemaText]),
             (.overallDescription, "Describe what you perceived from the user input.")
         ] + self.fields

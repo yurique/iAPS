@@ -17,7 +17,7 @@ final class FoodSearchStateModel: ObservableObject {
     @Published var isBarcode = false
 
     @Published var navigateToAIAnalysis: AnalysisRoute? = nil
-    @Published var searchResult: FoodAnalysisResult?
+    @Published var searchResults: [FoodAnalysisResult] = []
     @Published var aiAnalysisRequest: AnalysisRequest?
 
     @Published var isLoading = false
@@ -52,7 +52,7 @@ final class FoodSearchStateModel: ObservableObject {
     func searchByText(query: String) {
         let trimmedQuery = query.trimmingCharacters(in: .whitespacesAndNewlines)
         guard trimmedQuery.isNotEmpty else {
-            searchResult = nil
+            searchResults = []
             return
         }
         let isBarcode = isBarcode(trimmedQuery)
@@ -69,7 +69,7 @@ final class FoodSearchStateModel: ObservableObject {
                         telemetryCallback: nil
                     )
                     Task { @MainActor in
-                        self.searchResult = result
+                        self.searchResults = [result] + self.searchResults
                         self.isLoading = false
                     }
 
@@ -87,7 +87,7 @@ final class FoodSearchStateModel: ObservableObject {
                         )
 
                         if !Task.isCancelled {
-                            self.searchResult = result
+                            self.searchResults = [result] + self.searchResults
                             self.isLoading = false
                         }
                     }
@@ -96,7 +96,7 @@ final class FoodSearchStateModel: ObservableObject {
                 if !Task.isCancelled {
                     self.errorMessage = error.localizedDescription
                     self.isLoading = false
-                    self.searchResult = nil
+                    self.searchResults = []
                     print("❌ Search failed: \(error.localizedDescription)")
                 }
             }

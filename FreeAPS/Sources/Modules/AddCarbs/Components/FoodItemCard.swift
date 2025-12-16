@@ -10,22 +10,6 @@ struct FoodItemCard: View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 8) {
                 HStack {
-                    if let portion = foodItem.portionEstimateSize {
-                        PortionSizeBadge(
-                            value: portion,
-                            unit: (foodItem.units ?? .grams).localizedAbbreviation,
-                            color: .yellow,
-                            icon: "scalemass.fill"
-                        )
-                        if let servingSize = foodItem.standardServingSize {
-                            NumberOfServingsBadge(
-                                value: portion / servingSize,
-                                color: .orange,
-                                icon: "multiply" // or "xmark"
-                            )
-                        }
-                    }
-
                     Text(foodItem.name ?? "Product without name")
                         .font(.headline)
                         .foregroundColor(.primary)
@@ -50,30 +34,34 @@ struct FoodItemCard: View {
 
                 VStack(alignment: .leading, spacing: 4) {
                     if let portion = foodItem.portionEstimateSize {
-                        HStack(spacing: 8) {
-//                            PortionSizeBadge(
-//                                value: portion,
-//                                unit: (foodItem.units ?? .grams).localizedAbbreviation,
-//                                color: .yellow
-//                            )
-                        }
-                    }
+                        PortionSizeBadge(
+                            value: portion,
+                            unit: (foodItem.units ?? .grams).localizedAbbreviation,
+                            color: .yellow,
+                            icon: "scalemass.fill"
+                        )
 
-                    if let standardServingSize = foodItem.standardServingSize {
-                        HStack {
-                            Text("Standard serving:")
-                                .font(.caption)
-                                .foregroundStyle(.secondary)
-                            Text(
-                                "\(Double(standardServingSize), specifier: "%.0f") \((foodItem.units ?? .grams).localizedAbbreviation)"
-                            )
-                            .font(.caption)
-                        }
-                        if let standardServing = foodItem.standardServing {
+                        if let servingSize = foodItem.standardServingSize {
                             HStack {
-                                Text(standardServing)
-                                    .font(.caption2)
-                                    .foregroundStyle(.secondary)
+                                //                            Text("Standard serving:")
+                                //                                .font(.caption)
+                                //                                .foregroundStyle(.secondary)
+                                NumberOfServingsBadge(
+                                    value: portion / servingSize,
+                                    color: .orange,
+                                    icon: "multiply" // or "xmark"
+                                )
+                                if let standardServing = foodItem.standardServing {
+                                    HStack {
+                                        Text(standardServing)
+                                            .font(.caption2)
+                                            .foregroundStyle(.secondary)
+                                        Text(
+                                            "/ \(Double(servingSize), specifier: "%.0f") \((foodItem.units ?? .grams).localizedAbbreviation)"
+                                        )
+                                        .font(.caption2)
+                                    }
+                                }
                             }
                         }
                     }
