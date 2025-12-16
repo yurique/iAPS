@@ -2,57 +2,96 @@ import SwiftUI
 
 struct AIAnalysisResultsView: View {
     let analysisResults: [FoodAnalysisResult]
+    @ObservedObject var state: State
     let onFoodItemSelected: (AIFoodItem) -> Void
     let onCompleteMealSelected: (AIFoodItem) -> Void
 
-    // Track edited state internally
-    @State private var editedItems: [String: EditableFoodItem] = [:]
-    @State private var deletedSections: Set<UUID> = []
+    // Nested analysis state management type
+    class State: ObservableObject {
+        @Published var editedItems: [String: EditableFoodItem] = [:]
+        @Published var deletedSections: Set<UUID> = []
+        @Published var collapsedSections: Set<UUID> = []
 
-    // Public accessor for current edited state
-    var currentEditedState: [EditableFoodItem] {
-        editedItems.values.filter { !$0.isDeleted }
-    }
-
-    // Helper to get current portion size for a food item
-    private func portionSizeFor(_ foodItem: AnalysedFoodItem) -> Decimal {
-        let key = foodItem.id.uuidString
-        return editedItems[key]?.portionSize ?? foodItem.portionEstimateSize ?? 0
-    }
-
-    // Helper to check if item is deleted
-    private func isDeleted(_ foodItem: AnalysedFoodItem) -> Bool {
-        let key = foodItem.id.uuidString
-        return editedItems[key]?.isDeleted ?? false
-    }
-
-    // Update portion size for an item
-    private func updatePortion(for foodItem: AnalysedFoodItem, to newPortion: Decimal) {
-        let key = foodItem.id.uuidString
-        if editedItems[key] == nil {
-            editedItems[key] = EditableFoodItem(from: foodItem)
+        static var empty: State {
+            State()
         }
-        editedItems[key]?.portionSize = newPortion
-    }
 
-    // Mark item as deleted
-    private func deleteItem(_ foodItem: AnalysedFoodItem) {
-        let key = foodItem.id.uuidString
-        if editedItems[key] == nil {
-            editedItems[key] = EditableFoodItem(from: foodItem)
+        // Public accessor for current edited state
+        var currentEditedItems: [EditableFoodItem] {
+            editedItems.values.filter { !$0.isDeleted }
         }
-        editedItems[key]?.isDeleted = true
-    }
 
-    // Undelete an item
-    private func undeleteItem(_ foodItem: AnalysedFoodItem) {
-        let key = foodItem.id.uuidString
-        editedItems[key]?.isDeleted = false
+        // Helper to get current portion size for a food item
+        func portionSize(for foodItem: AnalysedFoodItem) -> Decimal {
+            let key = foodItem.id.uuidString
+            return editedItems[key]?.portionSize ?? foodItem.portionEstimateSize ?? 0
+        }
+
+        // Helper to check if item is deleted
+        func isDeleted(_ foodItem: AnalysedFoodItem) -> Bool {
+            let key = foodItem.id.uuidString
+            return editedItems[key]?.isDeleted ?? false
+        }
+
+        // Update portion size for an item
+        func updatePortion(for foodItem: AnalysedFoodItem, to newPortion: Decimal) {
+            let key = foodItem.id.uuidString
+            if editedItems[key] == nil {
+                editedItems[key] = EditableFoodItem(from: foodItem)
+            }
+            editedItems[key]?.portionSize = newPortion
+        }
+
+        // Mark item as deleted
+        func deleteItem(_ foodItem: AnalysedFoodItem) {
+            let key = foodItem.id.uuidString
+            if editedItems[key] == nil {
+                editedItems[key] = EditableFoodItem(from: foodItem)
+            }
+            editedItems[key]?.isDeleted = true
+        }
+
+        // Undelete an item
+        func undeleteItem(_ foodItem: AnalysedFoodItem) {
+            let key = foodItem.id.uuidString
+            editedItems[key]?.isDeleted = false
+        }
+
+        // Delete entire section
+        func deleteSection(_ sectionId: UUID) {
+            deletedSections.insert(sectionId)
+        }
+
+        // Check if section is deleted
+        func isSectionDeleted(_ sectionId: UUID) -> Bool {
+            deletedSections.contains(sectionId)
+        }
+
+        // MARK: - Collapsed sections helpers
+
+        func isSectionCollapsed(_ sectionId: UUID) -> Bool {
+            collapsedSections.contains(sectionId)
+        }
+
+        func toggleSectionCollapsed(_ sectionId: UUID) {
+            if collapsedSections.contains(sectionId) {
+                collapsedSections.remove(sectionId)
+            } else {
+                collapsedSections.insert(sectionId)
+            }
+        }
+
+        // Clear all state
+        func clear() {
+            editedItems.removeAll()
+            deletedSections.removeAll()
+            collapsedSections.removeAll()
+        }
     }
 
     // Computed properties for aggregated totals
     private var visibleSections: [FoodAnalysisResult] {
-        analysisResults.filter({ !deletedSections.contains($0.id) })
+        analysisResults.filter({ !state.isSectionDeleted($0.id) })
     }
 
     private var allFoodItems: [AnalysedFoodItem] {
@@ -60,37 +99,37 @@ struct AIAnalysisResultsView: View {
     }
 
     private var nonDeletedItemCount: Int {
-        allFoodItems.filter { !isDeleted($0) }.count
+        allFoodItems.filter { !state.isDeleted($0) }.count
     }
 
     private var totalCalories: Decimal {
         allFoodItems.reduce(0) { sum, item in
-            guard !isDeleted(item) else { return sum }
-            let portion = portionSizeFor(item)
+            guard !state.isDeleted(item) else { return sum }
+            let portion = state.portionSize(for: item)
             return sum + (item.caloriesInPortion(portion: portion) ?? 0)
         }
     }
 
     private var totalCarbs: Decimal {
         allFoodItems.reduce(0) { sum, item in
-            guard !isDeleted(item) else { return sum }
-            let portion = portionSizeFor(item)
+            guard !state.isDeleted(item) else { return sum }
+            let portion = state.portionSize(for: item)
             return sum + (item.carbsInPortion(portion: portion) ?? 0)
         }
     }
 
     private var totalProtein: Decimal {
         allFoodItems.reduce(0) { sum, item in
-            guard !isDeleted(item) else { return sum }
-            let portion = portionSizeFor(item)
+            guard !state.isDeleted(item) else { return sum }
+            let portion = state.portionSize(for: item)
             return sum + (item.proteinInPortion(portion: portion) ?? 0)
         }
     }
 
     private var totalFat: Decimal {
         allFoodItems.reduce(0) { sum, item in
-            guard !isDeleted(item) else { return sum }
-            let portion = portionSizeFor(item)
+            guard !state.isDeleted(item) else { return sum }
+            let portion = state.portionSize(for: item)
             return sum + (item.fatInPortion(portion: portion) ?? 0)
         }
     }
@@ -108,7 +147,7 @@ struct AIAnalysisResultsView: View {
                     if nonDeletedItemCount > 0 {
                         Button(action: {
                             let mealName = nonDeletedItemCount == 1 ?
-                                allFoodItems.first(where: { !isDeleted($0) })?.name ?? "Meal" :
+                                allFoodItems.first(where: { !state.isDeleted($0) })?.name ?? "Meal" :
                                 "Complete Meal"
 
                             let totalMeal = AIFoodItem(
@@ -118,7 +157,7 @@ struct AIAnalysisResultsView: View {
                                 carbs: totalCarbs,
                                 protein: totalProtein,
                                 fat: totalFat,
-                                imageURL: nonDeletedItemCount == 1 ? allFoodItems.first(where: { !isDeleted($0) })?
+                                imageURL: nonDeletedItemCount == 1 ? allFoodItems.first(where: { !state.isDeleted($0) })?
                                     .imageURL : nil,
                                 source: analysisResults.first?.source ?? .ai
                             )
@@ -217,18 +256,8 @@ struct AIAnalysisResultsView: View {
                 ForEach(visibleSections) { analysisResult in
                     AnalysisResultListSection(
                         analysisResult: analysisResult,
-                        isDeleted: isDeleted,
-                        portionSizeFor: portionSizeFor,
-                        updatePortion: updatePortion,
-                        deleteItem: deleteItem,
-                        undeleteItem: undeleteItem,
-                        onFoodItemSelected: onFoodItemSelected,
-                        onDeleteSection: {
-                            let sectionId = analysisResult.id
-                            _ = withAnimation(.easeInOut(duration: 0.2)) {
-                                deletedSections.insert(sectionId)
-                            }
-                        }
+                        state: state,
+                        onFoodItemSelected: onFoodItemSelected
                     )
                 }
                 .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
@@ -368,15 +397,9 @@ struct EditableFoodItem: Identifiable {
 
 struct AnalysisResultListSection: View {
     let analysisResult: FoodAnalysisResult
-    let isDeleted: (AnalysedFoodItem) -> Bool
-    let portionSizeFor: (AnalysedFoodItem) -> Decimal
-    let updatePortion: (AnalysedFoodItem, Decimal) -> Void
-    let deleteItem: (AnalysedFoodItem) -> Void
-    let undeleteItem: (AnalysedFoodItem) -> Void
+    @ObservedObject var state: AIAnalysisResultsView.State
     let onFoodItemSelected: (AIFoodItem) -> Void
-    let onDeleteSection: () -> Void
 
-    @State private var isExpanded = true
     @State private var showInfoPopup = false
 
     private var preferredInfoHeight: CGFloat {
@@ -388,58 +411,64 @@ struct AnalysisResultListSection: View {
     }
 
     private var nonDeletedItemCount: Int {
-        analysisResult.foodItemsDetailed.filter { !isDeleted($0) }.count
+        analysisResult.foodItemsDetailed.filter { !state.isDeleted($0) }.count
     }
 
     var body: some View {
         Group {
             // Section Header Row
-            HStack(spacing: 12) {
-                // Collapse/Expand button (left side)
-                Button(action: {
-                    withAnimation(.easeInOut(duration: 0.2)) {
-                        isExpanded.toggle()
+            VStack(spacing: 0) {
+                HStack(spacing: 12) {
+                    // Collapse/Expand button (left side)
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            state.toggleSectionCollapsed(analysisResult.id)
+                        }
+                    }) {
+                        Image(systemName: state.isSectionCollapsed(analysisResult.id) ? "chevron.right" : "chevron.down")
+                            .font(.system(size: 14, weight: .semibold))
+                            .foregroundColor(.secondary)
+                            .frame(width: 20)
+                            .contentShape(Rectangle())
                     }
-                }) {
-                    Image(systemName: isExpanded ? "chevron.down" : "chevron.right")
-                        .font(.system(size: 14, weight: .semibold))
-                        .foregroundColor(.secondary)
-                        .frame(width: 20)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(PlainButtonStyle())
+                    .buttonStyle(PlainButtonStyle())
 
-                // Title (tappable to show info if available)
-                Button(action: {
-                    if analysisResult.source == .ai || analysisResult.source == .aiText {
-                        showInfoPopup = true
+                    // Title (tappable to show info if available)
+                    Button(action: {
+                        if analysisResult.source == .ai || analysisResult.source == .aiText {
+                            showInfoPopup = true
+                        }
+                    }) {
+                        Text(analysisResult.title)
+                            .font(.subheadline)
+                            .fontWeight(.semibold)
+                            .foregroundColor(.primary)
+                            .lineLimit(1)
+                            .truncationMode(.tail)
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .contentShape(Rectangle())
                     }
-                }) {
-                    Text(analysisResult.title)
-                        .font(.subheadline)
-                        .fontWeight(.semibold)
-                        .foregroundColor(.primary)
-                        .lineLimit(1)
-                        .truncationMode(.tail)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                        .contentShape(Rectangle())
-                }
-                .buttonStyle(PlainButtonStyle())
-                .disabled(analysisResult.source != .ai && analysisResult.source != .aiText)
+                    .buttonStyle(PlainButtonStyle())
+                    .disabled(analysisResult.source != .ai && analysisResult.source != .aiText)
 
-                // Source icon (non-interactive, just visual indicator)
-                if let icon = analysisResult.source?.icon {
-                    Image(systemName: icon)
-                        .font(.system(size: 16))
-                        .foregroundColor(.secondary)
+                    // Source icon (non-interactive, just visual indicator)
+                    if let icon = analysisResult.source?.icon {
+                        Image(systemName: icon)
+                            .font(.system(size: 16))
+                            .foregroundColor(.secondary)
+                    }
                 }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 14)
             }
-            .padding(.horizontal, 16)
-            .padding(.vertical, 14)
-            .background(Color(.tertiarySystemGroupedBackground))
+            .background(Color(.systemGray5))
             .listRowSeparator(.hidden)
             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-                Button(role: .destructive, action: onDeleteSection) {
+                Button(role: .destructive) {
+                    withAnimation(.easeInOut(duration: 0.2)) {
+                        state.deleteSection(analysisResult.id)
+                    }
+                } label: {
                     Image(systemName: "trash")
                 }
             }
@@ -450,30 +479,32 @@ struct AnalysisResultListSection: View {
             }
 
             // Food Items
-            if isExpanded {
+            if !state.isSectionCollapsed(analysisResult.id) {
                 ForEach(Array(analysisResult.foodItemsDetailed.enumerated()), id: \.element.name) { index, foodItem in
                     Group {
-                        if isDeleted(foodItem) {
+                        if state.isDeleted(foodItem) {
                             DeletedFoodItemRow(
                                 foodItem: foodItem,
                                 onUndelete: {
                                     withAnimation(.easeInOut(duration: 0.2)) {
-                                        undeleteItem(foodItem)
+                                        state.undeleteItem(foodItem)
                                     }
                                 }
                             )
                         } else {
                             FoodItemRow(
                                 foodItem: foodItem,
-                                portionSize: portionSizeFor(foodItem),
-                                onPortionChange: { newPortion in updatePortion(foodItem, newPortion) },
+                                portionSize: state.portionSize(for: foodItem),
+                                onPortionChange: { newPortion in
+                                    state.updatePortion(for: foodItem, to: newPortion)
+                                },
                                 onDelete: {
                                     withAnimation(.easeInOut(duration: 0.2)) {
-                                        deleteItem(foodItem)
+                                        state.deleteItem(foodItem)
                                     }
                                 },
                                 onSelect: {
-                                    let currentPortion = portionSizeFor(foodItem)
+                                    let currentPortion = state.portionSize(for: foodItem)
                                     let selectedFood = AIFoodItem(
                                         name: foodItem.name,
                                         brand: foodItem.brand,
@@ -490,6 +521,8 @@ struct AnalysisResultListSection: View {
                         }
                     }
                     .listRowSeparator(index == analysisResult.foodItemsDetailed.count - 1 ? .hidden : .visible)
+                    .padding(.top, index == 0 ? 8 : 0)
+                    .padding(.bottom, index == analysisResult.foodItemsDetailed.count - 1 ? 8 : 0)
                 }
             }
         }
@@ -1046,9 +1079,10 @@ struct FoodItemRow: View {
                     NutritionBadge(value: calories, unit: "kcal", color: NutritionBadgeConfig.caloriesColor)
                 }
             }
-            .padding(.horizontal)
-            .padding(.bottom)
+            .padding(.horizontal, 16)
+            .padding(.bottom, 12)
         }
+        .background(Color(.systemGray6))
         .swipeActions(edge: .trailing, allowsFullSwipe: true) {
             Button(role: .destructive) {
                 onDelete()

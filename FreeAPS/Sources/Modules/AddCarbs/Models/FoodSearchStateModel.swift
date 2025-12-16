@@ -23,6 +23,8 @@ final class FoodSearchStateModel: ObservableObject {
     @Published var isLoading = false
     @Published var errorMessage: String?
 
+    @ObservedObject var searchResultsState = AIAnalysisResultsView.State.empty
+
     private var cancellables = Set<AnyCancellable>()
     private var searchTask: Task<Void, Never>?
 

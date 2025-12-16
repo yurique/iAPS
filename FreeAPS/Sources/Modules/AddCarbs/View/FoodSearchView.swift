@@ -64,6 +64,7 @@ struct FoodSearchView: View {
                 if state.searchResults.isNotEmpty {
                     AIAnalysisResultsView(
                         analysisResults: state.searchResults,
+                        state: state.searchResultsState,
                         onFoodItemSelected: { foodItem in
                             handleFoodItemSelection(foodItem, image: state.aiAnalysisRequest?.image)
                         },
@@ -125,7 +126,7 @@ struct FoodSearchView: View {
     }
 
     private func handleAIAnalysis(_ analysisResult: FoodAnalysisResult, image _: UIImage?) { // ✅ Parameter name korrigiert
-        state.searchResults = state.searchResults + [analysisResult]
+        state.searchResults = [analysisResult] + state.searchResults
 
         // TODO: to ai food items
 //        let aiFoodItems = analysisResult.foodItemsDetailed.map { foodItem in
