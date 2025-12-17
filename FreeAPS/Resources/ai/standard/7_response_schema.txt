@@ -1,2 +1,2 @@
-This file is only to show the structure/order of the prompt.
-This part is generated in the app.
+RESPOND IN JSON FORMAT:
+(schema)

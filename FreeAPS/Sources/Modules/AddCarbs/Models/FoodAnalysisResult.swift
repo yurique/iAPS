@@ -1,7 +1,7 @@
 import Foundation
 
 /// Result from AI food analysis with detailed breakdown
-struct FoodAnalysisResult: Identifiable {
+struct FoodAnalysisResult: Identifiable, Equatable {
     let id = UUID()
     let imageType: ImageAnalysisType?
     let foodItemsDetailed: [AnalysedFoodItem]
@@ -22,6 +22,10 @@ struct FoodAnalysisResult: Identifiable {
     let source: FoodItemSource?
     var barcode: String? = nil
     var textQuery: String? = nil
+
+    static func == (lhs: FoodAnalysisResult, rhs: FoodAnalysisResult) -> Bool {
+        lhs.id == rhs.id
+    }
 
     // Store original baseline servings for proper scaling calculations
 //    let originalServings: Double
@@ -399,8 +403,8 @@ extension FoodAnalysisResult {
     private static var fields: [(FoodAnalysisResult.CodingKeys, Any)] {
         [
             //            .servingsStandard: "brief name/description of NUTRITION_AUTHORITY",
-            (.briefDescription, "generate a SHORT UI TITLE describing the analyzed food"),
-            (.diabetesConsiderations, "Carb sources, GI impact (low/medium/high), timing considerations")
+            (.briefDescription, "generate a SHORT UI TITLE describing the analyzed food; (language)"),
+            (.diabetesConsiderations, "carb sources, GI impact (low/medium/high), timing considerations; (language)")
 //            .insulinTimingRecommendations: "Meal type and pre-meal timing (minutes before eating)",
 //            .absorptionTimeHours: "absorption hours between 2 and 6",
 //            .absorptionTimeReasoning: "Brief timing calculation explanation",
@@ -413,7 +417,7 @@ extension FoodAnalysisResult {
             (.imageType, "string enum: food_photo or menu_item or recipe_photo"),
             (.foodItemsDetailed, AnalysedFoodItem.schemaVisual),
             //      (.visualAssessmentDetails, "Textures, colors, cooking evidence")
-            (.overallDescription, "Describe what you see on the photo.")
+            (.overallDescription, "describe what you see on the photo; (language)")
         ] + self.fields
 
         return fields.map { key, value in
@@ -425,7 +429,7 @@ extension FoodAnalysisResult {
         let fields = [
             (.imageType, "string, always set to: text_search"),
             (.foodItemsDetailed, [AnalysedFoodItem.schemaText]),
-            (.overallDescription, "Describe what you perceived from the user input.")
+            (.overallDescription, "describe what you perceived from the user input; (language)")
         ] + self.fields
 
         return fields.map { key, value in

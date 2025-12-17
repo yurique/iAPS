@@ -81,11 +81,12 @@ final class OpenFoodFactsService {
             let request = createRequest(for: directURL)
             let response = try await performRequest(request)
 
-            // ✅ DEBUG: Response speichern
-            let tempDir = FileManager.default.temporaryDirectory
-            let responseFile = tempDir.appendingPathComponent("openfoodfacts_direct_response.json")
-            try response.data.write(to: responseFile)
-            print("💾 DEBUG: Direct product response saved to: \(responseFile.path)")
+            #if DEBUG
+                let tempDir = FileManager.default.temporaryDirectory
+                let responseFile = tempDir.appendingPathComponent("openfoodfacts_direct_response.json")
+                try response.data.write(to: responseFile)
+                print("💾 DEBUG: Direct product response saved to: \(responseFile.path)")
+            #endif
 
             // Versuche das direkte Produkt-Format zu parsen
             do {
@@ -122,12 +123,28 @@ final class OpenFoodFactsService {
         let request = createRequest(for: url)
         let response = try await performRequest(request)
 
-        // Response speichern für Debugging
-        let tempDir = FileManager.default.temporaryDirectory
-        let responseFile = tempDir.appendingPathComponent("openfoodfacts_search_response.json")
-        try response.data.write(to: responseFile)
-        print("💾 DEBUG: Search response saved to: \(responseFile.path)")
+        #if DEBUG
+            // Response speichern für Debugging
+            let tempDir = FileManager.default.temporaryDirectory
+            let responseFile = tempDir.appendingPathComponent("openfoodfacts_search_response.json")
+            try response.data.write(to: responseFile)
+            print("💾 DEBUG: Search response saved to: \(responseFile.path)")
+        #endif
 
+        do {
+            _ = try decodeResponse(OpenFoodFactsSearchResponse.self, from: response.data)
+        } catch let decodingError as DecodingError {
+            print("❌ DECODING FAILED:")
+            print(prettyPrintDecodingError(decodingError))
+
+            // Also print a snippet of the raw JSON for context
+            if let jsonString = String(data: response.data, encoding: .utf8) {
+                let preview = String(jsonString.prefix(500))
+                print("📄 JSON Preview (first 500 chars):\n\(preview)")
+            }
+        } catch {
+            print("❌ Other error: \(error.localizedDescription)")
+        }
         let searchResponse = try decodeResponse(OpenFoodFactsSearchResponse.self, from: response.data)
         let validProducts = searchResponse.products.filter { $0.hasSufficientNutritionalData }
 
@@ -297,10 +314,20 @@ final class OpenFoodFactsService {
             let decoder = JSONDecoder()
             return try decoder.decode(type, from: data)
         } catch let decodingError as DecodingError {
-            os_log("JSON decoding failed: %{public}@", log: log, type: .error, decodingError.localizedDescription)
+            let detailedError = prettyPrintDecodingError(decodingError)
+            os_log("JSON decoding failed:\n%{public}@", log: log, type: .error, detailedError)
+            print("❌ DETAILED DECODING ERROR:\n\(detailedError)")
+
+            // Print JSON preview
+            if let jsonString = String(data: data, encoding: .utf8) {
+                let preview = String(jsonString.prefix(1000))
+                print("📄 JSON Preview (first 1000 chars):\n\(preview)")
+            }
+
             throw OpenFoodFactsError.decodingError(decodingError)
         } catch {
             os_log("Decoding error: %{public}@", log: log, type: .error, error.localizedDescription)
+            print("❌ OTHER DECODING ERROR: \(error)")
             throw OpenFoodFactsError.decodingError(error)
         }
     }
@@ -311,5 +338,50 @@ final class OpenFoodFactsService {
         let numericPattern = "^[0-9]{8,14}$"
         let predicate = NSPredicate(format: "SELF MATCHES %@", numericPattern)
         return predicate.evaluate(with: barcode)
+    }
+
+    private func prettyPrintDecodingError(_ error: DecodingError) -> String {
+        switch error {
+        case let .typeMismatch(type, context):
+            var output = "Type mismatch for type: \(type)\n"
+            output += "  Expected type: \(type)\n"
+            output += "  Coding path: \(context.codingPath.map(\.stringValue).joined(separator: " → "))\n"
+            output += "  Debug description: \(context.debugDescription)\n"
+            if let underlyingError = context.underlyingError {
+                output += "  Underlying error: \(underlyingError.localizedDescription)\n"
+            }
+            return output
+
+        case let .valueNotFound(type, context):
+            var output = "Value not found for type: \(type)\n"
+            output += "  Expected type: \(type)\n"
+            output += "  Coding path: \(context.codingPath.map(\.stringValue).joined(separator: " → "))\n"
+            output += "  Debug description: \(context.debugDescription)\n"
+            if let underlyingError = context.underlyingError {
+                output += "  Underlying error: \(underlyingError.localizedDescription)\n"
+            }
+            return output
+
+        case let .keyNotFound(key, context):
+            var output = "Key '\(key.stringValue)' not found\n"
+            output += "  Coding path: \(context.codingPath.map(\.stringValue).joined(separator: " → "))\n"
+            output += "  Debug description: \(context.debugDescription)\n"
+            if let underlyingError = context.underlyingError {
+                output += "  Underlying error: \(underlyingError.localizedDescription)\n"
+            }
+            return output
+
+        case let .dataCorrupted(context):
+            var output = "Data corrupted\n"
+            output += "  Coding path: \(context.codingPath.map(\.stringValue).joined(separator: " → "))\n"
+            output += "  Debug description: \(context.debugDescription)\n"
+            if let underlyingError = context.underlyingError {
+                output += "  Underlying error: \(underlyingError.localizedDescription)\n"
+            }
+            return output
+
+        @unknown default:
+            return "Unknown decoding error: \(error.localizedDescription)"
+        }
     }
 }

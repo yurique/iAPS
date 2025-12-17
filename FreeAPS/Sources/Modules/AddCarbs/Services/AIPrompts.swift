@@ -53,33 +53,21 @@ private enum PromptLoader {
     }
 }
 
-private let standardAnalysis_0_Header: String = PromptLoader.loadTextResource(named: "ai/standard/0_header.txt")
-private let standardAnalysis_1_Preferences: String = PromptLoader.loadTextResource(named: "ai/standard/1_user_preferences.txt")
+private let prompt_0_header: String = PromptLoader.loadTextResource(named: "ai/standard/0_header.txt")
+private let prompt_1_preferences: String = PromptLoader.loadTextResource(named: "ai/standard/1_user_preferences.txt")
 
-private let standardAnalysis_3_Standards: String = PromptLoader.loadTextResource(named: "ai/standard/3_standards.txt")
+private let prompt_3_standards: String = PromptLoader.loadTextResource(named: "ai/standard/3_standards.txt")
 
-private let standardAnalysis_5_1_photo_instructions: String = PromptLoader
-    .loadTextResource(named: "ai/standard/5_1_photo_instructions.txt")
+private let prompt_5a_photo_instructions: String = PromptLoader
+    .loadTextResource(named: "ai/standard/5a_photo_instructions.txt")
 
-private let standardAnalysis_5_2_text_instructions: String = PromptLoader
-    .loadTextResource(named: "ai/standard/5_2_text_instructions.txt")
+private let prompt_5b_text_instructions: String = PromptLoader
+    .loadTextResource(named: "ai/standard/5b_text_instructions.txt")
 
-private let standardAnalysis_6_pre_response: String = PromptLoader.loadTextResource(named: "ai/standard/6_pre_response.txt")
+private let prompt_7_response_schema: String = PromptLoader.loadTextResource(named: "ai/standard/7_response_schema.txt")
 
-private let standardAnalysis_8_1_photo_response_format: String = PromptLoader
-    .loadTextResource(named: "ai/standard/8_1_photo_response_format.txt")
-
-private let standardAnalysis_8_2_text_response_format: String = PromptLoader
-    .loadTextResource(named: "ai/standard/8_2_text_response_format.txt")
-
-private let standardAnalysis_8_footer_common: String = PromptLoader
-    .loadTextResource(named: "ai/standard/8_footer_requirements_common.txt")
-
-private let standardAnalysis_9_1_footer_photo: String = PromptLoader
-    .loadTextResource(named: "ai/standard/9_1_footer_requirements_photo.txt")
-
-private let standardAnalysis_9_2_footer_text: String = PromptLoader
-    .loadTextResource(named: "ai/standard/9_2_footer_requirements_text.txt")
+private let prompt_8_footer: String = PromptLoader
+    .loadTextResource(named: "ai/standard/8_footer.txt")
 
 /// Standard analysis prompt for basic diabetes management (used when Advanced Dosing is OFF)
 private func getStandardAnalysisPrompt(
@@ -87,63 +75,53 @@ private func getStandardAnalysisPrompt(
     responseSchema: [(String, Any)],
 ) throws -> String {
     let instructions = switch request {
-    case .image: standardAnalysis_5_1_photo_instructions
-    case let .query(textQuery): standardAnalysis_5_2_text_instructions.replacingOccurrences(of: "(query)", with: textQuery)
+    case .image: prompt_5a_photo_instructions
+    case let .query(textQuery): prompt_5b_text_instructions.replacingOccurrences(of: "(query)", with: textQuery)
     }
 
     let schemaJson = PlainJSONFromPairs(responseSchema)
-    let schema = renderPlainJSON(schemaJson)
 
-    let responseFormat: String =
-        "RESPOND IN JSON FORMAT:\n" +
-        schema
-
+    var schema = renderPlainJSON(schemaJson)
     let languageCode = UserDefaults.standard.userPreferredLanguageForAI ?? Locale.current.region?.identifier
-    let regionCode = UserDefaults.standard.userPreferredRegionForAI ?? Locale.preferredLanguages.first
-    let userPreferences: String = {
-        let hasLang = !(languageCode?.isEmpty ?? true)
-        let hasRegion = !(regionCode?.isEmpty ?? true)
-        if hasLang || hasRegion {
-            return makePreferencesBlock(languageCode: languageCode, regionCode: regionCode)
-        } else {
-            return ""
-        }
-    }()
 
-    let footerRequirements = switch request {
-    case .image: standardAnalysis_9_1_footer_photo
-    case .query: standardAnalysis_9_2_footer_text
+    if let languageForAI = getLanguageForAI(languageCode: languageCode) {
+        schema = schema.replacingOccurrences(of: "(language)", with: "\(languageForAI)")
+    } else {
+        schema = schema.replacingOccurrences(of: "(language)", with: "")
     }
+    let responseSchema = prompt_7_response_schema.replacingOccurrences(of: "(schema)", with: schema)
 
-    return standardAnalysis_0_Header + "\n\n" +
+    let regionCode = UserDefaults.standard.userPreferredRegionForAI ?? Locale.preferredLanguages.first
+    let userPreferences: String = makePreferencesBlock(regionCode: regionCode)
+
+    return prompt_0_header + "\n\n" +
         userPreferences + "\n\n" +
-        standardAnalysis_3_Standards + "\n\n" +
+        prompt_3_standards + "\n\n" +
         instructions + "\n\n" +
-        standardAnalysis_6_pre_response + "\n\n" +
-        responseFormat + "\n\n" +
-        standardAnalysis_8_footer_common + "\n\n" +
-        footerRequirements
+        responseSchema + "\n\n" +
+        prompt_8_footer
 }
 
-private func makePreferencesBlock(languageCode: String?, regionCode: String?) -> String {
+private func getLanguageForAI(languageCode: String?) -> String? {
+    guard let languageCode else { return nil }
     let locale = Locale.current
 
-    let rawLang = languageCode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
-    let languageTag: String = {
-        let trimmed = rawLang
-        if trimmed.isEmpty { return "en-US" }
-        return trimmed
-    }()
+    let rawLang = languageCode.trimmingCharacters(in: .whitespacesAndNewlines)
 
+    let languageTag = rawLang.isEmpty ? "en-US" : rawLang
     let primaryLanguageCode = languageTag.split(separator: "-").first.map(String.init) ?? "en"
     let languageName = locale.localizedString(forLanguageCode: primaryLanguageCode) ?? primaryLanguageCode
+
+    return "\(languageName) (\(languageTag))"
+}
+
+private func makePreferencesBlock(regionCode: String?) -> String {
+    let locale = Locale.current
 
     let systemRegion = Locale.current.identifier
     let rawRegion = regionCode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let effectiveRegion = rawRegion.isEmpty ? systemRegion : rawRegion
     let regionName = locale.localizedString(forRegionCode: effectiveRegion) ?? effectiveRegion
-
-    let languageForAI = "\(languageName) (\(languageTag))"
 
     let regionForAI =
         effectiveRegion.isNotEmpty ?
@@ -151,9 +129,8 @@ private func makePreferencesBlock(languageCode: String?, regionCode: String?) ->
 
     let nutritionAuthority = UserDefaults.standard.userPreferredNutritionAuthorityForAI
 
-    return standardAnalysis_1_Preferences
+    return prompt_1_preferences
         .replacingOccurrences(of: "(nutrition_authority)", with: nutritionAuthority.descriptionForAI)
-        .replacingOccurrences(of: "(language)", with: languageForAI)
         .replacingOccurrences(of: "(region)", with: regionForAI)
 }
 

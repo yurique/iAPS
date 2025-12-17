@@ -69,7 +69,7 @@ struct AIProgressView: View {
             // AI Model Badge overlay - top right (doesn't affect layout)
             if let model = analysisModel {
                 HStack(spacing: 6) {
-                    Image(systemName: "sparkles")
+                    Image(systemName: "brain")
                         .font(.caption2)
                         .foregroundStyle(.secondary)
                     Text(model)

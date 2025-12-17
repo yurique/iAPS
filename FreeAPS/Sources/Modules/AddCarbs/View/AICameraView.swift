@@ -7,8 +7,8 @@ struct AICameraView: View {
     let onImageCaptured: (UIImage) -> Void
     let onCancel: () -> Void
 
-    @State private var showingImagePicker = false
-    @State private var imageSourceType: ImageSourceType = .camera
+    @State var showingImagePicker = false
+    @State var imageSourceType: ImageSourceType = .camera
     @State private var showingTips = false
     @State private var selectedPhotoItem: PhotosPickerItem?
 

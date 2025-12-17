@@ -238,15 +238,15 @@ extension AnalysedFoodItem {
             (.fiberPer100, "decimal, grams of fiber per 100 grams or milliliters"),
             (.proteinPer100, "decimal, grams of protein per 100 grams or milliliters"),
             (.sugarsPer100, "decimal, grams of sugars per 100 grams or milliliters"),
-            (.portionEstimate, "desription of the identified portion"),
+            (.portionEstimate, "desription of the identified portion; (language)"),
             (.portionEstimateSize, "decimal, exact size of the identified portion; in grams or milliliters; do not include unit"),
-            (
-                .standardServing,
-                "description of the identified standard serving, if available, is natural description is available - do NOT add size in grams/milliliters, since you've already specified it above"
-            ),
             (
                 .standardServingSize,
                 "decimal, the identified standard serving size in grams or milliliters, if available; do not include unit"
+            ),
+            (
+                .standardServing,
+                "description of the identified standard serving, if available, is natural description is available - do NOT add size in grams/milliliters, since you've already specified it above; (language)"
             ),
             (.glycemicIndex, "decimal, glycemic index if available")
         ]
@@ -254,11 +254,11 @@ extension AnalysedFoodItem {
 
     static var schemaVisual: [(String, Any)] {
         let fields = self.fields + [
-            (.visualCues, "visual elements analyzed"),
-            (.preparationMethod, "cooking details observed"),
+            (.visualCues, "visual elements analyzed; (language)"),
+            (.preparationMethod, "cooking details observed; (language)"),
             (
                 .assessmentNotes,
-                "Explain how you calculated this specific portion size, what visual references you used for measurement."
+                "explain how you calculated this specific portion size, what visual references you used for measurement; (language)"
             )
         ]
         return fields.map { key, value in
@@ -273,7 +273,7 @@ extension AnalysedFoodItem {
 //            (.preparationMethod, "cooking details if mentioned")
             (
                 .assessmentNotes,
-                "Explain how you calculated this specific portion size, what references you used."
+                "explain how you calculated this specific portion size, what references you used; (language)"
             )
         ]
         return fields.map { key, value in

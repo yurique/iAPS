@@ -9,6 +9,7 @@ struct FoodSearchView: View {
     // Navigation States
     @State private var navigateToBarcode = false
     @State private var navigateToAICamera = false
+    @State private var overrideCameraByDefault = false
 
     var body: some View {
         NavigationStack {
@@ -45,37 +46,38 @@ struct FoodSearchView: View {
                             .cornerRadius(8)
                     }
 
-                    Button {
-                        navigateToAICamera = true
-                    } label: {
-                        Image(systemName: "camera")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(width: 24, height: 24)
-                            .padding(8)
-                            .background(Color.purple.opacity(0.1))
-                            .cornerRadius(8)
-                            .foregroundColor(.purple)
-                    }
+                    Image(systemName: "camera")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(width: 24, height: 24)
+                        .padding(8)
+                        .background(Color.purple.opacity(0.1))
+                        .cornerRadius(8)
+                        .foregroundColor(.purple)
+                        .onTapGesture {
+                            print("regular tap")
+                            overrideCameraByDefault = false
+                            navigateToAICamera = true
+                        }
+                        .onLongPressGesture(minimumDuration: 0.5) {
+                            print("long press")
+                            overrideCameraByDefault = true
+                            navigateToAICamera = true
+                        }
                 }
                 .padding(.horizontal)
                 .padding(.top, 12)
 
-                if state.searchResults.isNotEmpty {
-                    AIAnalysisResultsView(
-                        analysisResults: state.searchResults,
-                        state: state.searchResultsState,
-                        onFoodItemSelected: { foodItem in
-                            handleFoodItemSelection(foodItem, image: state.aiAnalysisRequest?.image)
-                        },
-                        onCompleteMealSelected: { totalMeal in
-                            handleFoodItemSelection(totalMeal, image: state.aiAnalysisRequest?.image)
-                        }
-                    )
-                    .padding(.top, 4)
-                } else {
-                    Spacer()
-                }
+                SearchResultsView(
+                    state: state,
+                    onFoodItemSelected: { foodItem in
+                        handleFoodItemSelection(foodItem, image: state.aiAnalysisRequest?.image)
+                    },
+                    onCompleteMealSelected: { totalMeal in
+                        handleFoodItemSelection(totalMeal, image: state.aiAnalysisRequest?.image)
+                    }
+                )
+                .padding(.top, 4)
             }
 
 //            .navigationTitle("Food Search")
@@ -90,13 +92,25 @@ struct FoodSearchView: View {
                 )
             }
             .navigationDestination(isPresented: $navigateToAICamera) {
-                AICameraView(
-                    onImageCaptured: { image in
-                        navigateToAICamera = false
-                        state.navigateToAIAnalysis = AnalysisRoute(request: AnalysisRequest.image(image))
-                    },
-                    onCancel: { navigateToAICamera = false }
-                )
+                if UserDefaults.standard.alwaysOpenCamera, !overrideCameraByDefault {
+                    AICameraView(
+                        onImageCaptured: { image in
+                            navigateToAICamera = false
+                            state.navigateToAIAnalysis = AnalysisRoute(request: AnalysisRequest.image(image))
+                        },
+                        onCancel: { navigateToAICamera = false },
+                        showingImagePicker: true,
+                        imageSourceType: .camera
+                    )
+                } else {
+                    AICameraView(
+                        onImageCaptured: { image in
+                            navigateToAICamera = false
+                            state.navigateToAIAnalysis = AnalysisRoute(request: AnalysisRequest.image(image))
+                        },
+                        onCancel: { navigateToAICamera = false }
+                    )
+                }
             }
             .navigationDestination(item: $state.navigateToAIAnalysis) { analysisRoute in
                 AIProgressView(
@@ -115,6 +129,32 @@ struct FoodSearchView: View {
                     }
                 )
             }
+            .sheet(item: $state.latestTextSearch) { searchResult in
+                TextSearchResultsSheet(
+                    searchResult: searchResult,
+                    onFoodItemSelected: { selectedItem in
+                        let newResult = FoodAnalysisResult(
+                            imageType: searchResult.imageType,
+                            foodItemsDetailed: [selectedItem],
+                            briefDescription: searchResult.briefDescription,
+                            overallDescription: searchResult.overallDescription,
+                            diabetesConsiderations: searchResult.diabetesConsiderations,
+                            notes: searchResult.notes,
+                            source: searchResult.source,
+                            barcode: searchResult.barcode,
+                            textQuery: searchResult.textQuery
+                        )
+
+                        state.addItem(selectedItem)
+                        state.latestTextSearch = nil
+                    },
+                    onDismiss: {
+                        state.latestTextSearch = nil
+                    }
+                )
+                .presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+            }
         }.background(Color(.systemBackground))
     }
 
@@ -127,40 +167,6 @@ struct FoodSearchView: View {
 
     private func handleAIAnalysis(_ analysisResult: FoodAnalysisResult, image _: UIImage?) { // ✅ Parameter name korrigiert
         state.searchResults = [analysisResult] + state.searchResults
-
-        // TODO: to ai food items
-//        let aiFoodItems = analysisResult.foodItemsDetailed.map { foodItem in
-//            var carbs: Double = 0
-//            var proteins: Double = 0
-//            var fat: Double = 0
-//            var calories: Double = 0
-//
-//            if let portion = foodItem.portionEstimateSize {
-//                if let carbsPer100 = foodItem.carbsPer100 {
-//                    carbs = carbsPer100 / 100 * portion
-//                }
-//                if let proteinPer100 = foodItem.proteinPer100 {
-//                    proteins = proteinPer100 / 100 * portion
-//                }
-//                if let fatPer100 = foodItem.fatPer100 {
-//                    fat = fatPer100 / 100 * portion
-//                }
-//                if let caloriesPer100 = foodItem.caloriesPer100 {
-//                    calories = caloriesPer100 / 100 * portion
-//                }
-//            }
-//
-//            return AIFoodItem(
-//                name: foodItem.name,
-//                brand: nil,
-//                calories: calories,
-//                carbs: carbs,
-//                protein: proteins,
-//                fat: fat,
-//                imageURL: nil
-//            )
-//        }
-//        state.aiSearchResults = aiFoodItems
     }
 
     private func handleFoodItemSelection(_ foodItem: AIFoodItem, image: UIImage?) {

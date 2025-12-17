@@ -1,97 +1,15 @@
 import SwiftUI
 
-struct AIAnalysisResultsView: View {
-    let analysisResults: [FoodAnalysisResult]
-    @ObservedObject var state: State
+struct SearchResultsView: View {
+    @ObservedObject var state: FoodSearchStateModel
     let onFoodItemSelected: (AIFoodItem) -> Void
     let onCompleteMealSelected: (AIFoodItem) -> Void
 
-    // Nested analysis state management type
-    class State: ObservableObject {
-        @Published var editedItems: [String: EditableFoodItem] = [:]
-        @Published var deletedSections: Set<UUID> = []
-        @Published var collapsedSections: Set<UUID> = []
+    @State private var clearedResults: [FoodAnalysisResult] = []
+    @State private var clearedResultsViewState: SearchResultsState?
 
-        static var empty: State {
-            State()
-        }
-
-        // Public accessor for current edited state
-        var currentEditedItems: [EditableFoodItem] {
-            editedItems.values.filter { !$0.isDeleted }
-        }
-
-        // Helper to get current portion size for a food item
-        func portionSize(for foodItem: AnalysedFoodItem) -> Decimal {
-            let key = foodItem.id.uuidString
-            return editedItems[key]?.portionSize ?? foodItem.portionEstimateSize ?? 0
-        }
-
-        // Helper to check if item is deleted
-        func isDeleted(_ foodItem: AnalysedFoodItem) -> Bool {
-            let key = foodItem.id.uuidString
-            return editedItems[key]?.isDeleted ?? false
-        }
-
-        // Update portion size for an item
-        func updatePortion(for foodItem: AnalysedFoodItem, to newPortion: Decimal) {
-            let key = foodItem.id.uuidString
-            if editedItems[key] == nil {
-                editedItems[key] = EditableFoodItem(from: foodItem)
-            }
-            editedItems[key]?.portionSize = newPortion
-        }
-
-        // Mark item as deleted
-        func deleteItem(_ foodItem: AnalysedFoodItem) {
-            let key = foodItem.id.uuidString
-            if editedItems[key] == nil {
-                editedItems[key] = EditableFoodItem(from: foodItem)
-            }
-            editedItems[key]?.isDeleted = true
-        }
-
-        // Undelete an item
-        func undeleteItem(_ foodItem: AnalysedFoodItem) {
-            let key = foodItem.id.uuidString
-            editedItems[key]?.isDeleted = false
-        }
-
-        // Delete entire section
-        func deleteSection(_ sectionId: UUID) {
-            deletedSections.insert(sectionId)
-        }
-
-        // Check if section is deleted
-        func isSectionDeleted(_ sectionId: UUID) -> Bool {
-            deletedSections.contains(sectionId)
-        }
-
-        // MARK: - Collapsed sections helpers
-
-        func isSectionCollapsed(_ sectionId: UUID) -> Bool {
-            collapsedSections.contains(sectionId)
-        }
-
-        func toggleSectionCollapsed(_ sectionId: UUID) {
-            if collapsedSections.contains(sectionId) {
-                collapsedSections.remove(sectionId)
-            } else {
-                collapsedSections.insert(sectionId)
-            }
-        }
-
-        // Clear all state
-        func clear() {
-            editedItems.removeAll()
-            deletedSections.removeAll()
-            collapsedSections.removeAll()
-        }
-    }
-
-    // Computed properties for aggregated totals
     private var visibleSections: [FoodAnalysisResult] {
-        analysisResults.filter({ !state.isSectionDeleted($0.id) })
+        state.searchResults.filter({ !state.resultsView.isSectionDeleted($0.id) })
     }
 
     private var allFoodItems: [AnalysedFoodItem] {
@@ -99,42 +17,174 @@ struct AIAnalysisResultsView: View {
     }
 
     private var nonDeletedItemCount: Int {
-        allFoodItems.filter { !state.isDeleted($0) }.count
+        allFoodItems.filter { !state.resultsView.isDeleted($0) }.count
     }
 
     private var totalCalories: Decimal {
         allFoodItems.reduce(0) { sum, item in
-            guard !state.isDeleted(item) else { return sum }
-            let portion = state.portionSize(for: item)
+            guard !state.resultsView.isDeleted(item) else { return sum }
+            let portion = state.resultsView.portionSize(for: item)
             return sum + (item.caloriesInPortion(portion: portion) ?? 0)
         }
     }
 
     private var totalCarbs: Decimal {
         allFoodItems.reduce(0) { sum, item in
-            guard !state.isDeleted(item) else { return sum }
-            let portion = state.portionSize(for: item)
+            guard !state.resultsView.isDeleted(item) else { return sum }
+            let portion = state.resultsView.portionSize(for: item)
             return sum + (item.carbsInPortion(portion: portion) ?? 0)
         }
     }
 
     private var totalProtein: Decimal {
         allFoodItems.reduce(0) { sum, item in
-            guard !state.isDeleted(item) else { return sum }
-            let portion = state.portionSize(for: item)
+            guard !state.resultsView.isDeleted(item) else { return sum }
+            let portion = state.resultsView.portionSize(for: item)
             return sum + (item.proteinInPortion(portion: portion) ?? 0)
         }
     }
 
     private var totalFat: Decimal {
         allFoodItems.reduce(0) { sum, item in
-            guard !state.isDeleted(item) else { return sum }
-            let portion = state.portionSize(for: item)
+            guard !state.resultsView.isDeleted(item) else { return sum }
+            let portion = state.resultsView.portionSize(for: item)
             return sum + (item.fatInPortion(portion: portion) ?? 0)
         }
     }
 
     var body: some View {
+        VStack(spacing: 0) {
+            // Loading indicator
+            if state.isLoading {
+                loadingBanner()
+            }
+            // Error message (only when not loading)
+            else if let latestSearchError = state.latestSearchError {
+                errorMessageBanner(message: latestSearchError, icon: state.latestSearchIcon)
+            }
+
+            // Undo button (shown after clearing, regardless of empty/non-empty state)
+            if clearedResultsViewState != nil {
+                undoButton
+            }
+
+            // Always show results if available, otherwise show empty state
+            if state.searchResults.isEmpty {
+                noSearchesView
+            } else {
+                searchResultsView
+            }
+        }
+        .onChange(of: state.searchResults) { _, newValue in
+            if clearedResultsViewState != nil, !newValue.isEmpty {
+                withAnimation(.easeOut(duration: 0.2)) {
+                    clearedResults = []
+                    clearedResultsViewState = nil
+                }
+            }
+        }
+    }
+
+    private var undoButton: some View {
+        HStack(alignment: .center) {
+            Spacer()
+
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    // Restore cleared results and state
+                    state.searchResults = clearedResults
+                    if let savedState = clearedResultsViewState {
+                        state.resultsView.editedItems = savedState.editedItems
+                        state.resultsView.deletedSections = savedState.deletedSections
+                        state.resultsView.collapsedSections = savedState.collapsedSections
+                    }
+
+                    clearedResults = []
+                    clearedResultsViewState = nil
+                }
+            }) {
+                HStack(spacing: 4) {
+                    Image(systemName: "arrow.uturn.backward")
+                        .font(.system(size: 13))
+                    Text("Undo Clear")
+                        .font(.subheadline)
+                }
+                .foregroundColor(.blue)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .fill(Color(.systemGray5))
+                )
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 20)
+        .background(
+            LinearGradient(
+                colors: [
+                    Color(.systemGray6).opacity(0.5),
+                    Color(.systemGray6).opacity(0.3)
+                ],
+                startPoint: .top,
+                endPoint: .bottom
+            )
+        )
+        .overlay(
+            Rectangle()
+                .frame(height: 0.5)
+                .foregroundColor(Color.gray.opacity(0.2)),
+            alignment: .bottom
+        )
+        .transition(.move(edge: .top).combined(with: .opacity))
+    }
+
+    private func loadingBanner() -> some View {
+        HStack(spacing: 12) {
+            ProgressView()
+                .controlSize(.regular)
+
+            Text("Searching...")
+                .font(.subheadline)
+                .foregroundColor(.secondary)
+                .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.secondarySystemGroupedBackground))
+    }
+
+    private func errorMessageBanner(message: String, icon: String?) -> some View {
+        HStack(spacing: 12) {
+            Image(systemName: icon ?? "exclamationmark.circle")
+                .font(.system(size: 18))
+                .foregroundColor(.orange)
+
+            Text(message)
+                .font(.subheadline)
+                .foregroundColor(.primary)
+                .lineLimit(2)
+                .frame(maxWidth: .infinity, alignment: .leading)
+
+            Button(action: {
+                withAnimation(.easeInOut(duration: 0.2)) {
+                    state.latestSearchError = nil
+                    state.latestSearchIcon = nil
+                }
+            }) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 18))
+                    .foregroundColor(.secondary.opacity(0.6))
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        .background(Color(.secondarySystemGroupedBackground))
+    }
+
+    private var searchResultsView: some View {
         VStack(spacing: 0) {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .center) {
@@ -144,10 +194,43 @@ struct AIAnalysisResultsView: View {
 
                     Spacer()
 
+                    // Clear All button
+                    Button(action: {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            // Save current state for undo
+                            clearedResults = state.searchResults
+                            clearedResultsViewState = SearchResultsState()
+                            clearedResultsViewState?.editedItems = state.resultsView.editedItems
+                            clearedResultsViewState?.deletedSections = state.resultsView.deletedSections
+                            clearedResultsViewState?.collapsedSections = state.resultsView.collapsedSections
+
+                            // Clear everything
+                            state.searchResults = []
+                            state.resultsView.clear()
+                            state.latestSearchError = nil
+                            state.latestSearchIcon = nil
+                        }
+                    }) {
+                        HStack(spacing: 4) {
+                            Image(systemName: "xmark.circle")
+                                .font(.system(size: 13))
+                            Text("Clear All")
+                                .font(.subheadline)
+                        }
+                        .foregroundColor(.secondary)
+                        .padding(.horizontal, 12)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                .fill(Color(.systemGray5))
+                        )
+                    }
+                    .buttonStyle(PlainButtonStyle())
+
                     if nonDeletedItemCount > 0 {
                         Button(action: {
                             let mealName = nonDeletedItemCount == 1 ?
-                                allFoodItems.first(where: { !state.isDeleted($0) })?.name ?? "Meal" :
+                                allFoodItems.first(where: { !state.resultsView.isDeleted($0) })?.name ?? "Meal" :
                                 "Complete Meal"
 
                             let totalMeal = AIFoodItem(
@@ -157,9 +240,10 @@ struct AIAnalysisResultsView: View {
                                 carbs: totalCarbs,
                                 protein: totalProtein,
                                 fat: totalFat,
-                                imageURL: nonDeletedItemCount == 1 ? allFoodItems.first(where: { !state.isDeleted($0) })?
+                                imageURL: nonDeletedItemCount == 1 ? allFoodItems
+                                    .first(where: { !state.resultsView.isDeleted($0) })?
                                     .imageURL : nil,
-                                source: analysisResults.first?.source ?? .ai
+                                source: state.searchResults.first?.source ?? .ai
                             )
                             onCompleteMealSelected(totalMeal)
                         }) {
@@ -268,13 +352,160 @@ struct AIAnalysisResultsView: View {
             .scrollContentBackground(.hidden)
         }
     }
+
+    private var noSearchesView: some View {
+        VStack(spacing: 12) {
+            Spacer()
+
+            Image(systemName: "doc.text.magnifyingglass")
+                .font(.title)
+                .foregroundColor(.orange)
+
+            Text(NSLocalizedString("No Foods Found", comment: "Title when no food search results"))
+                .font(.headline)
+                .foregroundColor(.primary)
+
+            VStack(spacing: 8) {
+                Text(NSLocalizedString(
+                    "Check your spelling and try again",
+                    comment: "Primary suggestion when no food search results"
+                ))
+                    .font(.subheadline)
+                    .foregroundColor(.primary)
+                    .multilineTextAlignment(.center)
+
+                Text(NSLocalizedString(
+                    "Try simpler terms like \"bread\" or \"apple\", or scan a barcode",
+                    comment: "Secondary suggestion when no food search results"
+                ))
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .multilineTextAlignment(.center)
+            }
+
+            // Helpful suggestions
+            VStack(spacing: 4) {
+                Text("💡 Search Tips:")
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                    .fontWeight(.medium)
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("• Use simple, common food names")
+                    Text("• Try brand names (e.g., \"Cheerios\")")
+                    Text("• Check spelling carefully")
+                    Text("• Use the barcode scanner for packaged foods")
+                }
+                .font(.caption2)
+                .foregroundColor(.secondary)
+            }
+            .padding(.top, 8)
+            Spacer()
+        }
+        .padding()
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
 }
 
-extension FoodItemSource {
+class SearchResultsState: ObservableObject {
+    @Published var editedItems: [String: EditableFoodItem] = [:]
+    @Published var deletedSections: Set<UUID> = []
+    @Published var collapsedSections: Set<UUID> = []
+
+    static var empty: SearchResultsState {
+        SearchResultsState()
+    }
+
+    struct EditableFoodItem: Identifiable {
+        let id = UUID()
+        let original: AnalysedFoodItem
+        var portionSize: Decimal
+        var isDeleted: Bool = false
+
+        init(from foodItem: AnalysedFoodItem) {
+            original = foodItem
+            portionSize = foodItem.portionEstimateSize ?? 0
+        }
+    }
+
+    // Public accessor for current edited state
+    var currentEditedItems: [EditableFoodItem] {
+        editedItems.values.filter { !$0.isDeleted }
+    }
+
+    // Helper to get current portion size for a food item
+    func portionSize(for foodItem: AnalysedFoodItem) -> Decimal {
+        let key = foodItem.id.uuidString
+        return editedItems[key]?.portionSize ?? foodItem.portionEstimateSize ?? 0
+    }
+
+    // Helper to check if item is deleted
+    func isDeleted(_ foodItem: AnalysedFoodItem) -> Bool {
+        let key = foodItem.id.uuidString
+        return editedItems[key]?.isDeleted ?? false
+    }
+
+    // Update portion size for an item
+    func updatePortion(for foodItem: AnalysedFoodItem, to newPortion: Decimal) {
+        let key = foodItem.id.uuidString
+        if editedItems[key] == nil {
+            editedItems[key] = EditableFoodItem(from: foodItem)
+        }
+        editedItems[key]?.portionSize = newPortion
+    }
+
+    // Mark item as deleted
+    func deleteItem(_ foodItem: AnalysedFoodItem) {
+        let key = foodItem.id.uuidString
+        if editedItems[key] == nil {
+            editedItems[key] = EditableFoodItem(from: foodItem)
+        }
+        editedItems[key]?.isDeleted = true
+    }
+
+    // Undelete an item
+    func undeleteItem(_ foodItem: AnalysedFoodItem) {
+        let key = foodItem.id.uuidString
+        editedItems[key]?.isDeleted = false
+    }
+
+    // Delete entire section
+    func deleteSection(_ sectionId: UUID) {
+        deletedSections.insert(sectionId)
+    }
+
+    // Check if section is deleted
+    func isSectionDeleted(_ sectionId: UUID) -> Bool {
+        deletedSections.contains(sectionId)
+    }
+
+    // MARK: - Collapsed sections helpers
+
+    func isSectionCollapsed(_ sectionId: UUID) -> Bool {
+        collapsedSections.contains(sectionId)
+    }
+
+    func toggleSectionCollapsed(_ sectionId: UUID) {
+        if collapsedSections.contains(sectionId) {
+            collapsedSections.remove(sectionId)
+        } else {
+            collapsedSections.insert(sectionId)
+        }
+    }
+
+    // Clear all state
+    func clear() {
+        editedItems.removeAll()
+        deletedSections.removeAll()
+        collapsedSections.removeAll()
+    }
+}
+
+private extension FoodItemSource {
     var icon: String {
         switch self {
         case .ai:
-            return "brain"
+            return "photo"
         case .aiText:
             return "text.bubble"
         case .search:
@@ -287,13 +518,23 @@ extension FoodItemSource {
     }
 }
 
-extension FoodAnalysisResult {
+private extension FoodAnalysisResult {
     var title: String {
-        briefDescription ?? barcode ?? textQuery ?? (source == .manual ? "Manual Entry" : "AI Analysis")
+        switch source {
+        case .manual: NSLocalizedString("Manual entry", comment: "Section with manualy entered foods")
+        case .barcode: NSLocalizedString("Barcode scan", comment: "Section with bar code scan results")
+        case .search: NSLocalizedString("Online database search", comment: "Section with online database search results")
+        case .ai,
+             .aiText: briefDescription ?? textQuery ?? NSLocalizedString(
+                "AI Results",
+                comment: "Section with AI food analysis results, when details are unavailable"
+            )
+        case nil: ""
+        }
     }
 }
 
-enum NutritionBadgeConfig {
+private enum NutritionBadgeConfig {
     static let caloriesColor = Color.red
     static let carbsColor = Color.orange
     static let proteinColor = Color.green
@@ -303,7 +544,7 @@ enum NutritionBadgeConfig {
 }
 
 // Unified nutrition badge used throughout the file
-struct NutritionBadge: View {
+private struct NutritionBadge: View {
     let value: Decimal
     let unit: String?
     let label: String?
@@ -319,41 +560,39 @@ struct NutritionBadge: View {
     }
 
     private var backgroundOpacity: Double {
-        colorScheme == .dark ? 0.2 : 0.4
+        colorScheme == .dark ? 0.25 : 0.15
     }
 
     var body: some View {
         HStack(spacing: 3) {
             Text("\(Double(value), specifier: unit == "kcal" || value > 20 ? "%.0f" : "%.1f")")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 15, weight: .semibold, design: .rounded))
                 .foregroundColor(.primary)
-                .tracking(-0.5)
+                .fixedSize()
             if let unit = unit {
                 Text(unit)
-                    .font(.system(size: 10))
-                    .foregroundColor(.primary)
+                    .font(.system(size: 11, weight: .medium, design: .rounded))
+                    .foregroundColor(.secondary)
+                    .fixedSize()
             }
             if let label = label {
                 Text(label)
-                    .font(.system(size: 10, weight: .medium))
-                    .fontDesign(.rounded)
-                    .textCase(.uppercase)
-                    .foregroundColor(.primary)
-                    .tracking(-0.3)
+                    .font(.system(size: 11, weight: .semibold, design: .rounded))
+                    .textCase(.lowercase)
+                    .foregroundColor(.secondary)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
             }
         }
         .frame(maxWidth: .infinity)
-        .padding(.horizontal, 6)
-        .padding(.vertical, 4)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 6)
         .background(color.opacity(backgroundOpacity))
         .cornerRadius(8)
-        .lineLimit(1)
     }
 }
 
-struct ConfidenceBadge: View {
+private struct ConfidenceBadge: View {
     let level: AIConfidenceLevel
 
     @Environment(\.colorScheme) private var colorScheme
@@ -368,7 +607,7 @@ struct ConfidenceBadge: View {
 
     var body: some View {
         HStack(spacing: 4) {
-            Image(systemName: "gauge")
+            Image(systemName: "brain")
                 .font(.system(size: 14))
 
             Text(level.description)
@@ -383,21 +622,9 @@ struct ConfidenceBadge: View {
     }
 }
 
-struct EditableFoodItem: Identifiable {
-    let id = UUID()
-    let original: AnalysedFoodItem
-    var portionSize: Decimal
-    var isDeleted: Bool = false
-
-    init(from foodItem: AnalysedFoodItem) {
-        original = foodItem
-        portionSize = foodItem.portionEstimateSize ?? 0
-    }
-}
-
-struct AnalysisResultListSection: View {
+private struct AnalysisResultListSection: View {
     let analysisResult: FoodAnalysisResult
-    @ObservedObject var state: AIAnalysisResultsView.State
+    @ObservedObject var state: FoodSearchStateModel
     let onFoodItemSelected: (AIFoodItem) -> Void
 
     @State private var showInfoPopup = false
@@ -411,7 +638,7 @@ struct AnalysisResultListSection: View {
     }
 
     private var nonDeletedItemCount: Int {
-        analysisResult.foodItemsDetailed.filter { !state.isDeleted($0) }.count
+        analysisResult.foodItemsDetailed.filter { !state.resultsView.isDeleted($0) }.count
     }
 
     var body: some View {
@@ -422,21 +649,24 @@ struct AnalysisResultListSection: View {
                     // Collapse/Expand button (left side)
                     Button(action: {
                         withAnimation(.easeInOut(duration: 0.2)) {
-                            state.toggleSectionCollapsed(analysisResult.id)
+                            state.resultsView.toggleSectionCollapsed(analysisResult.id)
                         }
                     }) {
-                        Image(systemName: state.isSectionCollapsed(analysisResult.id) ? "chevron.right" : "chevron.down")
-                            .font(.system(size: 14, weight: .semibold))
-                            .foregroundColor(.secondary)
-                            .frame(width: 20)
-                            .contentShape(Rectangle())
+                        Image(
+                            systemName: state.resultsView
+                                .isSectionCollapsed(analysisResult.id) ? "chevron.right" : "chevron.down"
+                        )
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundColor(.secondary)
+                        .frame(width: 20, height: 20)
+                        .contentShape(Rectangle())
                     }
                     .buttonStyle(PlainButtonStyle())
 
-                    // Title (tappable to show info if available)
+                    // Title (tappable to collapse/expand)
                     Button(action: {
-                        if analysisResult.source == .ai || analysisResult.source == .aiText {
-                            showInfoPopup = true
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            state.resultsView.toggleSectionCollapsed(analysisResult.id)
                         }
                     }) {
                         Text(analysisResult.title)
@@ -449,24 +679,43 @@ struct AnalysisResultListSection: View {
                             .contentShape(Rectangle())
                     }
                     .buttonStyle(PlainButtonStyle())
-                    .disabled(analysisResult.source != .ai && analysisResult.source != .aiText)
 
-                    // Source icon (non-interactive, just visual indicator)
-                    if let icon = analysisResult.source?.icon {
-                        Image(systemName: icon)
-                            .font(.system(size: 16))
-                            .foregroundColor(.secondary)
+                    // Info button (only for AI sources)
+                    if analysisResult.source == .ai || analysisResult.source == .aiText {
+                        Button(action: {
+                            showInfoPopup = true
+                        }) {
+                            HStack(spacing: 0) {
+                                Image(systemName: "info.circle")
+                                    .font(.system(size: 18, weight: .medium))
+                                    .foregroundColor(.blue)
+                                    .frame(width: 44, height: 44)
+                                    .contentShape(Rectangle())
+                                if let icon = analysisResult.source?.icon {
+                                    Image(systemName: icon)
+                                        .font(.system(size: 16))
+                                        .foregroundColor(.secondary)
+                                }
+                            }
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    } else {
+                        if let icon = analysisResult.source?.icon {
+                            Image(systemName: icon)
+                                .font(.system(size: 16))
+                                .foregroundColor(.secondary)
+                        }
                     }
                 }
                 .padding(.horizontal, 16)
-                .padding(.vertical, 14)
+                .padding(.vertical, 4)
             }
             .background(Color(.systemGray5))
             .listRowSeparator(.hidden)
             .swipeActions(edge: .trailing, allowsFullSwipe: true) {
                 Button(role: .destructive) {
                     withAnimation(.easeInOut(duration: 0.2)) {
-                        state.deleteSection(analysisResult.id)
+                        state.resultsView.deleteSection(analysisResult.id)
                     }
                 } label: {
                     Image(systemName: "trash")
@@ -479,32 +728,34 @@ struct AnalysisResultListSection: View {
             }
 
             // Food Items
-            if !state.isSectionCollapsed(analysisResult.id) {
+            if !state.resultsView.isSectionCollapsed(analysisResult.id) {
                 ForEach(Array(analysisResult.foodItemsDetailed.enumerated()), id: \.element.name) { index, foodItem in
                     Group {
-                        if state.isDeleted(foodItem) {
+                        if state.resultsView.isDeleted(foodItem) {
                             DeletedFoodItemRow(
                                 foodItem: foodItem,
                                 onUndelete: {
                                     withAnimation(.easeInOut(duration: 0.2)) {
-                                        state.undeleteItem(foodItem)
+                                        state.resultsView.undeleteItem(foodItem)
                                     }
-                                }
+                                },
+                                isFirst: index == 0,
+                                isLast: index == analysisResult.foodItemsDetailed.count - 1
                             )
                         } else {
                             FoodItemRow(
                                 foodItem: foodItem,
-                                portionSize: state.portionSize(for: foodItem),
+                                portionSize: state.resultsView.portionSize(for: foodItem),
                                 onPortionChange: { newPortion in
-                                    state.updatePortion(for: foodItem, to: newPortion)
+                                    state.resultsView.updatePortion(for: foodItem, to: newPortion)
                                 },
                                 onDelete: {
                                     withAnimation(.easeInOut(duration: 0.2)) {
-                                        state.deleteItem(foodItem)
+                                        state.resultsView.deleteItem(foodItem)
                                     }
                                 },
                                 onSelect: {
-                                    let currentPortion = state.portionSize(for: foodItem)
+                                    let currentPortion = state.resultsView.portionSize(for: foodItem)
                                     let selectedFood = AIFoodItem(
                                         name: foodItem.name,
                                         brand: foodItem.brand,
@@ -516,13 +767,14 @@ struct AnalysisResultListSection: View {
                                         source: foodItem.source
                                     )
                                     onFoodItemSelected(selectedFood)
-                                }
+                                },
+                                isFirst: index == 0,
+                                isLast: index == analysisResult.foodItemsDetailed.count - 1,
+                                showSelectButton: false
                             )
                         }
                     }
                     .listRowSeparator(index == analysisResult.foodItemsDetailed.count - 1 ? .hidden : .visible)
-                    .padding(.top, index == 0 ? 8 : 0)
-                    .padding(.bottom, index == analysisResult.foodItemsDetailed.count - 1 ? 8 : 0)
                 }
             }
         }
@@ -532,6 +784,8 @@ struct AnalysisResultListSection: View {
 struct DeletedFoodItemRow: View {
     let foodItem: AnalysedFoodItem
     let onUndelete: () -> Void
+    let isFirst: Bool
+    let isLast: Bool
 
     var body: some View {
         HStack(spacing: 12) {
@@ -569,6 +823,9 @@ struct DeletedFoodItemRow: View {
         }
         .padding(.horizontal, 16)
         .padding(.vertical, 12)
+        .padding(.top, isFirst ? 8 : 0)
+        .padding(.bottom, isLast ? 8 : 0)
+        .background(Color(.systemGray6))
     }
 }
 
@@ -968,6 +1225,15 @@ extension View {
     func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
         clipShape(RoundedCorner(radius: radius, corners: corners))
     }
+
+    // Helper for conditional view modifiers
+    @ViewBuilder func when<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
+        if condition {
+            transform(self)
+        } else {
+            self
+        }
+    }
 }
 
 struct RoundedCorner: Shape {
@@ -989,9 +1255,12 @@ struct RoundedCorner: Shape {
 struct FoodItemRow: View {
     let foodItem: AnalysedFoodItem
     let portionSize: Decimal
-    let onPortionChange: (Decimal) -> Void
-    let onDelete: () -> Void
+    let onPortionChange: ((Decimal) -> Void)?
+    let onDelete: (() -> Void)?
     let onSelect: () -> Void
+    let isFirst: Bool
+    let isLast: Bool
+    let showSelectButton: Bool
 
     @State private var showItemInfo = false
     @State private var showPortionAdjuster = false
@@ -1021,14 +1290,36 @@ struct FoodItemRow: View {
                         .foregroundColor(.primary)
                         .lineLimit(1)
                         .truncationMode(.tail)
+                        .frame(maxWidth: .infinity, alignment: .leading)
 
-                    Spacer()
+                    // Select button (when in search results mode)
+                    if showSelectButton {
+                        Button(action: onSelect) {
+                            HStack(spacing: 4) {
+                                Image(systemName: "plus.circle.fill")
+                                    .font(.system(size: 14, weight: .semibold))
+                                Text("Select")
+                                    .font(.subheadline)
+                                    .fontWeight(.semibold)
+                            }
+                            .foregroundColor(.white)
+                            .padding(.horizontal, 12)
+                            .padding(.vertical, 8)
+                            .background(
+                                RoundedRectangle(cornerRadius: 8, style: .continuous)
+                                    .fill(Color.accentColor)
+                            )
+                        }
+                        .buttonStyle(PlainButtonStyle())
+                    }
 
                     // Source icon with confidence badge (if AI)
-                    HStack(spacing: 0) {
-                        // Confidence badge (if AI source)
-                        if shouldShowConfidence, let confidence = foodItem.confidence {
-                            ConfidenceBadge(level: confidence)
+                    if !showSelectButton {
+                        HStack(spacing: 0) {
+                            // Confidence badge (if AI source)
+                            if shouldShowConfidence, let confidence = foodItem.confidence {
+                                ConfidenceBadge(level: confidence)
+                            }
                         }
                     }
                 }
@@ -1056,7 +1347,9 @@ struct FoodItemRow: View {
                 showItemInfo = true
             }
             .onLongPressGesture {
-                showPortionAdjuster = true
+                if onPortionChange != nil {
+                    showPortionAdjuster = true
+                }
             }
             .sheet(isPresented: $showItemInfo) {
                 FoodItemInfoPopup(foodItem: foodItem, portionSize: portionSize)
@@ -1082,46 +1375,55 @@ struct FoodItemRow: View {
             .padding(.horizontal, 16)
             .padding(.bottom, 12)
         }
+        .padding(.top, isFirst ? 8 : 0)
+        .padding(.bottom, isLast ? 8 : 0)
         .background(Color(.systemGray6))
-        .swipeActions(edge: .trailing, allowsFullSwipe: true) {
-            Button(role: .destructive) {
-                onDelete()
-            } label: {
-                Image(systemName: "trash")
+        .when(onDelete != nil) { view in
+            view.swipeActions(edge: .trailing, allowsFullSwipe: true) {
+                Button {
+                    onDelete?()
+                } label: {
+                    Label("Delete", systemImage: "trash")
+                }
+                .tint(.red)
             }
         }
-        .swipeActions(edge: .leading, allowsFullSwipe: true) {
-            Button {
-                showPortionAdjuster = true
-            } label: {
-                Image(systemName: "pencil")
+        .when(onPortionChange != nil) { view in
+            view.swipeActions(edge: .leading, allowsFullSwipe: true) {
+                Button {
+                    showPortionAdjuster = true
+                } label: {
+                    Label("Edit Portion", systemImage: "slider.horizontal.3")
+                }
+                .tint(.orange)
             }
-            .tint(.orange)
         }
-        .sheet(isPresented: $showPortionAdjuster) {
-            PortionAdjusterView(
-                currentPortion: portionSize,
-                foodItem: foodItem,
-                sliderMultiplier: $sliderMultiplier,
-                onSave: { newPortion in
-                    onPortionChange(newPortion)
-                    showPortionAdjuster = false
-                },
-                onReset: foodItem.portionEstimateSize != nil ? {
-                    if let original = foodItem.portionEstimateSize {
-                        onPortionChange(original)
+        .when(onPortionChange != nil) { view in
+            view.sheet(isPresented: $showPortionAdjuster) {
+                PortionAdjusterView(
+                    currentPortion: portionSize,
+                    foodItem: foodItem,
+                    sliderMultiplier: $sliderMultiplier,
+                    onSave: { newPortion in
+                        onPortionChange?(newPortion)
+                        showPortionAdjuster = false
+                    },
+                    onReset: foodItem.portionEstimateSize != nil ? {
+                        if let original = foodItem.portionEstimateSize {
+                            onPortionChange?(original)
+                            showPortionAdjuster = false
+                        }
+                    } : nil,
+                    onCancel: {
                         showPortionAdjuster = false
                     }
-                } : nil,
-                onCancel: {
-                    showPortionAdjuster = false
-                }
-            )
-            .presentationDetents([.height(
-                hasNutritionInfo ? (foodItem.portionEstimateSize != nil ? 420 : 400) :
-                    (foodItem.portionEstimateSize != nil ? 340 : 300)
-            )])
-            .presentationDragIndicator(.visible)
+                )
+                .presentationDetents([.height(
+                    hasNutritionInfo ? (foodItem.portionEstimateSize != nil ? 420 : 400) :
+                        (foodItem.portionEstimateSize != nil ? 340 : 300)
+                )])
+                .presentationDragIndicator(.visible)
+            }
         }
         .onChange(of: portionSize) { _, newValue in
             // Update multiplier when portion size changes externally
@@ -1307,6 +1609,92 @@ extension FoodItemRow {
         private var hasNutritionInfo: Bool {
             foodItem.caloriesPer100 != nil || foodItem.carbsPer100 != nil || foodItem.proteinPer100 != nil || foodItem
                 .fatPer100 != nil
+        }
+    }
+}
+
+// MARK: - Text Search Results Sheet
+
+struct TextSearchResultsSheet: View {
+    let searchResult: FoodAnalysisResult
+    let onFoodItemSelected: (AnalysedFoodItem) -> Void
+    let onDismiss: () -> Void
+
+    @Environment(\.dismiss) var dismiss
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 0) {
+                // Header card with search info
+                VStack(alignment: .leading, spacing: 8) {
+                    HStack {
+                        Image(systemName: "magnifyingglass")
+                            .font(.system(size: 16))
+                            .foregroundColor(.blue)
+
+                        if let query = searchResult.textQuery {
+                            Text("Results for \"\(query)\"")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                                .lineLimit(1)
+                        } else {
+                            Text("Search Results")
+                                .font(.subheadline)
+                                .fontWeight(.medium)
+                                .foregroundColor(.secondary)
+                        }
+
+                        Spacer()
+                    }
+
+                    Text(
+                        "\(searchResult.foodItemsDetailed.count) \(searchResult.foodItemsDetailed.count == 1 ? "result" : "results") found"
+                    )
+                    .font(.caption)
+                    .foregroundColor(.secondary)
+                }
+                .padding(.horizontal, 16)
+                .padding(.vertical, 12)
+                .background(
+                    Color.blue.opacity(0.08)
+                )
+
+                // Results list
+                List {
+                    ForEach(Array(searchResult.foodItemsDetailed.enumerated()), id: \.element.id) { index, foodItem in
+                        if foodItem.name.isNotEmpty {
+                            FoodItemRow(
+                                foodItem: foodItem,
+                                portionSize: foodItem.portionEstimateSize ?? foodItem.standardServingSize ?? 100,
+                                onPortionChange: nil,
+                                onDelete: nil,
+                                onSelect: {
+                                    onFoodItemSelected(foodItem)
+                                },
+                                isFirst: index == 0,
+                                isLast: index == searchResult.foodItemsDetailed.count - 1,
+                                showSelectButton: true
+                            )
+                            .listRowInsets(EdgeInsets(top: 0, leading: 0, bottom: 0, trailing: 0))
+                            .listRowBackground(Color(.systemGray6))
+                            .listRowSeparator(index == searchResult.foodItemsDetailed.count - 1 ? .hidden : .visible)
+                        }
+                    }
+                }
+                .listStyle(.plain)
+                .background(Color(.systemGroupedBackground))
+                .scrollContentBackground(.hidden)
+            }
+            .navigationTitle("Select Food")
+            .navigationBarTitleDisplayMode(.inline)
+            .toolbar {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Button("Cancel") {
+                        onDismiss()
+                    }
+                }
+            }
         }
     }
 }

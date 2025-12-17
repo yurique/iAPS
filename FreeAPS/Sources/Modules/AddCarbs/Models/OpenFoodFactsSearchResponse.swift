@@ -17,6 +17,41 @@ struct OpenFoodFactsSearchResponse: Codable {
         case pageCount = "page_count"
         case pageSize = "page_size"
     }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+
+        products = try container.decode([OpenFoodFactsProduct].self, forKey: .products)
+        count = try Self.decodeFlexibleInt(from: container, forKey: .count)
+        page = try Self.decodeFlexibleInt(from: container, forKey: .page)
+        pageCount = try Self.decodeFlexibleInt(from: container, forKey: .pageCount)
+        pageSize = try Self.decodeFlexibleInt(from: container, forKey: .pageSize)
+    }
+
+    /// Decode an Int that might come as a String or Int from the API
+    private static func decodeFlexibleInt(
+        from container: KeyedDecodingContainer<CodingKeys>,
+        forKey key: CodingKeys
+    ) throws -> Int {
+        // Try as Int first
+        if let intValue = try? container.decode(Int.self, forKey: key) {
+            return intValue
+        }
+        // Try as String and convert
+        if let stringValue = try? container.decode(String.self, forKey: key),
+           let intValue = Int(stringValue)
+        {
+            return intValue
+        }
+        // Throw an error if neither works
+        throw DecodingError.typeMismatch(
+            Int.self,
+            DecodingError.Context(
+                codingPath: container.codingPath + [key],
+                debugDescription: "Expected Int or String containing Int for key '\(key.stringValue)'"
+            )
+        )
+    }
 }
 
 /// Response structure for single product lookup by barcode
