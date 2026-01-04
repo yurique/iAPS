@@ -226,9 +226,32 @@ extension FoodItemDetailed {
 
     // MARK: - Per 100g/ml calculations
 
+    /// Calculates calories from macronutrients using standard conversion factors:
+    /// - Carbs: 4 kcal/g
+    /// - Protein: 4 kcal/g
+    /// - Fat: 9 kcal/g
+    private func calculateCaloriesFromMacros(carbs: Decimal?, protein: Decimal?, fat: Decimal?) -> Decimal {
+        let carbCals = (carbs ?? 0) * 4
+        let proteinCals = (protein ?? 0) * 4
+        let fatCals = (fat ?? 0) * 9
+        return carbCals + proteinCals + fatCals
+    }
+
     func caloriesInPortion(portion: Decimal) -> Decimal? {
         guard case let .per100(per100) = nutrition else { return nil }
-        guard let caloriesPer100 = per100.calories else { return nil }
+
+        let caloriesPer100: Decimal
+        if let explicitCalories = per100.calories {
+            caloriesPer100 = explicitCalories
+        } else {
+            // Calculate from macronutrients if calories not specified
+            caloriesPer100 = calculateCaloriesFromMacros(
+                carbs: per100.carbs,
+                protein: per100.protein,
+                fat: per100.fat
+            )
+        }
+
         return caloriesPer100 / 100 * portion
     }
 
@@ -266,7 +289,19 @@ extension FoodItemDetailed {
 
     func caloriesInServings(multiplier: Decimal) -> Decimal? {
         guard case let .perServing(perServing) = nutrition else { return nil }
-        guard let caloriesPerServing = perServing.calories else { return nil }
+
+        let caloriesPerServing: Decimal
+        if let explicitCalories = perServing.calories {
+            caloriesPerServing = explicitCalories
+        } else {
+            // Calculate from macronutrients if calories not specified
+            caloriesPerServing = calculateCaloriesFromMacros(
+                carbs: perServing.carbs,
+                protein: perServing.protein,
+                fat: perServing.fat
+            )
+        }
+
         return caloriesPerServing * multiplier
     }
 

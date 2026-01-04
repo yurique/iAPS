@@ -481,6 +481,8 @@
 		F2C73D662EB6604500B700AB /* MainChartConfigStateModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C73D652EB6604500B700AB /* MainChartConfigStateModel.swift */; };
 		F2C73D682EB8022C00B700AB /* CalculatedGeometries.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2C73D672EB8022C00B700AB /* CalculatedGeometries.swift */; };
 		F2D361002EE21D83004CC6B1 /* ModelQueryEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2D360FF2EE21D83004CC6B1 /* ModelQueryEditor.swift */; };
+		F2DCBC522F0B2DEB005D713E /* ManualNutritionOverrideEditor.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2DCBC512F0B2DEB005D713E /* ManualNutritionOverrideEditor.swift */; };
+		F2DCBC562F0B30A2005D713E /* ViewExtensions.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2DCBC552F0B30A2005D713E /* ViewExtensions.swift */; };
 		F2E8D1492F0960820097F482 /* FoodItemBadges.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E8D1482F0960820097F482 /* FoodItemBadges.swift */; };
 		F2E8D14D2F09616A0097F482 /* TimePickerSheet.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E8D14C2F09616A0097F482 /* TimePickerSheet.swift */; };
 		F2E8D1512F0961CC0097F482 /* FoodTagCloudView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F2E8D1502F0961CC0097F482 /* FoodTagCloudView.swift */; };
@@ -1163,6 +1165,8 @@
 		F2C73D652EB6604500B700AB /* MainChartConfigStateModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MainChartConfigStateModel.swift; sourceTree = "<group>"; };
 		F2C73D672EB8022C00B700AB /* CalculatedGeometries.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CalculatedGeometries.swift; sourceTree = "<group>"; };
 		F2D360FF2EE21D83004CC6B1 /* ModelQueryEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ModelQueryEditor.swift; sourceTree = "<group>"; };
+		F2DCBC512F0B2DEB005D713E /* ManualNutritionOverrideEditor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManualNutritionOverrideEditor.swift; sourceTree = "<group>"; };
+		F2DCBC552F0B30A2005D713E /* ViewExtensions.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewExtensions.swift; sourceTree = "<group>"; };
 		F2E8D1482F0960820097F482 /* FoodItemBadges.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodItemBadges.swift; sourceTree = "<group>"; };
 		F2E8D14C2F09616A0097F482 /* TimePickerSheet.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TimePickerSheet.swift; sourceTree = "<group>"; };
 		F2E8D1502F0961CC0097F482 /* FoodTagCloudView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FoodTagCloudView.swift; sourceTree = "<group>"; };
@@ -2462,6 +2466,8 @@
 				F2FA68932EEC87D200476D7B /* AIProgressView.swift */,
 				F2D360FF2EE21D83004CC6B1 /* ModelQueryEditor.swift */,
 				F2E8D16C2F098B8E0097F482 /* DismissPreventionKey.swift */,
+				F2DCBC512F0B2DEB005D713E /* ManualNutritionOverrideEditor.swift */,
+				F2DCBC552F0B30A2005D713E /* ViewExtensions.swift */,
 			);
 			path = View;
 			sourceTree = "<group>";
@@ -3317,6 +3323,7 @@
 				38192E04261B82FA0094D973 /* ReachabilityManager.swift in Sources */,
 				38E44539274E411700EC9A94 /* Disk+UIImage.swift in Sources */,
 				388E595C25AD948C0019842D /* FreeAPSApp.swift in Sources */,
+				F2DCBC522F0B2DEB005D713E /* ManualNutritionOverrideEditor.swift in Sources */,
 				191A9D182BED24B000028D48 /* ActiveIOBView.swift in Sources */,
 				38FEF3FC2737E53800574A46 /* MainStateModel.swift in Sources */,
 				F2159A542BA6207F00A0B716 /* ContactTrickEntry.swift in Sources */,
@@ -3556,6 +3563,7 @@
 				E13B7DAB2A435F57066AF02E /* TargetsEditorStateModel.swift in Sources */,
 				F29FC35D2E7F670000DC04FE /* CoreDataStorageGlucoseSaver.swift in Sources */,
 				19DC678129CA676A00FD9EC4 /* OverrideProfilesProvider.swift in Sources */,
+				F2DCBC562F0B30A2005D713E /* ViewExtensions.swift in Sources */,
 				1948C0662D35A8350032B6A2 /* AutoISFHistoryView.swift in Sources */,
 				9702FF92A09C53942F20D7EA /* TargetsEditorRootView.swift in Sources */,
 				1967DFBE29D052C200759F30 /* Icons.swift in Sources */,

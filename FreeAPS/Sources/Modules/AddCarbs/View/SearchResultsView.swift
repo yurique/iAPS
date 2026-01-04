@@ -14,6 +14,7 @@ struct SearchResultsView: View {
     @State private var selectedTime: Date?
     @State private var showTimePicker = false
     @State private var isDownloadingImage = false
+    @State private var showNutritionOverrideEditor = false
 
     private var nonDeletedItemCount: Int {
         state.searchResultsState.nonDeletedItemCount
@@ -278,6 +279,7 @@ struct SearchResultsView: View {
                     .fontWeight(.semibold)
                     .foregroundColor(.secondary)
                 Spacer()
+
                 // Clear All button
                 Button(action: {
                     withAnimation(.easeInOut(duration: 0.2)) {
@@ -286,6 +288,11 @@ struct SearchResultsView: View {
                         clearedResultsViewState?.searchResults = state.searchResultsState.searchResults
                         clearedResultsViewState?.editedItems = state.searchResultsState.editedItems
                         clearedResultsViewState?.collapsedSections = state.searchResultsState.collapsedSections
+                        clearedResultsViewState?.carbsOverride = state.searchResultsState.carbsOverride
+                        clearedResultsViewState?.proteinOverride = state.searchResultsState.proteinOverride
+                        clearedResultsViewState?.fatOverride = state.searchResultsState.fatOverride
+                        clearedResultsViewState?.fiberOverride = state.searchResultsState.fiberOverride
+                        clearedResultsViewState?.sugarsOverride = state.searchResultsState.sugarsOverride
 
                         // Clear everything
                         state.searchResultsState.clear()
@@ -299,43 +306,102 @@ struct SearchResultsView: View {
                 }
             }
 
-            HStack(spacing: 8) {
-                TotalNutritionBadge(
-                    value: state.searchResultsState.totalCarbs,
-                    label: "carbs",
-                    color: NutritionBadgeConfig.carbsColor
-                )
-                .id("carbs-\(state.searchResultsState.totalCarbs)")
-                .transition(.scale.combined(with: .opacity))
+            // Make the totals badges tappable
+            Button(action: {
+                showNutritionOverrideEditor = true
+            }) {
+                HStack(spacing: 8) {
+                    TotalNutritionBadge(
+                        value: state.searchResultsState.totalCarbs,
+                        label: "carbs",
+                        color: NutritionBadgeConfig.carbsColor
+                    )
+                    .id("carbs-\(state.searchResultsState.totalCarbs)")
+                    .transition(.scale.combined(with: .opacity))
 
-                TotalNutritionBadge(
-                    value: state.searchResultsState.totalProtein,
-                    label: "protein",
-                    color: NutritionBadgeConfig.proteinColor
-                )
-                .id("protein-\(state.searchResultsState.totalProtein)")
-                .transition(.scale.combined(with: .opacity))
+                    TotalNutritionBadge(
+                        value: state.searchResultsState.totalProtein,
+                        label: "protein",
+                        color: NutritionBadgeConfig.proteinColor
+                    )
+                    .id("protein-\(state.searchResultsState.totalProtein)")
+                    .transition(.scale.combined(with: .opacity))
 
-                TotalNutritionBadge(
-                    value: state.searchResultsState.totalFat,
-                    label: "fat",
-                    color: NutritionBadgeConfig.fatColor
-                )
-                .id("fat-\(state.searchResultsState.totalFat)")
-                .transition(.scale.combined(with: .opacity))
+                    TotalNutritionBadge(
+                        value: state.searchResultsState.totalFat,
+                        label: "fat",
+                        color: NutritionBadgeConfig.fatColor
+                    )
+                    .id("fat-\(state.searchResultsState.totalFat)")
+                    .transition(.scale.combined(with: .opacity))
 
-                TotalNutritionBadge(
-                    value: state.searchResultsState.totalCalories,
-                    label: "kcal",
-                    color: NutritionBadgeConfig.caloriesColor
-                )
-                .id("calories-\(state.searchResultsState.totalCalories)")
-                .transition(.scale.combined(with: .opacity))
+                    TotalNutritionBadge(
+                        value: state.searchResultsState.totalCalories,
+                        label: "kcal",
+                        color: NutritionBadgeConfig.caloriesColor
+                    )
+                    .id("calories-\(state.searchResultsState.totalCalories)")
+                    .transition(.scale.combined(with: .opacity))
+                }
             }
+            .buttonStyle(.plain)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: state.searchResultsState.totalCarbs)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: state.searchResultsState.totalProtein)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: state.searchResultsState.totalFat)
             .animation(.spring(response: 0.4, dampingFraction: 0.7), value: state.searchResultsState.totalCalories)
+
+            // Show adjustments row if any overrides are active - also make it tappable
+            if state.searchResultsState.hasNutritionOverrides {
+                Button(action: {
+                    showNutritionOverrideEditor = true
+                }) {
+                    VStack(spacing: 6) {
+                        Divider()
+                            .padding(.vertical, 4)
+
+                        HStack {
+                            HStack(spacing: 4) {
+                                Image(systemName: "pencil.circle.fill")
+                                    .font(.caption2)
+                                    .foregroundColor(.orange)
+                                Text("Manual Adjustments")
+                                    .font(.caption2)
+                                    .foregroundColor(.secondary)
+                            }
+                            Spacer()
+                        }
+
+                        HStack(spacing: 8) {
+                            if let override = state.searchResultsState.carbsOverride, abs(override) >= 0.1 {
+                                AdjustmentBadge(
+                                    value: override,
+                                    label: "carbs",
+                                    color: NutritionBadgeConfig.carbsColor
+                                )
+                            }
+
+                            if let override = state.searchResultsState.proteinOverride, abs(override) >= 0.1 {
+                                AdjustmentBadge(
+                                    value: override,
+                                    label: "protein",
+                                    color: NutritionBadgeConfig.proteinColor
+                                )
+                            }
+
+                            if let override = state.searchResultsState.fatOverride, abs(override) >= 0.1 {
+                                AdjustmentBadge(
+                                    value: override,
+                                    label: "fat",
+                                    color: NutritionBadgeConfig.fatColor
+                                )
+                            }
+
+                            Spacer()
+                        }
+                    }
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(.bottom, 12)
         .background(
@@ -365,6 +431,11 @@ struct SearchResultsView: View {
             } label: {
                 Label("Save", systemImage: "square.and.arrow.down")
             }
+        }
+        .sheet(isPresented: $showNutritionOverrideEditor) {
+            ManualNutritionOverrideEditor(state: state)
+                .presentationDetents([.height(480), .medium])
+                .presentationDragIndicator(.visible)
         }
     }
 
@@ -446,6 +517,12 @@ struct SearchResultsView: View {
                         state.searchResultsState.searchResults = savedState.searchResults
                         state.searchResultsState.editedItems = savedState.editedItems
                         state.searchResultsState.collapsedSections = savedState.collapsedSections
+                        // Restore nutrition overrides
+                        state.searchResultsState.carbsOverride = savedState.carbsOverride
+                        state.searchResultsState.proteinOverride = savedState.proteinOverride
+                        state.searchResultsState.fatOverride = savedState.fatOverride
+                        state.searchResultsState.fiberOverride = savedState.fiberOverride
+                        state.searchResultsState.sugarsOverride = savedState.sugarsOverride
                     }
 
                     clearedResultsViewState = nil
@@ -996,35 +1073,5 @@ private struct DeletedFoodItemRow: View {
         .padding(.top, isFirst ? 8 : 0)
         .padding(.bottom, isLast ? 8 : 0)
         .background(Color(.systemGray6))
-    }
-}
-
-// Helper for rounded corners on specific corners
-extension View {
-    func cornerRadius(_ radius: CGFloat, corners: UIRectCorner) -> some View {
-        clipShape(RoundedCorner(radius: radius, corners: corners))
-    }
-
-    // Helper for conditional view modifiers
-    @ViewBuilder func when<Content: View>(_ condition: Bool, transform: (Self) -> Content) -> some View {
-        if condition {
-            transform(self)
-        } else {
-            self
-        }
-    }
-}
-
-struct RoundedCorner: Shape {
-    var radius: CGFloat = .infinity
-    var corners: UIRectCorner = .allCorners
-
-    func path(in rect: CGRect) -> Path {
-        let path = UIBezierPath(
-            roundedRect: rect,
-            byRoundingCorners: corners,
-            cornerRadii: CGSize(width: radius, height: radius)
-        )
-        return Path(path.cgPath)
     }
 }

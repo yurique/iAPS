@@ -1,3 +1,4 @@
+import Combine
 import Foundation
 
 class SearchResultsState: ObservableObject {
@@ -5,6 +6,14 @@ class SearchResultsState: ObservableObject {
 
     @Published var editedItems: [String: EditableFoodItem] = [:]
     @Published var collapsedSections: Set<UUID> = []
+
+    // Nutrition overrides (deltas applied to totals)
+    // nil means no override, non-nil means user has entered a value
+    @Published var carbsOverride: Decimal? = nil
+    @Published var proteinOverride: Decimal? = nil
+    @Published var fatOverride: Decimal? = nil
+    @Published var fiberOverride: Decimal? = nil
+    @Published var sugarsOverride: Decimal? = nil
 
     static var empty: SearchResultsState {
         SearchResultsState()
@@ -202,6 +211,11 @@ class SearchResultsState: ObservableObject {
         searchResults = []
         editedItems.removeAll()
         collapsedSections.removeAll()
+        carbsOverride = nil
+        proteinOverride = nil
+        fatOverride = nil
+        fiberOverride = nil
+        sugarsOverride = nil
     }
 
     // MARK: - Computed Properties
@@ -218,7 +232,8 @@ class SearchResultsState: ObservableObject {
         !searchResults.isEmpty
     }
 
-    var totalCalories: Decimal {
+    // Base totals (from food items only, without overrides)
+    var baseTotalCalories: Decimal {
         nonDeletedItems.reduce(0) { sum, item in
             let portion = portionSize(for: item)
             switch item.nutrition {
@@ -230,7 +245,7 @@ class SearchResultsState: ObservableObject {
         }
     }
 
-    var totalCarbs: Decimal {
+    var baseTotalCarbs: Decimal {
         nonDeletedItems.reduce(0) { sum, item in
             let portion = portionSize(for: item)
             switch item.nutrition {
@@ -242,7 +257,7 @@ class SearchResultsState: ObservableObject {
         }
     }
 
-    var totalProtein: Decimal {
+    var baseTotalProtein: Decimal {
         nonDeletedItems.reduce(0) { sum, item in
             let portion = portionSize(for: item)
             switch item.nutrition {
@@ -254,7 +269,7 @@ class SearchResultsState: ObservableObject {
         }
     }
 
-    var totalFat: Decimal {
+    var baseTotalFat: Decimal {
         nonDeletedItems.reduce(0) { sum, item in
             let portion = portionSize(for: item)
             switch item.nutrition {
@@ -266,7 +281,7 @@ class SearchResultsState: ObservableObject {
         }
     }
 
-    var totalFiber: Decimal {
+    var baseTotalFiber: Decimal {
         nonDeletedItems.reduce(0) { sum, item in
             let portion = portionSize(for: item)
             switch item.nutrition {
@@ -278,7 +293,7 @@ class SearchResultsState: ObservableObject {
         }
     }
 
-    var totalSugars: Decimal {
+    var baseTotalSugars: Decimal {
         nonDeletedItems.reduce(0) { sum, item in
             let portion = portionSize(for: item)
             switch item.nutrition {
@@ -288,5 +303,44 @@ class SearchResultsState: ObservableObject {
                 return sum + (item.sugarsInServings(multiplier: portion) ?? 0)
             }
         }
+    }
+
+    // Final totals (with overrides applied)
+    var totalCalories: Decimal {
+        // If any macros are overridden, calculate calories from macros
+        // Otherwise use base calories
+        if carbsOverride != nil || proteinOverride != nil || fatOverride != nil {
+            let carbs = totalCarbs
+            let protein = totalProtein
+            let fat = totalFat
+            return max((carbs * 4) + (protein * 4) + (fat * 9), 0)
+        } else {
+            return max(baseTotalCalories, 0)
+        }
+    }
+
+    var totalCarbs: Decimal {
+        max(baseTotalCarbs + (carbsOverride ?? 0), 0)
+    }
+
+    var totalProtein: Decimal {
+        max(baseTotalProtein + (proteinOverride ?? 0), 0)
+    }
+
+    var totalFat: Decimal {
+        max(baseTotalFat + (fatOverride ?? 0), 0)
+    }
+
+    var totalFiber: Decimal {
+        max(baseTotalFiber + (fiberOverride ?? 0), 0)
+    }
+
+    var totalSugars: Decimal {
+        max(baseTotalSugars + (sugarsOverride ?? 0), 0)
+    }
+
+    var hasNutritionOverrides: Bool {
+        carbsOverride != nil || proteinOverride != nil || fatOverride != nil ||
+            fiberOverride != nil || sugarsOverride != nil
     }
 }

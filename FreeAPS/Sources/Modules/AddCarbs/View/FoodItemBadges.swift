@@ -90,10 +90,10 @@ struct NutritionBadgePlain: View {
         self.label = label
         self.color = color
     }
-    
+
     private var adaptiveColor: Color {
         guard colorScheme == .light else { return color }
-        
+
         // Use specific darker variants for better contrast in light mode
         switch color {
         case .orange:
@@ -151,10 +151,10 @@ struct NutritionBadgePlainStacked: View {
         self.label = label
         self.color = color
     }
-    
+
     private var adaptiveColor: Color {
         guard colorScheme == .light else { return color }
-        
+
         // Use specific darker variants for better contrast in light mode
         switch color {
         case .orange:
@@ -264,5 +264,38 @@ struct ConfidenceBadge: View {
         .background(level.color.opacity(backgroundOpacity))
         .foregroundColor(textColor)
         .cornerRadius(4)
+    }
+}
+
+struct AdjustmentBadge: View {
+    let value: Decimal
+    let label: String
+    let color: Color
+
+    private var formattedValue: String {
+        let nsNumber = NSDecimalNumber(decimal: abs(value))
+        let numberFormatter = NumberFormatter()
+        numberFormatter.numberStyle = .decimal
+        numberFormatter.maximumFractionDigits = 1
+        numberFormatter.minimumFractionDigits = 0
+        let valueString = numberFormatter.string(from: nsNumber) ?? "0"
+
+        let sign = value >= 0 ? "+" : "-"
+        return "\(sign)\(valueString)"
+    }
+
+    var body: some View {
+        HStack(spacing: 3) {
+            Text(formattedValue)
+                .font(.caption2)
+                .fontWeight(.semibold)
+            Text(label)
+                .font(.caption2)
+        }
+        .foregroundColor(color)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(color.opacity(0.15))
+        .cornerRadius(6)
     }
 }

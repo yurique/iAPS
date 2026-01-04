@@ -47,7 +47,7 @@ struct FoodItemRow: View {
                             .foregroundColor(.primary)
                             .lineLimit(1)
                             .truncationMode(.tail)
-                        
+
                         if foodItem.source.isAI, let confidence = foodItem.confidence {
                             ConfidenceBadge(level: confidence)
                         }
