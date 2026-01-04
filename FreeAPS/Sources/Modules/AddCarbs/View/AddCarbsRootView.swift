@@ -18,6 +18,7 @@ extension AddCarbs {
         @State var saved = false
         @State var pushed = false
         @State var button = false
+
         @State private var showAlert = false
         @State private var presentPresets = false
         @State private var string = ""
@@ -29,6 +30,8 @@ extension AddCarbs {
         @State private var portionGrams: Decimal = 100.00001
         @State private var selectedFoodImage: UIImage?
         @State private var showCancelConfirmation = false
+
+        @State private var showingSettings = false
 
         @FetchRequest(
             entity: Presets.entity(),
@@ -133,7 +136,10 @@ extension AddCarbs {
                             .foregroundColor(.blue)
                         }
                     } else {
-                        NavigationLink(destination: FoodSearchSettingsView()) {
+                        Button {
+                            showingSettings = true
+                        }
+                        label: {
                             Image(systemName: "gearshape")
                                 .font(.system(size: 20, weight: .medium))
                                 .foregroundColor(.secondary.opacity(0.5))
@@ -151,6 +157,9 @@ extension AddCarbs {
                     Text(foodSearchState.showSavedFoods ? "Done" : "Cancel")
                 }
             )
+            .sheet(isPresented: $showingSettings) {
+                FoodSearchSettingsView()
+            }
             .confirmationDialog(
                 "Discard Food Search?",
                 isPresented: $showCancelConfirmation,

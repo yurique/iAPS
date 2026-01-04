@@ -32,7 +32,7 @@ struct FoodSearchView: View {
             case .camera:
                 ModernCameraView(
                     onImageCaptured: { image in
-                        state.handleImageCaptured(image: image)
+                        state.handleImageCaptured(image: image, fromCamera: true)
                     }
                 )
             case .barcodeScanner:
@@ -304,7 +304,7 @@ struct FoodSearchView: View {
                     if let data = try await selectedPhotoItem.loadTransferable(type: Data.self),
                        let image = UIImage(data: data)
                     {
-                        state.handleImageCaptured(image: image)
+                        state.handleImageCaptured(image: image, fromCamera: false)
                         self.selectedPhotoItem = nil
                     }
                 }

@@ -1,4 +1,5 @@
 import Combine
+import Photos
 import SwiftUI
 
 enum FoodSearchRoute {
@@ -145,7 +146,11 @@ final class FoodSearchStateModel: ObservableObject {
         startAIAnalysis(analysisRequest: .image(image, comment))
     }
 
-    func handleImageCaptured(image: UIImage) {
+    func handleImageCaptured(image: UIImage, fromCamera: Bool) {
+        if fromCamera, UserDefaults.standard.aiSavePhotosToLibrary {
+            saveImageToLibrary(image)
+        }
+
         let shouldShowComment = forceShowCommentForNextImage || UserDefaults.standard.aiAddImageCommentByDefault
 
         forceShowCommentForNextImage = false
@@ -154,6 +159,72 @@ final class FoodSearchStateModel: ObservableObject {
             foodSearchRoute = .imageCommentInput(image)
         } else {
             startImageAnalysis(image: image, comment: nil)
+        }
+    }
+
+    private func saveImageToLibrary(_ image: UIImage) {
+        // Check current authorization status without requesting
+        let status = PHPhotoLibrary.authorizationStatus(for: .addOnly)
+
+        guard status == .authorized || status == .limited else {
+            print("Photo library access not granted")
+            return
+        }
+
+        getOrCreateAlbum(named: "iAPS") { album in
+            guard let album = album else {
+                // Fallback: save to camera roll if album creation fails
+                PHPhotoLibrary.shared().performChanges({
+                    PHAssetChangeRequest.creationRequestForAsset(from: image)
+                })
+                return
+            }
+
+            PHPhotoLibrary.shared().performChanges({
+                let assetRequest = PHAssetChangeRequest.creationRequestForAsset(from: image)
+                guard let placeholder = assetRequest.placeholderForCreatedAsset,
+                      let albumChangeRequest = PHAssetCollectionChangeRequest(for: album)
+                else {
+                    return
+                }
+                albumChangeRequest.addAssets([placeholder] as NSArray)
+            }) { success, error in
+                if success {
+                    print("✅ Image saved to iAPS album")
+                } else if let error = error {
+                    print("❌ Failed to save image: \(error.localizedDescription)")
+                }
+            }
+        }
+    }
+
+    private func getOrCreateAlbum(named albumName: String, completion: @escaping (PHAssetCollection?) -> Void) {
+        // Check if album already exists
+        let fetchOptions = PHFetchOptions()
+        fetchOptions.predicate = NSPredicate(format: "title = %@", albumName)
+        let collection = PHAssetCollection.fetchAssetCollections(with: .album, subtype: .any, options: fetchOptions)
+
+        if let album = collection.firstObject {
+            completion(album)
+            return
+        }
+
+        // Create new album
+        var albumPlaceholder: PHObjectPlaceholder?
+        PHPhotoLibrary.shared().performChanges({
+            let createAlbumRequest = PHAssetCollectionChangeRequest.creationRequestForAssetCollection(withTitle: albumName)
+            albumPlaceholder = createAlbumRequest.placeholderForCreatedAssetCollection
+        }) { success, error in
+            if success, let placeholder = albumPlaceholder {
+                let fetchResult = PHAssetCollection.fetchAssetCollections(
+                    withLocalIdentifiers: [placeholder.localIdentifier],
+                    options: nil
+                )
+                completion(fetchResult.firstObject)
+            } else {
+                print("Failed to create album: \(error?.localizedDescription ?? "unknown error")")
+                completion(nil)
+            }
         }
     }
 

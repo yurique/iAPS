@@ -1,4 +1,5 @@
 import Foundation
+import Photos
 import SlideButton
 import SwiftUI
 
@@ -23,7 +24,6 @@ struct StableSecureField: View {
     }
 }
 
-/// Settings view for configuring AI food analysis
 struct FoodSearchSettingsView: View {
     @ObservedObject private var aiService = ConfigurableAIService.shared
     @Environment(\.dismiss) private var dismiss
@@ -32,7 +32,7 @@ struct FoodSearchSettingsView: View {
     @State private var openAIKey: String = ""
     @State private var googleGeminiKey: String = ""
 
-    @State private var showingAPIKeyAlert = false
+    @State private var photoLibraryAuthStatus: PHAuthorizationStatus = .notDetermined
 
     // API Key visibility toggles - start with keys hidden (secure)
     @State private var showClaudeKey: Bool = false
@@ -48,6 +48,7 @@ struct FoodSearchSettingsView: View {
     @State private var aiTextSearchByDefault: Bool = false
     @State private var aiAddImageCommentByDefault: Bool = false
     @State private var sendSmallerImages: Bool = false
+    @State private var aiSavePhotosToLibrary: Bool = false
 
     @State private var preferredLanguage: String = ""
     @State private var preferredRegion: String = ""
@@ -105,27 +106,6 @@ struct FoodSearchSettingsView: View {
 
     private func displayName(for code: String, in options: [(code: String, name: String)]) -> String {
         options.first(where: { $0.code == code })?.name ?? code
-    }
-
-    init() {}
-
-    func readPersistedValues() {
-        claudeKey = ConfigurableAIService.shared.getAPIKey(for: .claude) ?? ""
-        openAIKey = ConfigurableAIService.shared.getAPIKey(for: .openAI) ?? ""
-        googleGeminiKey = ConfigurableAIService.shared.getAPIKey(for: .gemini) ?? ""
-
-        preferredLanguage = UserDefaults.standard.userPreferredLanguageForAI ?? ""
-        preferredRegion = UserDefaults.standard.userPreferredRegionForAI ?? ""
-
-        imageSearchProvider = UserDefaults.standard.aiImageProvider
-        aiTextProvider = UserDefaults.standard.aiTextProvider
-        textSearchProvider = UserDefaults.standard.textSearchProvider
-        barcodeSearchProvider = UserDefaults.standard.barcodeSearchProvider
-        preferredNutritionAuthority = UserDefaults.standard.userPreferredNutritionAuthorityForAI
-
-        aiTextSearchByDefault = UserDefaults.standard.aiTextSearchByDefault
-        aiAddImageCommentByDefault = UserDefaults.standard.aiAddImageCommentByDefault
-        sendSmallerImages = UserDefaults.standard.shouldSendSmallerImagesToAI
     }
 
     var body: some View {
@@ -426,6 +406,56 @@ struct FoodSearchSettingsView: View {
                     Toggle("Send smaller images to AI", isOn: $sendSmallerImages)
                 }
 
+                Section(
+                    header: Text("Photo Library"),
+                    footer: Text(
+                        "When enabled, photos taken will be saved into the iAPS album in your photo library."
+                    )
+                ) {
+                    switch photoLibraryAuthStatus {
+                    case .authorized,
+                         .limited:
+                        // Permission granted - show toggle
+                        Toggle("Save Photos", isOn: $aiSavePhotosToLibrary)
+
+                    case .notDetermined:
+                        // Can request permission - show button
+                        Button {
+                            Task {
+                                let newStatus = await PHPhotoLibrary.requestAuthorization(for: .addOnly)
+                                await MainActor.run {
+                                    photoLibraryAuthStatus = newStatus
+                                    if newStatus == .authorized || newStatus == .limited {
+                                        aiSavePhotosToLibrary = true
+                                    }
+                                }
+                            }
+                        } label: {
+                            Label("Enable Photo Library Access", systemImage: "photo.on.rectangle")
+                        }
+
+                    case .denied,
+                         .restricted:
+                        // Permission denied - show explanation and settings button
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Photo library access is required to save images.")
+                                .font(.caption)
+                                .foregroundColor(.secondary)
+
+                            Button {
+                                if let url = URL(string: UIApplication.openSettingsURLString) {
+                                    UIApplication.shared.open(url)
+                                }
+                            } label: {
+                                Label("Open Settings", systemImage: "gear")
+                            }
+                        }
+
+                    @unknown default:
+                        EmptyView()
+                    }
+                }
+
                 // Statistics Section
                 let allStats = AIUsageStatistics.getAllStatistics()
                 if !allStats.isEmpty {
@@ -571,10 +601,8 @@ struct FoodSearchSettingsView: View {
             buildLanguageOptions()
             buildRegionOptions()
         }
-        .alert("API Key Required", isPresented: $showingAPIKeyAlert) {
-            Button("OK") {}
-        } message: {
-            Text("This AI provider requires an API key. Please enter your API key in the settings below.")
+        .task {
+            photoLibraryAuthStatus = PHPhotoLibrary.authorizationStatus(for: .addOnly)
         }
         .sheet(isPresented: $showingStatistics) {
             StatisticsView()
@@ -633,6 +661,26 @@ struct FoodSearchSettingsView: View {
         return model.displayName
     }
 
+    private func readPersistedValues() {
+        claudeKey = ConfigurableAIService.shared.getAPIKey(for: .claude) ?? ""
+        openAIKey = ConfigurableAIService.shared.getAPIKey(for: .openAI) ?? ""
+        googleGeminiKey = ConfigurableAIService.shared.getAPIKey(for: .gemini) ?? ""
+
+        preferredLanguage = UserDefaults.standard.userPreferredLanguageForAI ?? ""
+        preferredRegion = UserDefaults.standard.userPreferredRegionForAI ?? ""
+
+        imageSearchProvider = UserDefaults.standard.aiImageProvider
+        aiTextProvider = UserDefaults.standard.aiTextProvider
+        textSearchProvider = UserDefaults.standard.textSearchProvider
+        barcodeSearchProvider = UserDefaults.standard.barcodeSearchProvider
+        preferredNutritionAuthority = UserDefaults.standard.userPreferredNutritionAuthorityForAI
+
+        aiTextSearchByDefault = UserDefaults.standard.aiTextSearchByDefault
+        aiAddImageCommentByDefault = UserDefaults.standard.aiAddImageCommentByDefault
+        sendSmallerImages = UserDefaults.standard.shouldSendSmallerImagesToAI
+        aiSavePhotosToLibrary = UserDefaults.standard.aiSavePhotosToLibrary
+    }
+
     private func saveSettings() {
         aiService.setAPIKey(claudeKey, for: .claude)
         aiService.setAPIKey(openAIKey, for: .openAI)
@@ -650,6 +698,7 @@ struct FoodSearchSettingsView: View {
         UserDefaults.standard.aiTextSearchByDefault = aiTextSearchByDefault
         UserDefaults.standard.aiAddImageCommentByDefault = aiAddImageCommentByDefault
         UserDefaults.standard.shouldSendSmallerImagesToAI = sendSmallerImages
+        UserDefaults.standard.aiSavePhotosToLibrary = aiSavePhotosToLibrary
 
         dismiss()
     }
@@ -1043,13 +1092,3 @@ private struct ComplexityRow: View {
         .padding(.vertical, 4)
     }
 }
-
-// MARK: - Preview
-
-#if DEBUG
-    struct FoodSearchSettingsView_Previews: PreviewProvider {
-        static var previews: some View {
-            FoodSearchSettingsView()
-        }
-    }
-#endif
