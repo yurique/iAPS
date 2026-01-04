@@ -90,10 +90,10 @@ struct NutritionBadgePlain: View {
         self.label = label
         self.color = color
     }
-
+    
     private var adaptiveColor: Color {
         guard colorScheme == .light else { return color }
-
+        
         // Use specific darker variants for better contrast in light mode
         switch color {
         case .orange:
@@ -133,6 +133,7 @@ struct NutritionBadgePlain: View {
                     .minimumScaleFactor(0.7)
             }
         }
+        .frame(maxWidth: .infinity)
     }
 }
 
@@ -150,10 +151,10 @@ struct NutritionBadgePlainStacked: View {
         self.label = label
         self.color = color
     }
-
+    
     private var adaptiveColor: Color {
         guard colorScheme == .light else { return color }
-
+        
         // Use specific darker variants for better contrast in light mode
         switch color {
         case .orange:
@@ -256,16 +257,12 @@ struct ConfidenceBadge: View {
     var body: some View {
         HStack(spacing: 4) {
             Image(systemName: "brain")
-                .font(.system(size: 14))
-
-            Text(level.description)
-                .font(.caption)
-                .fontWeight(.regular)
+                .font(.system(size: 11))
         }
-        .padding(.horizontal, 8)
+        .padding(.horizontal, 4)
         .padding(.vertical, 4)
         .background(level.color.opacity(backgroundOpacity))
         .foregroundColor(textColor)
-        .cornerRadius(6)
+        .cornerRadius(4)
     }
 }

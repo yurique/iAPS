@@ -47,14 +47,12 @@ struct FoodItemRow: View {
                             .foregroundColor(.primary)
                             .lineLimit(1)
                             .truncationMode(.tail)
-                            .frame(maxWidth: .infinity, alignment: .leading)
-
+                        
                         if foodItem.source.isAI, let confidence = foodItem.confidence {
-                            HStack(spacing: 0) {
-                                ConfidenceBadge(level: confidence)
-                            }
+                            ConfidenceBadge(level: confidence)
                         }
                     }
+                    .frame(maxWidth: .infinity, alignment: .leading)
 
                     HStack(spacing: 8) {
                         Button(action: {
@@ -69,7 +67,6 @@ struct FoodItemRow: View {
                         }
                         .buttonStyle(.plain)
 
-                        // Only show serving multiplier for per100 items
                         if case .per100 = foodItem.nutrition {
                             if let servingSize = foodItem.standardServingSize {
                                 Text("\(Double(portionSize / servingSize), specifier: "%.1f")× serving")
@@ -81,8 +78,9 @@ struct FoodItemRow: View {
                     }
                 }
 
-                // Product image thumbnail (if available) - on the right
-                FoodItemThumbnail(imageURL: foodItem.imageURL)
+                if foodItem.imageURL != nil {
+                    FoodItemThumbnail(imageURL: foodItem.imageURL)
+                }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 12)
@@ -138,43 +136,43 @@ struct FoodItemRow: View {
             HStack(spacing: 6) {
                 switch foodItem.nutrition {
                 case .per100:
-                    NutritionBadge(
+                    NutritionBadgePlain(
                         value: foodItem.carbsInPortion(portion: portionSize) ?? 0,
                         label: "carbs",
                         color: NutritionBadgeConfig.carbsColor
                     )
-                    NutritionBadge(
+                    NutritionBadgePlain(
                         value: foodItem.proteinInPortion(portion: portionSize) ?? 0,
                         label: "protein",
                         color: NutritionBadgeConfig.proteinColor
                     )
-                    NutritionBadge(
+                    NutritionBadgePlain(
                         value: foodItem.fatInPortion(portion: portionSize) ?? 0,
                         label: "fat",
                         color: NutritionBadgeConfig.fatColor
                     )
-                    NutritionBadge(
+                    NutritionBadgePlain(
                         value: foodItem.caloriesInPortion(portion: portionSize) ?? 0,
                         unit: "kcal",
                         color: NutritionBadgeConfig.caloriesColor
                     )
                 case .perServing:
-                    NutritionBadge(
+                    NutritionBadgePlain(
                         value: foodItem.carbsInServings(multiplier: portionSize) ?? 0,
                         label: "carbs",
                         color: NutritionBadgeConfig.carbsColor
                     )
-                    NutritionBadge(
+                    NutritionBadgePlain(
                         value: foodItem.proteinInServings(multiplier: portionSize) ?? 0,
                         label: "protein",
                         color: NutritionBadgeConfig.proteinColor
                     )
-                    NutritionBadge(
+                    NutritionBadgePlain(
                         value: foodItem.fatInServings(multiplier: portionSize) ?? 0,
                         label: "fat",
                         color: NutritionBadgeConfig.fatColor
                     )
-                    NutritionBadge(
+                    NutritionBadgePlain(
                         value: foodItem.caloriesInServings(multiplier: portionSize) ?? 0,
                         unit: "kcal",
                         color: NutritionBadgeConfig.caloriesColor
