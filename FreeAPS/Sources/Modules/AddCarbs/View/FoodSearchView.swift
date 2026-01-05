@@ -4,8 +4,8 @@ import SwiftUI
 
 struct FoodSearchView: View {
     @ObservedObject var state: FoodSearchStateModel
-    let onContinue: ([FoodItemDetailed], UIImage?, Date?) -> Void
-    let onHypoTreatment: (([FoodItemDetailed], UIImage?, Date?) -> Void)?
+    let onContinue: (FoodItemDetailed, UIImage?, Date?) -> Void
+    let onHypoTreatment: ((FoodItemDetailed, UIImage?, Date?) -> Void)?
     let onPersist: (FoodItemDetailed) -> Void
     let onDelete: (FoodItemDetailed) -> Void
     let continueButtonLabelKey: LocalizedStringKey

@@ -67,10 +67,10 @@ extension AddCarbs {
             add(continue_, fetch: fetch, carbsToStore: carbsToStore)
         }
 
-        func addAIFood(_ continue_: Bool, fetch: Bool, food: [FoodItemDetailed], date: Date?) {
-            var carbs = food.compactMap(\.carbsInThisPortion).reduce(0, +)
-            let fat = food.compactMap(\.fatInThisPortion).reduce(0, +)
-            let protein = food.compactMap(\.proteinInThisPortion).reduce(0, +)
+        func addAIFood(_ continue_: Bool, fetch: Bool, food: FoodItemDetailed, date: Date?) {
+            var carbs = food.carbsInThisPortion ?? 0
+            let fat = food.fatInThisPortion ?? 0
+            let protein = food.proteinInThisPortion ?? 0
             guard carbs > 0 || fat > 0 || protein > 0 else {
                 showModal(for: nil)
                 return

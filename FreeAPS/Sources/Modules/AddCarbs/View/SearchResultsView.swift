@@ -3,8 +3,8 @@ import SwiftUI
 
 struct SearchResultsView: View {
     @ObservedObject var state: FoodSearchStateModel
-    let onContinue: ([FoodItemDetailed], Date?) -> Void
-    let onHypoTreatment: (([FoodItemDetailed], Date?) -> Void)?
+    let onContinue: (FoodItemDetailed, Date?) -> Void
+    let onHypoTreatment: ((FoodItemDetailed, Date?) -> Void)?
     let onPersist: (FoodItemDetailed) -> Void
     let onDelete: (FoodItemDetailed) -> Void
     let continueButtonLabelKey: LocalizedStringKey
@@ -228,10 +228,8 @@ struct SearchResultsView: View {
             if hasVisibleContent {
                 if let onHypoTreatment = self.onHypoTreatment {
                     Button(action: {
-                        let foodItems = state.searchResultsState.searchResults.flatMap(\.foodItemsDetailed)
-                            .filter { !state.searchResultsState.isDeleted($0) }
-                            .map { $0.withPortion(state.searchResultsState.portionSize(for: $0)) }
-                        onHypoTreatment(foodItems, selectedTime)
+                        let combinedFoodItem = createCombinedFoodItem()
+                        onHypoTreatment(combinedFoodItem, selectedTime)
                     }) {
                         Text(hypoTreatmentButtonLabelKey)
                             .font(.subheadline)
@@ -247,10 +245,8 @@ struct SearchResultsView: View {
                     .buttonStyle(PlainButtonStyle())
                 }
                 Button(action: {
-                    let foodItems = state.searchResultsState.searchResults.flatMap(\.foodItemsDetailed)
-                        .filter { !state.searchResultsState.isDeleted($0) }
-                        .map { $0.withPortion(state.searchResultsState.portionSize(for: $0)) }
-                    onContinue(foodItems, selectedTime)
+                    let combinedFoodItem = createCombinedFoodItem()
+                    onContinue(combinedFoodItem, selectedTime)
                 }) {
                     Text(continueButtonLabelKey)
                         .font(.subheadline)
@@ -660,6 +656,39 @@ struct SearchResultsView: View {
     }
 
     // utils
+
+    private func createCombinedFoodItem() -> FoodItemDetailed {
+        let allItems = state.searchResultsState.searchResults.flatMap(\.foodItemsDetailed)
+            .filter { !state.searchResultsState.isDeleted($0) }
+
+        let nutritionValues = NutritionValues(
+            calories: state.searchResultsState.totalCalories,
+            carbs: state.searchResultsState.totalCarbs,
+            fat: state.searchResultsState.totalFat,
+            fiber: state.searchResultsState.totalFiber,
+            protein: state.searchResultsState.totalProtein,
+            sugars: state.searchResultsState.totalSugars
+        )
+
+        // Create new food item with per-serving nutrition
+        return FoodItemDetailed(
+            name: "Complete Meal",
+            nutritionPerServing: nutritionValues,
+            servingsMultiplier: 1,
+            confidence: nil,
+            brand: nil,
+            standardServing: nil,
+            standardServingSize: nil,
+            units: .grams,
+            preparationMethod: nil,
+            visualCues: nil,
+            glycemicIndex: nil,
+            assessmentNotes: nil,
+            imageURL: nil,
+            tags: nil,
+            source: .manual
+        )
+    }
 
     private func persistFoodItem(_ foodItem: FoodItemDetailed) {
         if let imageURL = foodItem.imageURL, let url = URL(string: imageURL), !url.isFileURL {
