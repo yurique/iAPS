@@ -18,6 +18,7 @@ extension UserDefaults {
         case aiTextSearchByDefault = "com.loopkit.Loop.AITextSearchByDefault"
         case aiAddImageCommentByDefault = "com.loopkit.Loop.AIAddImageCommentByDefault"
         case aiSavePhotosToLibrary = "com.loopkit.Loop.AISavePhotosToLibrary"
+        case aiProgressAnimation = "com.loopkit.Loop.AIProgressAnimation"
     }
 
     var claudeAPIKey: String {
@@ -150,6 +151,15 @@ extension UserDefaults {
         }
         set {
             set(newValue, forKey: AIKey.aiSavePhotosToLibrary.rawValue)
+        }
+    }
+
+    var aiProgressAnimation: Bool {
+        get {
+            bool(forKey: AIKey.aiProgressAnimation.rawValue)
+        }
+        set {
+            set(newValue, forKey: AIKey.aiProgressAnimation.rawValue)
         }
     }
 

@@ -479,7 +479,7 @@ struct AnalyzingPill: View {
             // Traveling spotlight using trim with wrap-around handling (timeline-driven)
             .overlay(
                 Group {
-                    if !progressState.isFinished {
+                    if !progressState.isFinished, UserDefaults.standard.aiProgressAnimation {
                         TimelineView(.animation) { context in
                             let duration: TimeInterval = 5 // seconds per full revolution
                             let t = context.date.timeIntervalSinceReferenceDate

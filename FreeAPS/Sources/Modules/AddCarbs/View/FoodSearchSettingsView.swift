@@ -49,6 +49,7 @@ struct FoodSearchSettingsView: View {
     @State private var aiAddImageCommentByDefault: Bool = false
     @State private var sendSmallerImages: Bool = false
     @State private var aiSavePhotosToLibrary: Bool = false
+    @State private var aiProgressAnimation: Bool = false
 
     @State private var preferredLanguage: String = ""
     @State private var preferredRegion: String = ""
@@ -480,6 +481,12 @@ struct FoodSearchSettingsView: View {
                 }
 
                 Section(
+                    header: Text("Misc"),
+                ) {
+                    Toggle("AI Progress Animation", isOn: $aiProgressAnimation)
+                }
+
+                Section(
                     header: Text("Important: How to Use Your API Keys"),
 
                     footer: Text(
@@ -679,6 +686,7 @@ struct FoodSearchSettingsView: View {
         aiAddImageCommentByDefault = UserDefaults.standard.aiAddImageCommentByDefault
         sendSmallerImages = UserDefaults.standard.shouldSendSmallerImagesToAI
         aiSavePhotosToLibrary = UserDefaults.standard.aiSavePhotosToLibrary
+        aiProgressAnimation = UserDefaults.standard.aiProgressAnimation
     }
 
     private func saveSettings() {
@@ -699,6 +707,7 @@ struct FoodSearchSettingsView: View {
         UserDefaults.standard.aiAddImageCommentByDefault = aiAddImageCommentByDefault
         UserDefaults.standard.shouldSendSmallerImagesToAI = sendSmallerImages
         UserDefaults.standard.aiSavePhotosToLibrary = aiSavePhotosToLibrary
+        UserDefaults.standard.aiProgressAnimation = aiProgressAnimation
 
         dismiss()
     }
