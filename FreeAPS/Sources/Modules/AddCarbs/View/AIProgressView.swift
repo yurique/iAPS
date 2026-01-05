@@ -30,34 +30,38 @@ struct AIProgressView: View {
                 .padding(.bottom, 140)
 
                 VStack(spacing: 0) {
-                    HStack {
-                        if let model = state.analysisModel {
-                            Text(model)
-                                .font(.caption)
-                                .fontWeight(.semibold)
-                                .fontDesign(.rounded)
-                                .foregroundStyle(.primary.opacity(0.7))
-                                .transition(.scale.combined(with: .opacity))
+                    if state.analysisError == nil {
+                        HStack {
+                            if let model = state.analysisModel {
+                                Text(model)
+                                    .font(.caption)
+                                    .fontWeight(.semibold)
+                                    .fontDesign(.rounded)
+                                    .foregroundStyle(.primary.opacity(0.7))
+                                    .transition(.scale.combined(with: .opacity))
+                            }
+                            Spacer()
                         }
-                        Spacer()
-                    }
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, 8)
-                    .animation(.spring(response: 0.3, dampingFraction: 0.7), value: state.analysisModel)
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, 8)
+                        .animation(.spring(response: 0.3, dampingFraction: 0.7), value: state.analysisModel)
 
-                    AnalyzingPill(
-                        title: NSLocalizedString("Analyzing food with AI…", comment: ""),
-                        startDate: state.analysisStart,
-                        eta: state.analysisEta,
-                        endDate: state.analysisEnd,
-                        onCancel: {
-                            onCancel()
-                        }
-                    )
-                    .padding(.horizontal, 20)
-                    .padding(.bottom, max(geometry.safeAreaInsets.bottom, 120))
+                        AnalyzingPill(
+                            title: NSLocalizedString("Analyzing food with AI…", comment: ""),
+                            startDate: state.analysisStart,
+                            eta: state.analysisEta,
+                            endDate: state.analysisEnd,
+                            onCancel: {
+                                onCancel()
+                            }
+                        )
+                        .padding(.horizontal, 20)
+                        .padding(.bottom, max(geometry.safeAreaInsets.bottom, 120))
+                        .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                 }
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottom)
+                .animation(.spring(response: 0.4, dampingFraction: 0.8), value: state.analysisError)
             }
         }
         .ignoresSafeArea()
@@ -117,7 +121,6 @@ struct AIProgressView: View {
                 EmptyView()
             }
 
-            // Error banner (same for both)
             if let error = state.analysisError {
                 InlineErrorBanner(
                     error: error,
@@ -559,13 +562,6 @@ struct AnalyzingPill: View {
                 // Initialize progress state
                 progressState = ProgressState(eta: eta, isFinished: endDate != nil, isOvertime: false)
             }
-            .onChange(of: startDate) { _, newStartDate in
-                // Reset progress when a new analysis starts
-                if newStartDate != nil {
-                    progress = 0.0
-                    progressState = ProgressState(eta: eta, isFinished: false, isOvertime: false)
-                }
-            }
             .onChange(of: eta) { _, newEta in
                 // Update progress state with new ETA
                 progressState = ProgressState(eta: newEta, isFinished: endDate != nil, isOvertime: progressState.isOvertime)
@@ -602,65 +598,6 @@ struct InlineErrorBanner: View {
 
     @Environment(\.colorScheme) private var colorScheme
 
-    private var errorType: ErrorType {
-        if error.contains("credits exhausted") {
-            return .creditsExhausted
-        } else if error.contains("quota exceeded") {
-            return .quotaExceeded
-        } else if error.contains("rate limit") {
-            return .rateLimit
-        } else {
-            return .general
-        }
-    }
-
-    private enum ErrorType {
-        case creditsExhausted
-        case quotaExceeded
-        case rateLimit
-        case general
-
-        var icon: String {
-            switch self {
-            case .creditsExhausted,
-                 .quotaExceeded: return "creditcard.trianglebadge.exclamationmark"
-            case .rateLimit: return "clock.badge.exclamationmark"
-            case .general: return "exclamationmark.triangle"
-            }
-        }
-
-        var title: String {
-            switch self {
-            case .creditsExhausted: return "Credits Exhausted"
-            case .quotaExceeded: return "Quota Exceeded"
-            case .rateLimit: return "Rate Limit Reached"
-            case .general: return "Analysis Failed"
-            }
-        }
-
-        func message(originalError: String) -> String {
-            switch self {
-            case .creditsExhausted:
-                return "Your AI provider has run out of credits. Please check your account billing or try a different provider."
-            case .quotaExceeded:
-                return "Your AI provider quota has been exceeded. Please check your usage limits or try a different provider."
-            case .rateLimit:
-                return "Too many requests sent to your AI provider. Please wait a moment before trying again."
-            case .general:
-                return originalError
-            }
-        }
-
-        var canRetry: Bool {
-            switch self {
-            case .general,
-                 .rateLimit: return true
-            case .creditsExhausted,
-                 .quotaExceeded: return false
-            }
-        }
-    }
-
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             HStack(alignment: .top, spacing: 12) {
@@ -678,7 +615,7 @@ struct InlineErrorBanner: View {
                         )
                         .frame(width: 40, height: 40)
 
-                    Image(systemName: errorType.icon)
+                    Image(systemName: "exclamationmark.triangle")
                         .font(.body)
                         .foregroundStyle(
                             LinearGradient(
@@ -690,12 +627,12 @@ struct InlineErrorBanner: View {
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text(errorType.title)
+                    Text("Analysis Failed")
                         .font(.subheadline)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
 
-                    Text(errorType.message(originalError: error))
+                    Text(error)
                         .font(.caption)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)
@@ -704,27 +641,30 @@ struct InlineErrorBanner: View {
                 Spacer(minLength: 0)
             }
 
-            HStack(spacing: 8) {
-                Spacer()
-
-                Button("Dismiss") {
+            HStack(spacing: 12) {
+                Button {
                     onCancel()
+                } label: {
+                    Text("Cancel")
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
                 }
-                .font(.footnote)
-                .foregroundStyle(.secondary)
                 .buttonStyle(.bordered)
                 .buttonBorderShape(.capsule)
+                .controlSize(.large)
 
-                if errorType.canRetry, let onRetry {
-                    Button(errorType == .rateLimit ? "Wait & Retry" : "Retry") {
+                if let onRetry {
+                    Button {
                         onRetry()
+                    } label: {
+                        Text("Retry")
+                            .fontWeight(.semibold)
+                            .frame(maxWidth: .infinity)
+                            .padding(.horizontal, 16)
                     }
-                    .font(.footnote)
-                    .fontWeight(.semibold)
-                    .foregroundStyle(.white)
-                    .buttonStyle(.borderedProminent)
+                    .buttonStyle(.bordered)
                     .buttonBorderShape(.capsule)
-                    .tint(.red)
+                    .controlSize(.large)
                 }
             }
         }
