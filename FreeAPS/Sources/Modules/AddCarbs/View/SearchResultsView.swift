@@ -166,6 +166,7 @@ struct SearchResultsView: View {
                 existingItem: nil,
                 title: "Add Food Manually",
                 allExistingTags: Set(state.savedFoods?.foodItemsDetailed.flatMap { $0.tags ?? [] } ?? []),
+                showTagsAndFavorite: false, // Don't show tags when adding manually to meal
                 onSave: { foodItem in
                     state.addItem(foodItem, group: nil)
                     state.showManualEntry = false
@@ -182,6 +183,7 @@ struct SearchResultsView: View {
                 existingItem: nil,
                 title: "Create Saved Food",
                 allExistingTags: Set(state.savedFoods?.foodItemsDetailed.flatMap { $0.tags ?? [] } ?? []),
+                showTagsAndFavorite: true, // Show tags when creating a saved food
                 onSave: { foodItem in
                     persistFoodItem(foodItem)
                     state.showNewSavedFoodEntry = false

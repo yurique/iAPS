@@ -262,6 +262,7 @@ struct FoodItemRow: View {
                 title: "Edit Food",
                 allowServingMultiplierEdit: true, // Allow editing multiplier for foods in the main list
                 allExistingTags: allExistingTags,
+                showTagsAndFavorite: isSaved, // Only show tags if this is a saved food
                 onSave: { editedItem in
                     onUpdate?(editedItem)
                     showEditSheet = false

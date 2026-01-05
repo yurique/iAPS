@@ -8,6 +8,7 @@ struct FoodItemEditorSheet: View {
     let onCancel: () -> Void
     let allowServingMultiplierEdit: Bool // New parameter to control slider visibility
     let allExistingTags: Set<String> // All tags from other saved foods
+    let showTagsAndFavorite: Bool // Whether to show tags section and favorite toggle
 
     @State private var nutritionMode: NutritionEntryMode = .perServing
     @State private var portionSizeOrMultiplier: Decimal = 1
@@ -81,6 +82,7 @@ struct FoodItemEditorSheet: View {
         title: String? = nil,
         allowServingMultiplierEdit: Bool = false,
         allExistingTags: Set<String> = [],
+        showTagsAndFavorite: Bool = false,
         onSave: @escaping (FoodItemDetailed) -> Void,
         onCancel: @escaping () -> Void
     ) {
@@ -89,6 +91,7 @@ struct FoodItemEditorSheet: View {
         self.title = title ?? (existingItem != nil ? "Edit Food" : "Add Food Manually")
         self.allowServingMultiplierEdit = allowServingMultiplierEdit
         self.allExistingTags = allExistingTags
+        self.showTagsAndFavorite = showTagsAndFavorite
         self.onSave = onSave
         self.onCancel = onCancel
 
@@ -217,7 +220,7 @@ struct FoodItemEditorSheet: View {
                             .textFieldStyle(.roundedBorder)
                             .focused($focusedField, equals: .name)
 
-                        if !allExistingTags.isEmpty || existingItem?.source == .database {
+                        if showTagsAndFavorite {
                             Button(action: {
                                 withAnimation(.easeInOut(duration: 0.2)) {
                                     if editedTags.contains(FoodTags.favorites) {
@@ -256,8 +259,8 @@ struct FoodItemEditorSheet: View {
                 .padding(.top, 12)
                 .padding(.bottom, 8)
 
-                // Collapsible tags section (only show if editing a saved food or creating one for the saved foods list)
-                if !allExistingTags.isEmpty || existingItem?.source == .database {
+                // Collapsible tags section (only show if showTagsAndFavorite is true)
+                if showTagsAndFavorite {
                     CollapsibleTagsSection(
                         selectedTags: $editedTags,
                         allExistingTags: allExistingTags,
