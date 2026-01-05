@@ -2,7 +2,7 @@ import Foundation
 import SwiftUI
 
 enum NutritionBadgeConfig {
-    static let caloriesColor = Color.red
+    static let caloriesColor = Color.gray
     static let carbsColor = Color.orange
     static let proteinColor = Color.green
     static let fatColor = Color.blue
@@ -106,6 +106,8 @@ struct NutritionBadgePlain: View {
             return Color(red: 0.0, green: 0.4, blue: 0.8) // Darker blue
         case .purple:
             return Color(red: 0.6, green: 0.0, blue: 0.6) // Darker purple
+        case .gray:
+            return Color(red: 0.4, green: 0.4, blue: 0.4) // Darker gray for better contrast
         default:
             return color
         }
@@ -167,6 +169,8 @@ struct NutritionBadgePlainStacked: View {
             return Color(red: 0.0, green: 0.4, blue: 0.8) // Darker blue
         case .purple:
             return Color(red: 0.6, green: 0.0, blue: 0.6) // Darker purple
+        case .gray:
+            return Color(red: 0.4, green: 0.4, blue: 0.4) // Darker gray for better contrast
         default:
             return color
         }
