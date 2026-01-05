@@ -235,6 +235,8 @@ extension TextAnalysisService {
                 units: item.units,
                 preparationMethod: item.preparationMethod,
                 visualCues: item.visualCues,
+                glycemicIndex: item.glycemicIndex,
+                assessmentNotes: item.assessmentNotes,
                 imageURL: nil,
                 standardName: item.standardName,
                 source: source
@@ -414,8 +416,7 @@ extension AnalysiedFoodItem {
             ),
             (.confidence, "decimal 0 to 1; required; confidence for this item"),
             (.units, "string enum; one of: 'grams' or 'milliliters'; as appropriate for this meal; do NOT translate;"),
-            (.caloriesPer100, "decimal, kilocalories per 100 grams or milliliters"),
-            (.carbsPer100, "decimal, grams of carbohydrates per 100 grams or milliliters"),
+            (.carbsPer100, "decimal, grams of available / digestible carbohydrates per 100 grams or milliliters"),
             (.fatPer100, "decimal, grams of fat per 100 grams or milliliters"),
             (.fiberPer100, "decimal, grams of fiber per 100 grams or milliliters"),
             (.proteinPer100, "decimal, grams of protein per 100 grams or milliliters"),
@@ -427,7 +428,7 @@ extension AnalysiedFoodItem {
             ),
             (
                 .standardServing,
-                "description of the identified standard serving, if available, is natural description is available - do NOT add size in grams/milliliters, since you've already specified it above; (language)"
+                "description of the identified standard serving, if available; if natural description is available - do NOT add size in grams/milliliters; (language)"
             ),
             (.glycemicIndex, "decimal, glycemic index if available")
         ]
@@ -439,7 +440,7 @@ extension AnalysiedFoodItem {
             (.preparationMethod, "cooking details observed; (language)"),
             (
                 .assessmentNotes,
-                "explain how you calculated this specific portion size, what visual references you used for measurement; (language)"
+                "explain how you calculated this specific portion size, what visual references you used for measurement; explain your initial data and reasoning about carbohydrates and fibers; (language)"
             )
         ]
         return fields.map { key, value in

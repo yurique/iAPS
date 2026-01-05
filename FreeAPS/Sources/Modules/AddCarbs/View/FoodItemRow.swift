@@ -126,13 +126,7 @@ struct FoodItemRow: View {
                     }
                 }
             }
-            .sheet(isPresented: $showItemInfo) {
-                FoodItemInfoPopup(foodItem: foodItem, portionSize: portionSize)
-                    .presentationDetents([.height(preferredItemInfoHeight(for: foodItem)), .large])
-                    .presentationDragIndicator(.visible)
-            }
 
-            // Compact nutrition info
             HStack(spacing: 6) {
                 switch foodItem.nutrition {
                 case .per100:
@@ -278,6 +272,11 @@ struct FoodItemRow: View {
             )
             .presentationDetents([.height(600), .large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $showItemInfo) {
+            FoodItemInfoPopup(foodItem: foodItem, portionSize: portionSize)
+                .presentationDetents([.height(preferredItemInfoHeight(for: foodItem)), .large])
+                .presentationDragIndicator(.visible)
         }
         .onChange(of: portionSize) { _, newValue in
             // Update multiplier when portion size changes externally
