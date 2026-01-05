@@ -241,7 +241,7 @@ extension FoodItemDetailed {
         guard case let .per100(per100) = nutrition else { return nil }
 
         let caloriesPer100: Decimal
-        if let explicitCalories = per100.calories {
+        if let explicitCalories = per100.calories, explicitCalories > 0 {
             caloriesPer100 = explicitCalories
         } else {
             // Calculate from macronutrients if calories not specified
@@ -291,7 +291,7 @@ extension FoodItemDetailed {
         guard case let .perServing(perServing) = nutrition else { return nil }
 
         let caloriesPerServing: Decimal
-        if let explicitCalories = perServing.calories {
+        if let explicitCalories = perServing.calories, explicitCalories > 0 {
             caloriesPerServing = explicitCalories
         } else {
             // Calculate from macronutrients if calories not specified
