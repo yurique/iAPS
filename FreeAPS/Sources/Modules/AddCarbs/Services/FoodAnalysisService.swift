@@ -409,7 +409,7 @@ extension AnalysiedFoodItem: Decodable {
 extension AnalysiedFoodItem {
     private static var fields: [(AnalysiedFoodItem.CodingKeys, Any)] {
         [
-            (.name, "string, required; specific food name"),
+            (.name, "string, required; specific food name; (language)"),
             (
                 .standardName,
                 "string; concise image-search query for this product. Branded/menu item: include the brand + product name. Generic food: use only the common product name. Use only nouns, plus an optional color. Do not use any other adjectives. Never include rawness, doneness, peel/skin state, serving style, cut form, or texture."
@@ -440,7 +440,7 @@ extension AnalysiedFoodItem {
             (.preparationMethod, "cooking details observed; (language)"),
             (
                 .assessmentNotes,
-                "explain how you calculated this specific portion size, what visual references you used for measurement; explain your initial data and reasoning about carbohydrates and fibers; (language)"
+                "explain how you calculated this specific portion size, what visual references you used for measurement; (language)"
             )
         ]
         return fields.map { key, value in

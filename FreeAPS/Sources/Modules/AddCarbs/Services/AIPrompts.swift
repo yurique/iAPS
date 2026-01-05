@@ -77,16 +77,16 @@ private func buildAnalysisPrompt(
     let schemaJson = PlainJSONFromPairs(responseSchema)
 
     var schema = renderPlainJSON(schemaJson)
-    let languageCode = UserDefaults.standard.userPreferredLanguageForAI ?? Locale.current.region?.identifier
+    let languageCode = UserDefaults.standard.userPreferredLanguageForAI ?? systemLanguageCode()
+    let regionCode = UserDefaults.standard.userPreferredRegionForAI ?? systemRegionCode()
 
-    if let languageForAI = getLanguageForAI(languageCode: languageCode) {
-        schema = schema.replacingOccurrences(of: "(language)", with: "\(languageForAI)")
+    if let languageForAI = getLanguageForAI(primaryLanguageCode: languageCode) {
+        schema = schema.replacingOccurrences(of: "(language)", with: "translate into \(languageForAI)")
     } else {
-        schema = schema.replacingOccurrences(of: "(language)", with: "")
+        schema = schema.replacingOccurrences(of: "(language)", with: "in English")
     }
     let responseSchema = prompt_7_response_schema.replacingOccurrences(of: "(schema)", with: schema)
 
-    let regionCode = UserDefaults.standard.userPreferredRegionForAI ?? Locale.preferredLanguages.first
     let userPreferences: String = makePreferencesBlock(regionCode: regionCode)
 
     return prompt_0_header + "\n\n" +
@@ -97,26 +97,42 @@ private func buildAnalysisPrompt(
         prompt_8_footer
 }
 
-private func getLanguageForAI(languageCode: String?) -> String? {
-    guard let languageCode else { return nil }
-    let locale = Locale.current
+private func systemLanguageCode() -> String {
+    if let first = Locale.preferredLanguages.first {
+        let loc = Locale(identifier: first)
+        if let lang = loc.language.languageCode?.identifier {
+            return lang
+        }
+    }
+    if let lang = Locale.current.language.languageCode?.identifier {
+        return lang
+    }
+    return "en"
+}
 
-    let rawLang = languageCode.trimmingCharacters(in: .whitespacesAndNewlines)
+private func systemRegionCode() -> String {
+    if let region = Locale.current.region?.identifier {
+        return region
+    } else if let regionCode = (Locale.current as NSLocale).object(forKey: .countryCode) as? String {
+        return regionCode
+    }
+    return "US"
+}
 
-    let languageTag = rawLang.isEmpty ? "en-US" : rawLang
-    let primaryLanguageCode = languageTag.split(separator: "-").first.map(String.init) ?? "en"
-    let languageName = locale.localizedString(forLanguageCode: primaryLanguageCode) ?? primaryLanguageCode
-
-    return "\(languageName) (\(languageTag))"
+private func getLanguageForAI(primaryLanguageCode: String) -> String? {
+    let englishLocale = Locale(identifier: "en_US")
+    return englishLocale.localizedString(forLanguageCode: primaryLanguageCode)
 }
 
 private func makePreferencesBlock(regionCode: String?) -> String {
-    let locale = Locale.current
+    let englishLocale = Locale(identifier: "en_US")
 
-    let systemRegion = Locale.current.identifier
+    let systemRegion = systemRegionCode()
     let rawRegion = regionCode?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
     let effectiveRegion = rawRegion.isEmpty ? systemRegion : rawRegion
-    let regionName = locale.localizedString(forRegionCode: effectiveRegion) ?? effectiveRegion
+
+    // Get region name in English for AI
+    let regionName = englishLocale.localizedString(forRegionCode: effectiveRegion) ?? effectiveRegion
 
     let regionForAI =
         effectiveRegion.isNotEmpty ?
