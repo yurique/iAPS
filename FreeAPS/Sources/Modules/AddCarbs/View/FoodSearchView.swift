@@ -177,6 +177,17 @@ struct FoodSearchView: View {
                         Spacer()
 
                         HStack(spacing: 10) {
+                            Button {
+                                state.showingSettings = true
+                            }
+                            label: {
+                                Image(systemName: "gearshape")
+                                    .font(.system(size: 20, weight: .medium))
+                                    .foregroundColor(.secondary.opacity(0.5))
+                                    .frame(width: 46, height: 46)
+                            }
+                            .buttonStyle(PlainButtonStyle())
+
                             if state.showingFoodSearch {
                                 Button {
                                     state.showManualEntry = true

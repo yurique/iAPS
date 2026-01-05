@@ -48,6 +48,7 @@ final class FoodSearchStateModel: ObservableObject {
     @Published var latestSearchError: String? = nil
     @Published var latestSearchIcon: String? = nil
 
+    @Published var showingSettings = false
     @Published var showSavedFoods = false
     @Published var isLoading = false
     @Published var mealView = false
