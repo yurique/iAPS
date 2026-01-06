@@ -160,18 +160,7 @@ struct FoodSearchView: View {
                 if !state.showSavedFoods, state.latestMultipleSelectSearch == nil {
                     HStack(spacing: 10) {
                         if state.showingFoodSearch {
-                            Button {
-                                state.showingFoodSearch = false
-                            } label: {
-                                HStack(spacing: 4) {
-                                    Image(systemName: "chevron.left")
-                                        .font(.system(size: 14, weight: .medium))
-                                    Text("Back")
-                                        .font(.system(size: 15, weight: .regular))
-                                }
-                                .foregroundColor(.secondary)
-                            }
-                            .buttonStyle(PlainButtonStyle())
+                            backButton
                         }
 
                         Spacer()
@@ -318,6 +307,16 @@ struct FoodSearchView: View {
                         state.handleImageCaptured(image: image, fromCamera: false)
                         self.selectedPhotoItem = nil
                     }
+                }
+            }
+        }
+
+        private var backButton: some View {
+            Button(action: { state.showingFoodSearch = false }) {
+                HStack {
+                    Image(systemName: "chevron.left")
+                        .resizable()
+                        .frame(width: 12, height: 20)
                 }
             }
         }
