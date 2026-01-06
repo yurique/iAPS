@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" standalone="yes"?>
-<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24512" systemVersion="25B78" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" userDefinedModelVersionIdentifier="">
+<model type="com.apple.IDECoreDataModeler.DataModel" documentVersion="1.0" lastSavedToolsVersion="24512" systemVersion="24G419" minimumToolsVersion="Automatic" sourceLanguage="Swift" usedWithCloudKit="YES" userDefinedModelVersionIdentifier="">
     <entity name="ActiveProfile" representedClassName="ActiveProfile" syncable="YES" codeGenerationType="class">
         <attribute name="active" optional="YES" attributeType="Boolean" usesScalarValueType="YES"/>
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
@@ -38,13 +38,33 @@
         <relationship name="overrides" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Override" inverseName="autoISF" inverseEntity="Override"/>
     </entity>
     <entity name="Carbohydrates" representedClassName="Carbohydrates" syncable="YES" codeGenerationType="class">
+        <attribute name="a" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="b1" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="b9" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="b12" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="c" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="ca" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="carbs" optional="YES" attributeType="Decimal" defaultValueString="0"/>
+        <attribute name="cr" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="cu" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="d" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
+        <attribute name="e" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="enteredBy" optional="YES" attributeType="String"/>
         <attribute name="fat" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="fe" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="fibers" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="i" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="id" optional="YES" attributeType="String"/>
+        <attribute name="k" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="kalium" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="mg" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="na" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="note" optional="YES" attributeType="String" defaultValueString="Empty"/>
+        <attribute name="p" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
         <attribute name="protein" optional="YES" attributeType="Decimal" defaultValueString="0"/>
+        <attribute name="se" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
+        <attribute name="zn" optional="YES" attributeType="Decimal" defaultValueString="0.0"/>
     </entity>
     <entity name="Fat" representedClassName="Fat" syncable="YES" codeGenerationType="class">
         <attribute name="date" optional="YES" attributeType="Date" usesScalarValueType="NO"/>
