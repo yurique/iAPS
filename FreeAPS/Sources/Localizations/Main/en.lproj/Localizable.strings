@@ -1637,6 +1637,34 @@ Enact a temp Basal or a temp target */
 
 "Saved Foods" = "Saved Foods";
 
+"United States (USDA / FDA)" = "United States (USDA / FDA)";
+
+"European Union (EFSA / EU labeling)" = "European Union (EFSA / EU labeling)";
+
+"United Kingdom (CoFID / NHS)" = "United Kingdom (CoFID / NHS)";
+
+"Canada (Health Canada)" = "Canada (Health Canada)";
+
+"Australia & New Zealand (FSANZ)" = "Australia & New Zealand (FSANZ)";
+
+"Japan (MHLW)" = "Japan (MHLW)";
+
+"International (WHO / FAO / Codex)" = "International (WHO / FAO / Codex)";
+
+"United States Department of Agriculture (USDA), FDA Nutrition Facts" = "United States Department of Agriculture (USDA), FDA Nutrition Facts";
+
+"European Food Safety Authority (EFSA), EU food labeling standards" = "European Food Safety Authority (EFSA), EU food labeling standards";
+
+"UK Composition of Foods Integrated Dataset (CoFID), NHS" = "UK Composition of Foods Integrated Dataset (CoFID), NHS";
+
+"Health Canada, Canadian Nutrition Facts Table" = "Health Canada, Canadian Nutrition Facts Table";
+
+"Food Standards Australia New Zealand (FSANZ)" = "Food Standards Australia New Zealand (FSANZ)";
+
+"Ministry of Health, Labour and Welfare (MHLW), Japanese Food Labeling Standards" = "Ministry of Health, Labour and Welfare (MHLW), Japanese Food Labeling Standards";
+
+"World Health Organization (WHO), FAO, Codex Alimentarius" = "World Health Organization (WHO), FAO, Codex Alimentarius";
+
 "📝 Notes" = "📝 Notes";
 
 /* */
