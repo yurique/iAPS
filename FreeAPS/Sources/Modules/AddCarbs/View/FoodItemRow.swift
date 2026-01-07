@@ -539,7 +539,7 @@ extension FoodItemRow {
                     if let original = foodItem.portionSize {
                         Button(action: resetSliderToOriginal) {
                             HStack {
-                                Text("Reset to \(Double(original), specifier: "%.0f") \(unit)")
+                                Text(NSLocalizedString("Reset to", comment: "") + " \(Double(original), specifier: "%.0f")" + NSLocalizedString(unit, comment: ""))
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
@@ -553,7 +553,7 @@ extension FoodItemRow {
                     if let original = foodItem.servingsMultiplier {
                         Button(action: resetSliderToOriginal) {
                             HStack {
-                                Text("Reset to \(Double(original), specifier: "%.2f") \(original == 1 ? "serving" : "servings")")
+                                Text(NSLocalizedString("Reset to", comment: "") + " \(Double(original), specifier: "%.2f")" + original == 1 ? NSLocalizedString("serving", comment: "") : NSLocalizedString("servings", commenr: ""))
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)

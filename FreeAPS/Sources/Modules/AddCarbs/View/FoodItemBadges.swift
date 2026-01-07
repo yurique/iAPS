@@ -54,13 +54,13 @@ struct NutritionBadge: View {
                 .foregroundColor(.primary)
                 .fixedSize()
             if let unit = unit {
-                Text(unit)
+                Text(NSLocalizedString(unit, comment: ""))
                     .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundColor(.secondary)
                     .fixedSize()
             }
             if let label = label {
-                Text(label)
+                Text(NSLocalizedString(label, comment: ""))
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .textCase(.lowercase)
                     .foregroundColor(.secondary)
