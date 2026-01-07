@@ -199,9 +199,6 @@ extension AddCarbs {
                 }
 
                 Section {
-                    // Saved Food presets
-                    mealPresets.padding(.vertical, 9)
-
                     HStack {
                         Text("Carbs").fontWeight(.semibold)
                         Spacer()
@@ -217,22 +214,6 @@ extension AddCarbs {
 
                     if state.useFPUconversion {
                         proteinAndFat()
-                    }
-
-                    // Summary when combining presets
-                    if state.combinedPresets.isNotEmpty {
-                        let summary = state.waitersNotepad()
-                        if summary.isNotEmpty {
-                            HStack {
-                                Text("Total")
-                                HStack(spacing: 0) {
-                                    ForEach(summary, id: \.self) {
-                                        Text($0).foregroundStyle(Color.randomGreen()).font(.footnote)
-                                        Text($0 == summary[summary.count - 1] ? "" : ", ")
-                                    }
-                                }.frame(maxWidth: .infinity, alignment: .trailing)
-                            }
-                        }
                     }
 
                     // Time
