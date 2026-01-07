@@ -481,7 +481,7 @@ struct FoodSearchSettingsView: View {
                 }
 
                 Section(
-                    header: Text("Misc"),
+                    header: Text("Miscellaneous"),
                 ) {
                     Toggle("AI Progress Animation", isOn: $aiProgressAnimation)
                 }
@@ -620,10 +620,10 @@ struct FoodSearchSettingsView: View {
 
     @ViewBuilder private func modelRow(provider: String, model: String) -> some View {
         HStack {
-            Text(provider)
+            Text(NSLocalizedString(provider, comment: ""))
                 .font(.caption2)
                 .foregroundColor(.secondary)
-            Text(model)
+            Text(NSLocalizedString(model, comment: ""))
                 .font(.caption2)
                 .fontWeight(.medium)
                 .foregroundColor(.primary)
@@ -734,7 +734,7 @@ private struct OptionSelectionView: View {
                     dismiss()
                 } label: {
                     HStack {
-                        Text(item.name)
+                        Text(NSLocalizedString(item.name, comment: ""))
                             .foregroundColor(.primary)
                         Spacer()
                         if selection == item.code {
@@ -745,7 +745,7 @@ private struct OptionSelectionView: View {
                 }
             }
         }
-        .navigationTitle(title)
+        .navigationTitle(NSLocalizedString(title, comment: ""))
         .searchable(text: $searchText, placement: .navigationBarDrawer(displayMode: .automatic))
     }
 }
@@ -969,7 +969,7 @@ private struct StatTypeHeaderWithBadge: View {
                 .foregroundColor(.accentColor)
                 .frame(width: 16)
 
-            Text(label)
+            Text(NSLocalizedString(label, comment: ""))
                 .font(.subheadline)
                 .fontWeight(.semibold)
 
@@ -1075,7 +1075,7 @@ private struct ComplexityRow: View {
                     .foregroundColor(.secondary)
                     .frame(width: 14)
 
-                Text(label)
+                Text(NSLocalizedString(label, comment: ""))
                     .font(.caption)
                     .foregroundColor(.secondary)
             }

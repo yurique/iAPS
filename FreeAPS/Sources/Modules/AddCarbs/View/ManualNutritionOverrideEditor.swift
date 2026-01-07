@@ -240,7 +240,7 @@ private struct NutritionOverrideRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Text(label)
+            Text(NSLocalizedString(label, comment: ""))
                 .font(.subheadline)
                 .foregroundColor(.primary.opacity(0.8))
                 .frame(maxWidth: .infinity, alignment: .leading)
