@@ -1095,7 +1095,7 @@ Enact a temp Basal or a temp target */
 "Additional notification types" = "Additional notification types";
 
 /* */
-"Misc" = "Misc";
+"Miscellaneous" = "Miscellaneous";
 
 /* */
 "Unit override" = "Unit override";
@@ -1664,6 +1664,12 @@ Enact a temp Basal or a temp target */
 "Ministry of Health, Labour and Welfare (MHLW), Japanese Food Labeling Standards" = "Ministry of Health, Labour and Welfare (MHLW), Japanese Food Labeling Standards";
 
 "World Health Organization (WHO), FAO, Codex Alimentarius" = "World Health Organization (WHO), FAO, Codex Alimentarius";
+
+"protein" = "protein";
+
+"carbs" = "carbs";
+
+"fat" = "fat";
 
 "📝 Notes" = "📝 Notes";
 
