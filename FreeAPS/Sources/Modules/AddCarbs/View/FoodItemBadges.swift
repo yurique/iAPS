@@ -121,13 +121,13 @@ struct NutritionBadgePlain: View {
                 .shadow(color: .black.opacity(colorScheme == .light ? 0.08 : 0), radius: 0.5, x: 0, y: 0.5)
                 .fixedSize()
             if let unit = unit {
-                Text(unit)
+                Text(NSLocalizedString(unit, comment: ""))
                     .font(.system(size: 11, weight: .medium, design: .rounded))
                     .foregroundColor(.secondary)
                     .fixedSize()
             }
             if let label = label {
-                Text(label)
+                Text(NSLocalizedString(label, comment: ""))
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .textCase(.lowercase)
                     .foregroundColor(.secondary)

@@ -390,6 +390,13 @@ extension FoodItemRow {
             }
         }
 
+        private let formatter: NumberFormatter = {
+            let formatter = NumberFormatter()
+            formatter.numberStyle = .decimal
+            formatter.maximumFractionDigits = 1
+            return formatter
+        }()
+
         private func resetSliderToOriginal() {
             switch foodItem.nutrition {
             case .per100:
@@ -463,9 +470,12 @@ extension FoodItemRow {
                 VStack(spacing: 8) {
                     switch foodItem.nutrition {
                     case .per100:
-                        Text("\(Double(calculatedPortion), specifier: "%.0f") \(unit)")
-                            .font(.system(size: 32, weight: .bold))
-                            .foregroundColor(.orange)
+                        Text(
+                            (formatter.string(from: calculatedPortion as NSNumber) ?? "") +
+                                NSLocalizedString(unit, comment: "")
+                        )
+                        .font(.system(size: 32, weight: .bold))
+                        .foregroundColor(.orange)
                     case .perServing:
                         Text(formattedServingMultiplier(calculatedPortion))
                             .font(.system(size: 32, weight: .bold))
@@ -478,11 +488,11 @@ extension FoodItemRow {
                         .tint(.orange)
 
                     HStack {
-                        Text(sliderMinLabel)
+                        Text(NSLocalizedString(sliderMinLabel, comment: ""))
                             .font(.caption)
                             .foregroundColor(.secondary)
                         Spacer()
-                        Text(sliderMaxLabel)
+                        Text(NSLocalizedString(sliderMaxLabel, comment: ""))
                             .font(.caption)
                             .foregroundColor(.secondary)
                     }
@@ -539,7 +549,11 @@ extension FoodItemRow {
                     if let original = foodItem.portionSize {
                         Button(action: resetSliderToOriginal) {
                             HStack {
-                                Text(NSLocalizedString("Reset to", comment: "") + " \(Double(original), specifier: "%.0f")" + NSLocalizedString(unit, comment: ""))
+                                Text(
+                                    NSLocalizedString("Reset to ", comment: "") +
+                                        (formatter.string(from: original as NSNumber) ?? "") +
+                                        NSLocalizedString(unit, comment: "")
+                                )
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)
@@ -551,9 +565,14 @@ extension FoodItemRow {
                     }
                 case .perServing:
                     if let original = foodItem.servingsMultiplier {
+                        let servingString = original == 1 ? "serving" : "servings"
                         Button(action: resetSliderToOriginal) {
                             HStack {
-                                Text(NSLocalizedString("Reset to", comment: "") + " \(Double(original), specifier: "%.2f")" + original == 1 ? NSLocalizedString("serving", comment: "") : NSLocalizedString("servings", commenr: ""))
+                                Text(
+                                    NSLocalizedString("Reset to ", comment: "") +
+                                        (formatter.string(from: original as NSNumber) ?? "") +
+                                        NSLocalizedString(servingString, comment: "")
+                                )
                             }
                             .frame(maxWidth: .infinity)
                             .padding(.vertical, 10)

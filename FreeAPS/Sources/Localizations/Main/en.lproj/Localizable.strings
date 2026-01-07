@@ -1671,6 +1671,8 @@ Enact a temp Basal or a temp target */
 
 "fat" = "fat";
 
+
+
 "📝 Notes" = "📝 Notes";
 
 /* */
@@ -2006,6 +2008,15 @@ Enact a temp Basal or a temp target */
 
 "Cal" = "Cal";
 
+"servings" = "servings";
+
+"serving" = "serving";
+
+"Reset to " = "Reset to ";
+
+"Apply" = "Apply";
+
+"Carbs" = "Carbs";
 
 // --------- End of AI ---------
 
