@@ -279,7 +279,7 @@ private struct DetailedNutritionRow: View {
 
     var body: some View {
         HStack(spacing: 8) {
-            Text(label)
+            Text(NSLocalizedString(label, comment: ""))
                 .font(.subheadline)
                 .foregroundColor(.primary.opacity(0.8))
                 .frame(maxWidth: .infinity, alignment: .leading)
@@ -291,7 +291,7 @@ private struct DetailedNutritionRow: View {
                         .font(.subheadline)
                         .fontWeight(.medium)
                         .foregroundColor(.primary)
-                    Text(unit)
+                    Text(NSLocalizedString(unit, comment: ""))
                         .font(.caption2)
                         .foregroundColor(.secondary.opacity(0.7))
                         .frame(width: 24, alignment: .leading)
@@ -310,7 +310,7 @@ private struct DetailedNutritionRow: View {
                     Text("\(Double(value), specifier: "%.1f")")
                         .font(.subheadline)
                         .foregroundColor(.secondary)
-                    Text(unit)
+                    Text(NSLocalizedString(unit, comment: ""))
                         .font(.caption2)
                         .foregroundColor(.secondary.opacity(0.7))
                         .frame(width: 24, alignment: .leading)
@@ -336,7 +336,7 @@ struct SectionInfoPopup: View {
             VStack(alignment: .leading, spacing: 16) {
                 // Title
                 if let title = foodItemGroup.briefDescription, !title.isEmpty {
-                    Text(title)
+                    Text(NSLocalizedString(title, comment: ""))
                         .font(.title3)
                         .fontWeight(.semibold)
                         .foregroundColor(.primary)
@@ -398,7 +398,7 @@ private struct InfoCard: View {
                 .frame(width: 40)
 
                 // Content section
-                Text(content)
+                Text(NSLocalizedString(content, comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.primary.opacity(0.85))
                     .padding(.horizontal, 12)
@@ -409,11 +409,11 @@ private struct InfoCard: View {
             .cornerRadius(12)
         } else {
             VStack(alignment: .leading, spacing: 8) {
-                Label(title, systemImage: icon)
+                Label(NSLocalizedString(title, comment: ""), systemImage: icon)
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(color)
-                Text(content)
+                Text(NSLocalizedString(content, comment: ""))
                     .font(.subheadline)
                     .foregroundColor(.primary.opacity(0.85))
             }

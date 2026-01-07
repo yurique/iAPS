@@ -140,12 +140,12 @@ private struct CapabilityCard: View {
 
             // Text content
             VStack(alignment: .leading, spacing: 2) {
-                Text(title)
+                Text(NSLocalizedString(title, comment: ""))
                     .font(.subheadline)
                     .fontWeight(.semibold)
                     .foregroundColor(isDisabled ? .secondary : .primary)
 
-                Text(description)
+                Text(NSLocalizedString(description, comment: ""))
                     .font(.caption)
                     .foregroundColor(.secondary.opacity(isDisabled ? 0.6 : 1.0))
                     .lineLimit(2)
@@ -172,7 +172,7 @@ private struct TipRow: View {
                 .foregroundColor(.secondary)
                 .frame(width: 16)
 
-            Text(text)
+            Text(NSLocalizedString(text, comment: ""))
                 .font(.caption)
                 .foregroundColor(.secondary)
 

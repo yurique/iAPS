@@ -141,8 +141,11 @@ private func makePreferencesBlock(regionCode: String?) -> String {
     let nutritionAuthority = UserDefaults.standard.userPreferredNutritionAuthorityForAI
 
     return prompt_1_preferences
-        .replacingOccurrences(of: "(nutrition_authority)", with: nutritionAuthority.descriptionForAI)
-        .replacingOccurrences(of: "(region)", with: regionForAI)
+        .replacingOccurrences(
+            of: "(nutrition_authority)",
+            with: NSLocalizedString(nutritionAuthority.descriptionForAI, comment: "")
+        )
+        .replacingOccurrences(of: "(region)", with: NSLocalizedString(regionForAI, comment: ""))
 }
 
 // MARK: just to encode an [(string, any)] into a JSON string preserving the order of fields in the schema, since swift doesn't seem to have anything for this ¯\_(ツ)_/¯
