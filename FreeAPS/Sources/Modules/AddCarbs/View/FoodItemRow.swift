@@ -565,7 +565,7 @@ extension FoodItemRow {
                     }
                 case .perServing:
                     if let original = foodItem.servingsMultiplier {
-                        let servingString = original == 1 ? "serving" : "servings"
+                        let servingString = original == 1 ? " serving" : " servings"
                         Button(action: resetSliderToOriginal) {
                             HStack {
                                 Text(
