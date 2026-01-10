@@ -7,7 +7,6 @@ struct FoodItemRow: View {
     let onPortionChange: ((Decimal) -> Void)?
     let onDelete: (() -> Void)?
     let onPersist: ((FoodItemDetailed) -> Void)?
-    let onUpdate: ((FoodItemDetailed) -> Void)?
     let savedFoodIds: Set<UUID>
     let allExistingTags: Set<String>
     let isFirst: Bool
@@ -15,7 +14,6 @@ struct FoodItemRow: View {
 
     @State private var showItemInfo = false
     @State private var showPortionAdjuster = false
-    @State private var showEditSheet = false
     @State private var sliderMultiplier: Double = 1.0
 
     private var isSaved: Bool {
@@ -90,18 +88,10 @@ struct FoodItemRow: View {
             }
             .contextMenu {
                 if onPortionChange != nil {
-                    if isManualEntry {
-                        Button {
-                            showEditSheet = true
-                        } label: {
-                            Label("Edit Food", systemImage: "pencil")
-                        }
-                    } else {
-                        Button {
-                            showPortionAdjuster = true
-                        } label: {
-                            Label("Edit Portion", systemImage: "slider.horizontal.3")
-                        }
+                    Button {
+                        showPortionAdjuster = true
+                    } label: {
+                        Label("Edit Portion", systemImage: "slider.horizontal.3")
                     }
                 }
 
@@ -191,21 +181,12 @@ struct FoodItemRow: View {
         }
         .when(onPortionChange != nil) { view in
             view.swipeActions(edge: .leading, allowsFullSwipe: true) {
-                if isManualEntry {
-                    Button {
-                        showEditSheet = true
-                    } label: {
-                        Label("Edit", systemImage: "pencil")
-                    }
-                    .tint(.orange)
-                } else {
-                    Button {
-                        showPortionAdjuster = true
-                    } label: {
-                        Label("Edit Portion", systemImage: "slider.horizontal.3")
-                    }
-                    .tint(.orange)
+                Button {
+                    showPortionAdjuster = true
+                } label: {
+                    Label("Edit Portion", systemImage: "slider.horizontal.3")
                 }
+                .tint(.orange)
             }
         }
         .when(onPortionChange != nil) { view in
@@ -255,24 +236,6 @@ struct FoodItemRow: View {
                 }())])
                 .presentationDragIndicator(.visible)
             }
-        }
-        .sheet(isPresented: $showEditSheet) {
-            FoodItemEditorSheet(
-                existingItem: foodItem,
-                title: "Edit Food",
-                allowServingMultiplierEdit: true,
-                allExistingTags: allExistingTags,
-                showTagsAndFavorite: isSaved,
-                onSave: { editedItem in
-                    onUpdate?(editedItem)
-                    showEditSheet = false
-                },
-                onCancel: {
-                    showEditSheet = false
-                }
-            )
-            .presentationDetents([.height(600), .large])
-            .presentationDragIndicator(.visible)
         }
         .sheet(isPresented: $showItemInfo) {
             FoodItemInfoPopup(foodItem: foodItem, portionSize: portionSize)

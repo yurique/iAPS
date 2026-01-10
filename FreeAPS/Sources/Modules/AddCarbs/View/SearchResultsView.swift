@@ -1042,14 +1042,6 @@ private struct FoodItemGroupListSection: View {
                                     state.newFoodEntryToEdit = foodItem
                                     state.showNewSavedFoodEntry = true
                                 },
-                                onUpdate: { updatedItem in
-                                    // If this is a saved food, persist it and update all instances
-                                    if savedFoodIds.contains(updatedItem.id) {
-                                        onPersist(updatedItem)
-                                    } else {
-                                        state.updateItem(updatedItem)
-                                    }
-                                },
                                 savedFoodIds: savedFoodIds,
                                 allExistingTags: allExistingTags,
                                 isFirst: index == 0,
