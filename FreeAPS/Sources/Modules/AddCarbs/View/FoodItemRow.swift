@@ -260,9 +260,9 @@ struct FoodItemRow: View {
             FoodItemEditorSheet(
                 existingItem: foodItem,
                 title: "Edit Food",
-                allowServingMultiplierEdit: true, // Allow editing multiplier for foods in the main list
+                allowServingMultiplierEdit: true,
                 allExistingTags: allExistingTags,
-                showTagsAndFavorite: isSaved, // Only show tags if this is a saved food
+                showTagsAndFavorite: isSaved,
                 onSave: { editedItem in
                     onUpdate?(editedItem)
                     showEditSheet = false

@@ -55,6 +55,7 @@ final class FoodSearchStateModel: ObservableObject {
     @Published var filterText = ""
     @Published var showManualEntry = false
     @Published var showNewSavedFoodEntry = false
+    @Published var newFoodEntryToEdit: FoodItemDetailed? = nil
 
     @Published var aiTextAnalysis = UserDefaults.standard.aiTextSearchByDefault
 

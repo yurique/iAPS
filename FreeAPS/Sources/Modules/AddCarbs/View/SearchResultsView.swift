@@ -180,16 +180,18 @@ struct SearchResultsView: View {
         }
         .sheet(isPresented: $state.showNewSavedFoodEntry) {
             FoodItemEditorSheet(
-                existingItem: nil,
+                existingItem: state.newFoodEntryToEdit,
                 title: "Create Saved Food",
                 allExistingTags: Set(state.savedFoods?.foodItemsDetailed.flatMap { $0.tags ?? [] } ?? []),
                 showTagsAndFavorite: true, // Show tags when creating a saved food
                 onSave: { foodItem in
                     persistFoodItem(foodItem)
                     state.showNewSavedFoodEntry = false
+                    state.newFoodEntryToEdit = nil
                 },
                 onCancel: {
                     state.showNewSavedFoodEntry = false
+                    state.newFoodEntryToEdit = nil
                 }
             )
             .presentationDetents([.height(600), .large])
@@ -304,7 +306,6 @@ struct SearchResultsView: View {
                 }
             }
 
-            // Make the totals badges tappable
             Button(action: {
                 showNutritionOverrideEditor = true
             }) {
@@ -501,7 +502,8 @@ struct SearchResultsView: View {
             source: .manual
         )
 
-        onPersist(savedItem)
+        state.newFoodEntryToEdit = savedItem
+        state.showNewSavedFoodEntry = true
     }
 
     private var undoButton: some View {
@@ -907,7 +909,8 @@ private struct FoodItemGroupListSection: View {
             source: .manual
         )
 
-        onPersist(savedItem)
+        state.newFoodEntryToEdit = savedItem
+        state.showNewSavedFoodEntry = true
     }
 
     var body: some View {
@@ -1035,13 +1038,15 @@ private struct FoodItemGroupListSection: View {
                                         state.searchResultsState.deleteItem(foodItem)
                                     }
                                 },
-                                onPersist: onPersist,
+                                onPersist: { foodItem in
+                                    state.newFoodEntryToEdit = foodItem
+                                    state.showNewSavedFoodEntry = true
+                                },
                                 onUpdate: { updatedItem in
                                     // If this is a saved food, persist it and update all instances
                                     if savedFoodIds.contains(updatedItem.id) {
                                         onPersist(updatedItem)
                                     } else {
-                                        // Otherwise just update this instance
                                         state.updateItem(updatedItem)
                                     }
                                 },
